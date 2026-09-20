@@ -1,0 +1,59 @@
+# ─────────────────────────────────────────────────────────────────────
+#  Qué modelo de IA se usa para cada tarea.
+#  Cambiar de proveedor = cambiar estas líneas. NO hay que tocar código.
+#  Precios: verificalos en los enlaces de docs/04-modelos-ia.md, cambian seguido.
+# ─────────────────────────────────────────────────────────────────────
+
+tareas:
+  # Tarea de ALTO VOLUMEN: leer cada anuncio y sacar campos estructurados
+  # (ángulo, oferta, público, formato). Se ejecuta 1 vez por anuncio nuevo.
+  # Barato y rápido manda. Si falla, se intenta el siguiente de la lista.
+  analizar_anuncio:
+    - proveedor: groq
+      modelo: llama-3.3-70b-versatile
+      temperatura: 0.1
+      max_tokens: 900
+    - proveedor: gemini
+      modelo: gemini-2.5-flash-lite
+      temperatura: 0.1
+      max_tokens: 900
+    - proveedor: stub   # último recurso: sin IA, reglas simples. Nunca deja caer el pipeline.
+
+  # Tarea de CALIDAD: redactar el reporte que lee el cliente.
+  # Acá sí se paga por buena escritura. Es 1 llamada por reporte.
+  redactar_reporte:
+    - proveedor: gemini
+      modelo: gemini-2.5-pro
+      temperatura: 0.4
+      max_tokens: 4000
+    - proveedor: groq
+      modelo: openai/gpt-oss-120b
+      temperatura: 0.4
+      max_tokens: 4000
+    - proveedor: stub
+
+  # Tarea auxiliar: etiquetar en 2-4 palabras qué cambié yo al editar el borrador.
+  # Alimenta el dataset de la Fase 2. Volumen mínimo, modelo barato.
+  etiquetar_edicion:
+    - proveedor: groq
+      modelo: llama-3.1-8b-instant
+      temperatura: 0.0
+      max_tokens: 200
+    - proveedor: stub
+
+# Precio en USD por 1 millón de tokens. Solo se usa para ESTIMAR costo y
+# que sepas cuánto de tu crédito consumiste. Actualizalo cuando cambien.
+# Última verificación: 2026-09-20 (ai.google.dev/gemini-api/docs/pricing, console.groq.com/docs/models)
+precios_usd_por_millon:
+  gemini/gemini-2.5-pro:            {entrada: 1.25,  salida: 10.00}
+  gemini/gemini-2.5-flash:          {entrada: 0.30,  salida: 2.50}
+  gemini/gemini-2.5-flash-lite:     {entrada: 0.10,  salida: 0.40}
+  gemini/gemini-3.5-flash-lite:     {entrada: 0.30,  salida: 2.50}
+  groq/llama-3.3-70b-versatile:     {entrada: 0.59,  salida: 0.79}
+  groq/llama-3.1-8b-instant:        {entrada: 0.05,  salida: 0.08}
+  groq/openai-gpt-oss-120b:         {entrada: 0.15,  salida: 0.75}
+  stub/stub:                        {entrada: 0.0,   salida: 0.0}
+
+# Tope de gasto por corrida. Si la estimación lo supera, el pipeline se detiene
+# y te avisa en vez de quemarte el crédito en silencio.
+tope_gasto_usd_por_corrida: 0.75

@@ -1,0 +1,64 @@
+"""Configuración: lee el archivo .env y los YAML de config/.
+
+No usa librerías externas para el .env a propósito: menos cosas que instalar,
+menos cosas que se rompan.
+"""
+from __future__ import annotations
+
+import os
+from functools import lru_cache
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+RAIZ = Path(__file__).resolve().parent.parent
+DIR_CONFIG = RAIZ / "config"
+DIR_DATOS = RAIZ / "datos"
+DIR_BORRADORES = RAIZ / "borradores"
+DIR_SALIDA = RAIZ / "salida"
+
+
+def cargar_env(ruta: Path | None = None) -> None:
+    """Carga variables de .env al entorno, sin sobreescribir las que ya existen."""
+    ruta = ruta or (RAIZ / ".env")
+    if not ruta.exists():
+        return
+    for linea in ruta.read_text(encoding="utf-8").splitlines():
+        linea = linea.strip()
+        if not linea or linea.startswith("#") or "=" not in linea:
+            continue
+        clave, _, valor = linea.partition("=")
+        clave, valor = clave.strip(), valor.strip().strip('"').strip("'")
+        os.environ.setdefault(clave, valor)
+
+
+def env(clave: str, defecto: str | None = None) -> str | None:
+    cargar_env()
+    valor = os.environ.get(clave, defecto)
+    return valor or None
+
+
+def ruta_db() -> Path:
+    cargar_env()
+    return Path(os.environ.get("PULSERIVAL_DB") or (DIR_DATOS / "pulserival.db"))
+
+
+@lru_cache(maxsize=None)
+def _yaml(nombre: str) -> dict[str, Any]:
+    ruta = DIR_CONFIG / nombre
+    if not ruta.exists():
+        return {}
+    return yaml.safe_load(ruta.read_text(encoding="utf-8")) or {}
+
+
+def config_modelos() -> dict[str, Any]:
+    return _yaml("modelos.yaml")
+
+
+def config_fuentes() -> dict[str, Any]:
+    return _yaml("fuentes.yaml")
+
+
+def tope_gasto_usd() -> float:
+    return float(config_modelos().get("tope_gasto_usd_por_corrida", 1.0))

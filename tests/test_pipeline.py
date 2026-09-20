@@ -1,0 +1,102 @@
+"""El pipeline completo y las reglas de seguridad del envío."""
+from __future__ import annotations
+
+import os
+
+from pulserival import db, pipeline, util
+from pulserival.entrega import EnvioError, enviar_reporte
+from pulserival.reporte import generar as generar_mod
+from tests.base import CasoBase
+
+
+class TestPipeline(CasoBase):
+    def setUp(self):
+        super().setUp()
+        self.cli = self.cliente()
+        self.competidor(self.cli, "Vital Gym CR")
+        self.competidor(self.cli, "Club Atlas Escazú", google_dominio=None)
+
+    def test_ciclo_completo_en_modo_demo(self):
+        os.environ["PULSERIVAL_DEMO_SEMANA"] = "1"
+        res = pipeline.ciclo_completo(self.con, modo="demo")
+        self.assertGreater(res["totales"]["nuevos"], 0)
+        self.assertEqual(res["errores"], [])
+        self.assertEqual(len(res["reportes"]), 1)
+        rep = res["reportes"][0]
+        self.assertIn("reporte_id", rep)
+        self.assertTrue(rep["validacion"]["aprobado"], rep["validacion"]["problemas"])
+        self.assertTrue(os.path.exists(rep["archivo"]))
+
+    def test_segunda_corrida_detecta_cambios(self):
+        os.environ["PULSERIVAL_DEMO_SEMANA"] = "1"
+        pipeline.recolectar(self.con, modo="demo")
+        os.environ["PULSERIVAL_DEMO_SEMANA"] = "2"
+        corrida = pipeline.recolectar(self.con, modo="demo")
+        t = corrida.totales()
+        self.assertEqual(t["cambiados"], 1, "el cambio de precio debe detectarse")
+        self.assertEqual(t["pausados"], 1, "el anuncio que se cayó debe detectarse")
+        self.assertGreater(t["nuevos"], 0)
+
+    def test_corrida_registrada_para_auditoria(self):
+        os.environ["PULSERIVAL_DEMO_SEMANA"] = "1"
+        corrida = pipeline.recolectar(self.con, modo="demo")
+        fila = db.fila(self.con, "SELECT * FROM corridas_recoleccion WHERE id = ?", (corrida.id,))
+        self.assertEqual(fila["estado"], "ok")
+        resumen = db.leer_json(fila["resumen_json"], {})
+        self.assertIn("totales", resumen)
+        self.assertIn("por_competidor", resumen)
+
+    def test_competidor_sin_datos_de_google_se_salta_sin_error(self):
+        os.environ["PULSERIVAL_DEMO_SEMANA"] = "1"
+        corrida = pipeline.recolectar(self.con, modo="demo")
+        self.assertTrue(any(s["plataforma"] == "google" and "Atlas" in s["competidor"]
+                            for s in corrida.saltados))
+        self.assertEqual(corrida.errores, [])
+
+    def test_no_regenera_reporte_ya_existente(self):
+        os.environ["PULSERIVAL_DEMO_SEMANA"] = "1"
+        pipeline.recolectar(self.con, modo="demo")
+        cliente = db.fila(self.con, "SELECT * FROM clientes WHERE id = ?", (self.cli,))
+        inicio, fin = util.periodo("semanal")
+        r1 = generar_mod.generar(self.con, cliente, inicio, fin)
+        r2 = generar_mod.generar(self.con, cliente, inicio, fin)
+        self.assertEqual(r1["reporte_id"], r2["reporte_id"])
+        self.assertTrue(r2["ya_existia"])
+
+    def test_periodo_sin_movimiento_genera_reporte_honesto(self):
+        cliente = db.fila(self.con, "SELECT * FROM clientes WHERE id = ?", (self.cli,))
+        inicio, fin = util.periodo("semanal")
+        rep = generar_mod.generar(self.con, cliente, inicio, fin)
+        self.assertIn("no detectamos actividad", rep["borrador_md"])
+        self.assertTrue(rep["validacion"]["aprobado"])
+
+
+class TestSegurosDeEnvio(CasoBase):
+    def setUp(self):
+        super().setUp()
+        self.cli = self.cliente()
+        self.competidor(self.cli)
+        os.environ["PULSERIVAL_DEMO_SEMANA"] = "1"
+        pipeline.recolectar(self.con, modo="demo")
+        cliente = db.fila(self.con, "SELECT * FROM clientes WHERE id = ?", (self.cli,))
+        inicio, fin = util.periodo("semanal")
+        self.rep = generar_mod.generar(self.con, cliente, inicio, fin)["reporte_id"]
+        self.con.commit()
+
+    def test_no_envia_un_borrador_sin_revisar(self):
+        with self.assertRaises(EnvioError) as ctx:
+            enviar_reporte(self.con, self.rep)
+        self.assertIn("borrador", str(ctx.exception))
+
+    def test_simular_no_envia_pero_deja_los_archivos(self):
+        res = enviar_reporte(self.con, self.rep, simular=True)
+        self.assertFalse(res["enviado"])
+        self.assertTrue(os.path.exists(res["archivo"]))
+        estado = db.fila(self.con, "SELECT estado FROM reportes_generados WHERE id = ?", (self.rep,))["estado"]
+        self.assertEqual(estado, "borrador", "simular no debe marcar el reporte como enviado")
+
+    def test_sin_configuracion_de_correo_avisa_claro(self):
+        db.actualizar(self.con, "reportes_generados", self.rep, {"estado": "revisado"})
+        with self.assertRaises(EnvioError) as ctx:
+            enviar_reporte(self.con, self.rep)
+        self.assertIn("No hay forma de enviar configurada", str(ctx.exception))
