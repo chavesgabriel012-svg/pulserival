@@ -1,0 +1,16 @@
+# Secretos y datos locales
+.env
+datos/*.db
+datos/*.db-journal
+datos/crudo/
+salida/*
+!salida/.gitkeep
+borradores/*.md
+!borradores/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/

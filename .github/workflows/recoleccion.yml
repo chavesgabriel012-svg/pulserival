@@ -1,0 +1,84 @@
+# ─────────────────────────────────────────────────────────────────────
+#  Recolección automática, sin servidor propio.
+#
+#  Corre en GitHub Actions (gratis para repos privados dentro del cupo
+#  mensual). Cada lunes a las 5 a.m. de Costa Rica: trae los anuncios,
+#  arma los borradores y guarda la base de datos actualizada como
+#  artefacto descargable + commit en la rama `datos`.
+#
+#  NO envía nada al cliente: el envío siempre pasa por tu revisión.
+#
+#  Antes de activarlo, configurá los secretos del repositorio
+#  (Settings → Secrets and variables → Actions):
+#    APIFY_TOKEN, GEMINI_API_KEY, GROQ_API_KEY
+# ─────────────────────────────────────────────────────────────────────
+name: Recolección semanal
+
+on:
+  schedule:
+    # 11:00 UTC = 5:00 a.m. en Costa Rica (UTC-6, sin horario de verano)
+    - cron: "0 11 * * 1"
+  workflow_dispatch:        # también se puede correr a mano desde la pestaña Actions
+    inputs:
+      modo:
+        description: "auto (scrapers reales) o demo (datos de ejemplo)"
+        default: "auto"
+        type: choice
+        options: [auto, demo]
+
+concurrency:
+  group: recoleccion
+  cancel-in-progress: false
+
+jobs:
+  recolectar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write        # para guardar la base actualizada en la rama `datos`
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Traer la base de datos de la corrida anterior
+        run: |
+          mkdir -p datos
+          if git ls-remote --exit-code --heads origin datos >/dev/null 2>&1; then
+            git fetch origin datos:datos
+            git show datos:datos/pulserival.db > datos/pulserival.db 2>/dev/null || true
+          fi
+          python -m pulserival.cli init
+
+      - name: Recolectar y generar borradores
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          PULSERIVAL_DB: datos/pulserival.db
+        run: python -m pulserival.cli ciclo --modo "${{ inputs.modo || 'auto' }}"
+
+      - name: Guardar borradores y base como artefacto descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: pulserival-${{ github.run_number }}
+          path: |
+            borradores/
+            datos/pulserival.db
+          retention-days: 90
+
+      - name: Versionar la base en la rama `datos`
+        run: |
+          git config user.name "pulserival-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git checkout -B datos
+          git add -f datos/pulserival.db borradores/ 2>/dev/null || true
+          git commit -m "Corrida $(date -u +%Y-%m-%d)" || echo "sin cambios"
+          for intento in 1 2 3 4; do
+            git push -f origin datos && break || sleep $((2 ** intento))
+          done

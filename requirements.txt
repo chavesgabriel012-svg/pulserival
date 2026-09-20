@@ -1,0 +1,4 @@
+# PulseRival - dependencias mínimas a propósito.
+# Solo dos librerías externas: una para plantillas de email, otra para llamadas HTTP.
+Jinja2>=3.1
+requests>=2.31

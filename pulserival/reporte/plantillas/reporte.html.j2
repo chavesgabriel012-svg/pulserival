@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ asunto }}</title>
+</head>
+<body style="margin:0;padding:0;background:#f3f4f6;">
+  <div style="display:none;max-height:0;overflow:hidden;">{{ preheader }}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:24px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+             style="max-width:620px;background:#ffffff;border-radius:10px;overflow:hidden;
+                    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+
+        <!-- encabezado -->
+        <tr><td style="background:#0f172a;padding:20px 26px;">
+          <div style="color:#ffffff;font-size:17px;font-weight:600;letter-spacing:.3px;">PulseRival</div>
+          <div style="color:#94a3b8;font-size:12px;margin-top:2px;">
+            Inteligencia publicitaria · Costa Rica
+          </div>
+        </td></tr>
+
+        <!-- datos del reporte -->
+        <tr><td style="padding:22px 26px 0;">
+          <div style="font-size:19px;font-weight:600;color:#111827;line-height:1.35;">
+            Anuncios de la competencia
+          </div>
+          <div style="font-size:13px;color:#6b7280;margin-top:6px;">
+            {{ cliente }} · del {{ periodo_inicio }} al {{ periodo_fin }}
+          </div>
+          {% if conteo %}
+          <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 4px;">
+            <tr>
+              {% for etiqueta, valor in [('Nuevos', conteo.nuevo), ('Cambiaron', conteo.cambiado),
+                                          ('Se cayeron', conteo.pausado), ('Siguen', conteo.continua)] %}
+              <td style="padding-right:18px;">
+                <div style="font-size:21px;font-weight:600;color:#0f172a;">{{ valor }}</div>
+                <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;">{{ etiqueta }}</div>
+              </td>
+              {% endfor %}
+            </tr>
+          </table>
+          {% endif %}
+        </td></tr>
+
+        <!-- cuerpo -->
+        <tr><td style="padding:6px 26px 10px;font-size:15px;color:#374151;">
+          {{ cuerpo_html }}
+        </td></tr>
+
+        <!-- anexo con las fuentes: trazabilidad anuncio por anuncio -->
+        {% if anuncios %}
+        <tr><td style="padding:6px 26px 18px;">
+          <div style="font-size:13px;font-weight:600;color:#111827;margin:18px 0 8px;">
+            Anexo: anuncios detectados
+          </div>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:12px;color:#4b5563;">
+            {% for a in anuncios %}
+            <tr>
+              <td style="padding:7px 0;border-top:1px solid #f1f5f9;vertical-align:top;width:42px;color:#9ca3af;">
+                {{ a.referencia }}
+              </td>
+              <td style="padding:7px 0;border-top:1px solid #f1f5f9;">
+                <strong style="color:#111827;">{{ a.competidor }}</strong>
+                <span style="color:#9ca3af;">· {{ a.plataforma }} · {{ a.clasificacion }}</span><br>
+                {{ (a.titulo or a.texto or '')[:110] }}
+                {% if a.url_anuncio %}
+                <br><a href="{{ a.url_anuncio }}" style="color:#1a56db;text-decoration:none;">ver el anuncio en la fuente</a>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+        </td></tr>
+        {% endif %}
+
+        <!-- pie -->
+        <tr><td style="background:#f9fafb;padding:16px 26px;font-size:11px;color:#6b7280;line-height:1.6;">
+          Datos tomados de la Biblioteca de Anuncios de Meta y del Centro de Transparencia
+          de Anuncios de Google, ambas fuentes públicas. El reporte no incluye datos de
+          inversión, alcance ni resultados: esa información no es pública.
+          {% if enlace_baja %}<br><a href="{{ enlace_baja }}" style="color:#6b7280;">Darse de baja</a>{% endif %}
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
