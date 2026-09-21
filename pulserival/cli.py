@@ -416,6 +416,18 @@ def cmd_prueba_scraper(args) -> int:
     return 0
 
 
+def cmd_mantenimiento(args) -> int:
+    """Recalcula las huellas guardadas tras un cambio en cómo se calculan."""
+    from . import mantenimiento
+
+    with db.sesion() as con:
+        res = mantenimiento.recalcular_huellas(con, aplicar=not args.simular)
+    ok(f"{res['revisados']} anuncios revisados · {res['huellas_actualizadas']} huellas "
+       f"actualizadas · {res['duplicados_fusionados']} duplicados fusionados"
+       + ("  (simulación, no se guardó nada)" if args.simular else ""))
+    return 0
+
+
 def cmd_diagnostico(args) -> int:
     """Prueba cada proveedor de IA con una llamada mínima y dice cuál responde."""
     from .ia.router import diagnostico
@@ -631,6 +643,13 @@ def construir_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("dataset", help="exportar el dataset de ediciones (Fase 2)").set_defaults(func=cmd_dataset)
     sub.add_parser("costos", help="cuánto se gastó en IA").set_defaults(func=cmd_costos)
+    m = sub.add_parser("mantenimiento",
+                       help="recalcular las huellas de los anuncios ya guardados")
+    m.add_argument("accion", nargs="?", default="recalcular-huellas",
+                   choices=["recalcular-huellas"])
+    m.add_argument("--simular", action="store_true", help="mostrar qué haría, sin guardar")
+    m.set_defaults(func=cmd_mantenimiento)
+
     sub.add_parser("diagnostico",
                    help="probar los proveedores de IA y ver cuál responde").set_defaults(
         func=cmd_diagnostico)

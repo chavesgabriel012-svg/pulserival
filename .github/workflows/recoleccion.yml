@@ -60,6 +60,11 @@ jobs:
           PULSERIVAL_DB: datos/pulserival.db
         run: python -m pulserival.cli aplicar-config
 
+      - name: Poner al día las huellas de los anuncios guardados
+        env:
+          PULSERIVAL_DB: datos/pulserival.db
+        run: python -m pulserival.cli mantenimiento recalcular-huellas
+
       - name: Diagnóstico de los proveedores de IA
         continue-on-error: true
         env:

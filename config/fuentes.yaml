@@ -158,3 +158,16 @@ costos:
       starter: 1.00
       scale: 0.85
       business: 0.70
+
+# ─────────────────────────────────────────────────────────────────────
+#  Qué cuenta como "el anuncio cambió".
+# ─────────────────────────────────────────────────────────────────────
+deteccion:
+  # Si el creativo entra en la huella, cambiar la imagen cuenta como cambio
+  # aunque el texto siga igual. Se compara por el NOMBRE del archivo, no por
+  # la URL: las URLs de Meta se firman en cada consulta y rotan de servidor.
+  #
+  # Póngalo en false si en los reportes aparecen cambios que al revisarlos no
+  # son cambios reales: entonces solo el texto, la oferta y el destino
+  # cuentan.
+  huella_incluye_creativo: true

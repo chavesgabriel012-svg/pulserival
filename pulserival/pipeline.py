@@ -166,9 +166,21 @@ def ciclo_completo(
             reportes.append({"cliente": cliente["nombre_empresa"],
                              "omitido": "todavía no cierra el periodo de este cliente"})
             continue
+        # Un borrador de ESTE mismo periodo que nadie revisó todavía se
+        # rehace con lo que acaba de entrar: dejarlo viejo no le sirve a
+        # nadie. Uno ya revisado o enviado no se toca. Esto no afecta la
+        # cadencia: para un cliente mensual, una semana después el periodo es
+        # otro y no coincide.
+        existente = db.fila(
+            con,
+            "SELECT estado FROM reportes_generados WHERE cliente_id = ? "
+            "AND periodo_inicio = ? AND periodo_fin = ?",
+            (int(cliente["id"]), inicio, fin),
+        )
+        rehacer = solo_reporte or (existente is not None and existente["estado"] == "borrador")
         try:
             rep = generar_mod.generar(con, cliente, inicio, fin, presupuesto=presupuesto,
-                                      regenerar=solo_reporte)
+                                      regenerar=rehacer)
         except (ProveedorError, RuntimeError) as e:
             reportes.append({"cliente": cliente["nombre_empresa"], "error": str(e)})
             continue
@@ -180,7 +192,7 @@ def ciclo_completo(
             "validacion": rep.get("validacion", {}),
             "conteo": rep.get("conteo"),
         }
-        if exportar and (solo_reporte or not rep.get("ya_existia")):
+        if exportar and (rehacer or not rep.get("ya_existia")):
             item["archivo"] = str(flujo.exportar(con, rep["reporte_id"]))
             # Además del .md para editar, se deja el correo armado: es la
             # única forma de ver el reporte como lo recibe el cliente sin

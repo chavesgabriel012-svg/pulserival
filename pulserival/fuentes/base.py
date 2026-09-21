@@ -37,10 +37,13 @@ class AnuncioCrudo:
 
     def huella(self) -> str:
         """Identidad del contenido: si esto cambia, el anuncio cambió."""
-        return util.huella(
-            self.titulo, self.texto, self.descripcion, self.cta,
-            _destino(self.link_destino), self.creativo_url,
-        )
+        from .. import config
+
+        partes = [self.titulo, self.texto, self.descripcion, self.cta,
+                  _destino(self.link_destino)]
+        if config.huella_incluye_creativo():
+            partes.append(_creativo(self.creativo_url))
+        return util.huella(*partes)
 
     def vacio(self) -> bool:
         return not any([self.titulo, self.texto, self.descripcion, self.creativo_url])
@@ -59,6 +62,27 @@ def _destino(url: str | None) -> str:
     sin_esquema = url.split("://", 1)[-1]
     sin_params = sin_esquema.split("?", 1)[0].split("#", 1)[0]
     return sin_params.rstrip("/").lower()
+
+
+def _creativo(url: str | None) -> str:
+    """Identidad estable de la imagen o el video del anuncio.
+
+    La URL completa NO sirve: Meta firma sus enlaces de CDN en cada consulta
+    y además rota entre decenas de servidores (scontent-lax3-1, scontent-
+    iad3-1, y así). Medido sobre una corrida real: 68 de 77 anuncios
+    aparecían como "cambiados" teniendo el texto idéntico, solo porque la
+    firma y el servidor eran otros. Un reporte que cada semana le anuncia al
+    cliente 77 cambios que no ocurrieron deja de ser creíble a la segunda
+    semana.
+
+    Lo estable es el nombre del archivo, que identifica la pieza:
+        scontent-lax3-1.xx.fbcdn.net/v/t39.../795697003_1373407654959818_n.jpg?oh=...
+        -> 795697003_1373407654959818_n.jpg
+    """
+    if not url:
+        return ""
+    sin_parametros = str(url).split("?", 1)[0].split("#", 1)[0]
+    return sin_parametros.rstrip("/").rsplit("/", 1)[-1].lower()
 
 
 class Fuente(Protocol):
