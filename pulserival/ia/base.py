@@ -25,6 +25,9 @@ class Peticion:
     temperatura: float = 0.2
     max_tokens: int = 1200
     json_estricto: bool = False      # pedir salida JSON
+    # Solo Gemini 3.x: minimal | low | medium | high. Controla cuánto razona
+    # antes de responder, y ese razonamiento consume el presupuesto de salida.
+    nivel_razonamiento: str | None = None
 
 
 @dataclass

@@ -31,18 +31,24 @@ tareas:
   # documentación. Por eso la lista arranca en la generación vigente y tiene
   # varios respaldos: si Google retira uno, el siguiente contesta.
   redactar_reporte:
+    # max_tokens holgado: en los modelos 3.x el razonamiento sale de este
+    # mismo presupuesto. Con 4000 el modelo se quedó sin margen y entregó el
+    # reporte cortado a media frase. nivel_razonamiento bajo deja el
+    # presupuesto para el texto, que es lo que el cliente lee.
     - proveedor: gemini
       modelo: gemini-3.8-flash
       temperatura: 0.4
-      max_tokens: 4000
+      max_tokens: 12000
+      nivel_razonamiento: low
     - proveedor: gemini
       modelo: gemini-3.5-flash
       temperatura: 0.4
-      max_tokens: 4000
+      max_tokens: 12000
+      nivel_razonamiento: low
     - proveedor: gemini
       modelo: gemini-2.5-flash
       temperatura: 0.4
-      max_tokens: 4000
+      max_tokens: 8000
     - proveedor: groq
       modelo: llama-3.3-70b-versatile
       temperatura: 0.4

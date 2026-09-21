@@ -142,6 +142,7 @@ def ejecutar(
             temperatura=float(cand.get("temperatura", peticion.temperatura)),
             max_tokens=int(cand.get("max_tokens", peticion.max_tokens)),
             json_estricto=peticion.json_estricto,
+            nivel_razonamiento=cand.get("nivel_razonamiento"),
         )
 
         for intento in range(1, reintentos + 1):

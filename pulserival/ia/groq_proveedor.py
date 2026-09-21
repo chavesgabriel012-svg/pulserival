@@ -61,9 +61,15 @@ class ProveedorGroq:
             ) from e
         uso = datos.get("usage") or {}
         try:
-            texto = datos["choices"][0]["message"]["content"] or ""
+            eleccion = datos["choices"][0]
+            texto = eleccion["message"]["content"] or ""
         except (KeyError, IndexError) as e:
             raise ProveedorError(f"Respuesta inesperada de Groq: {str(datos)[:300]}") from e
+        # Una respuesta cortada no se acepta: mejor pasar al siguiente modelo.
+        if eleccion.get("finish_reason") == "length":
+            raise ProveedorError(
+                f"Groq cortó la respuesta por límite de tokens tras "
+                f"{uso.get('completion_tokens') or 0}. Subí max_tokens en config/modelos.yaml.")
         return Respuesta(
             texto=texto,
             proveedor=self.nombre,

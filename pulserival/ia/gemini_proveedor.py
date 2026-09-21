@@ -5,6 +5,8 @@ Ojo con el crédito: el router estima el costo y corta si se pasa del tope.
 """
 from __future__ import annotations
 
+from typing import Any
+
 import requests
 
 from .. import config
@@ -25,13 +27,20 @@ class ProveedorGemini:
     def generar(self, peticion: Peticion, modelo: str) -> Respuesta:
         if not self.clave:
             raise ProveedorError("Falta GEMINI_API_KEY en .env (https://aistudio.google.com/apikey)")
+        generacion: dict[str, Any] = {
+            "temperature": peticion.temperatura,
+            "maxOutputTokens": peticion.max_tokens,
+        }
+        # Los modelos Gemini 3.x razonan antes de responder, y esos tokens de
+        # razonamiento salen del MISMO presupuesto de maxOutputTokens. Si se
+        # agota mientras piensa, devuelve la respuesta cortada a media frase.
+        # El nivel de razonamiento se puede bajar desde config/modelos.yaml.
+        if peticion.nivel_razonamiento:
+            generacion["thinkingLevel"] = peticion.nivel_razonamiento
         cuerpo = {
             "systemInstruction": {"parts": [{"text": peticion.sistema}]},
             "contents": [{"role": "user", "parts": [{"text": peticion.usuario}]}],
-            "generationConfig": {
-                "temperature": peticion.temperatura,
-                "maxOutputTokens": peticion.max_tokens,
-            },
+            "generationConfig": generacion,
         }
         if peticion.json_estricto:
             cuerpo["generationConfig"]["responseMimeType"] = "application/json"
