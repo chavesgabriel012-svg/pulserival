@@ -75,20 +75,34 @@ google:
     advertiserMatch: "best"
     includeDetails: true
     enrichPreviews: true
+  # OJO, dato de producto: este actor NO devuelve el texto del anuncio.
+  # Verificado con 15 anuncios reales el 2026-09-21: vienen el creativo, el
+  # formato, las fechas, los días al aire y las variaciones, pero ni el
+  # titular ni la descripción. Por eso el reporte trata a Google como señal
+  # de ACTIVIDAD (cuántos anuncios, de qué tipo, desde cuándo) y no como
+  # mensajes. Los campos de texto se dejan mapeados por si el actor los
+  # agrega o se cambia de actor.
   mapeo:
     id_externo:     [creativeId, creative_id, id]
     texto:          [text, adText, description, headline]
     titulo:         [headline, title]
     descripcion:    [description, body]
     cta:            [callToAction, cta]
-    link_destino:   [destinationUrl, finalUrl, url]
+    link_destino:   [destinationUrl, finalUrl]
     creativo_url:   [previewImageUrl, imageUrls.0, thumbnailUrl]
+    # Los anuncios de video no traen imagen, pero sí el id de YouTube.
+    video_id:       [youtubeVideoId]
+    video_url:      [youtubeUrl]
     anunciante:     [advertiserName, advertiser_name]
     anunciante_id:  [advertiserId, advertiser_id]
     fecha_inicio:   [firstShown, first_shown, startDate]
     fecha_fin:      [lastShown, last_shown, endDate]
     plataformas:    [platform, platforms]
-    url_anuncio:    [url, adUrl]
+    formato:        [format]
+    dias_al_aire:   [daysShown]
+    variaciones:    [variationsCount]
+    regiones:       [regionsShownIn]
+    url_anuncio:    [url, adUrl, advertiserUrl]
 
 meta_api_oficial:
   # Fuente COMPLEMENTARIA, NO reemplaza al scraper.

@@ -121,7 +121,7 @@ class FuenteApify:
             descripcion=_texto(campo("descripcion")),
             cta=_texto(campo("cta")),
             link_destino=_texto(campo("link_destino")),
-            creativo_url=_texto(campo("creativo_url")),
+            creativo_url=_texto(campo("creativo_url")) or _miniatura_youtube(campo("video_id")),
             tipo_creativo=_tipo_creativo(item, campo("formato"), campo("creativo_url")),
             url_anuncio=_texto(campo("url_anuncio")) or self._url_ficha(id_externo),
             fecha_inicio=_fecha(campo("fecha_inicio")),
@@ -131,6 +131,12 @@ class FuenteApify:
                 "anunciante_id": _texto(campo("anunciante_id")),
                 "categoria_anunciante": campo("categoria"),
                 "activo_en_la_fuente": campo("activo"),
+                # Google no trae el texto, pero sí estas señales, que son lo
+                # único con lo que el reporte puede hablar de esa plataforma.
+                "dias_al_aire": campo("dias_al_aire"),
+                "variaciones": campo("variaciones"),
+                "regiones": campo("regiones"),
+                "video_url": _texto(campo("video_url")),
                 "crudo_claves": sorted(item)[:40],
             },
         )
@@ -176,12 +182,29 @@ def _tipo_creativo(item: dict, formato, creativo_url: str | None) -> str:
     """El formato declarado por la fuente manda; si no viene, se deduce."""
     if isinstance(formato, str) and formato.upper() in FORMATOS:
         return FORMATOS[formato.upper()]
-    crudo = json.dumps(item, ensure_ascii=False).lower()
-    if "youtubevideoid" in crudo or '"videohdurl"' in crudo or "videourl" in crudo:
+    # Ojo: no alcanza con buscar la palabra "video" en el JSON. Varios
+    # actores mandan youtubeVideoId/videoUrl en null para TODOS los anuncios,
+    # y así se clasificaba como video hasta un anuncio de texto.
+    for clave in ("youtubeVideoId", "youtubeUrl", "videoUrl", "videoHdUrl"):
+        if item.get(clave):
+            return "video"
+    if any((v or {}).get("videoHdUrl") or (v or {}).get("videoSdUrl")
+           for v in (util.buscar_anidado(item, "snapshot.videos") or [])):
         return "video"
     if creativo_url:
         return "imagen"
     return "texto"
+
+
+def _miniatura_youtube(video_id: Any) -> str | None:
+    """Miniatura de un anuncio de video de YouTube.
+
+    Los anuncios de video del centro de transparencia no traen imagen de
+    vista previa, solo el id del video. Sin esto, el anexo del reporte
+    mostraría una fila sin nada que mirar.
+    """
+    vid = _texto(video_id)
+    return f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg" if vid else None
 
 
 def _fecha(valor: Any) -> str | None:

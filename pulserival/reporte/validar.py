@@ -55,7 +55,32 @@ def validar(borrador: str, anuncios: list[dict[str, Any]]) -> dict[str, Any]:
         problemas.append({"tipo": "referencia_inexistente",
                           "detalle": f"Usa la referencia {r}, que no corresponde a ningún anuncio."})
 
-    # 3. cobertura de lo importante
+    # 3. anuncios sin texto: no se puede hablar de lo que dicen
+    VERBOS_DE_MENSAJE = [
+        "dice", "promete", "ofrece", "anuncia", "comunica", "menciona",
+        "destaca", "apunta a", "habla de", "propone", "invita a",
+    ]
+    for a in anuncios:
+        if not a.get("sin_texto"):
+            continue
+        ref = a["referencia"]
+        for oracion in re.split(r"(?<=[.!?])\s+", borrador):
+            if ref not in oracion:
+                continue
+            plano_oracion = util.normalizar_texto(oracion)
+            for verbo in VERBOS_DE_MENSAJE:
+                if util.normalizar_texto(verbo) in plano_oracion:
+                    problemas.append({
+                        "tipo": "mensaje_inventado",
+                        "detalle": f"{ref} es un anuncio del que la fuente NO publica el texto, "
+                                   f"pero el borrador describe lo que dice ('{verbo}'). "
+                                   "De esos anuncios solo se puede reportar formato, fechas y "
+                                   "actividad.",
+                    })
+                    break
+            break
+
+    # 4. cobertura de lo importante
     importantes = [a for a in anuncios if a["clasificacion"] in ("nuevo", "cambiado")]
     sin_mencion = [a["referencia"] for a in importantes if a["referencia"] not in usadas]
     if sin_mencion:
@@ -65,7 +90,7 @@ def validar(borrador: str, anuncios: list[dict[str, Any]]) -> dict[str, Any]:
                        + ", ".join(sin_mencion),
         })
 
-    # 4. forma
+    # 5. forma
     for seccion in SECCIONES_ESPERADAS:
         if seccion not in plano:
             avisos.append({"tipo": "seccion_faltante", "detalle": f"Falta la sección '{seccion}'."})

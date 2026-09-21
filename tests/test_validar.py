@@ -61,3 +61,41 @@ class TestValidar(unittest.TestCase):
     def test_avisa_tono_exclamativo(self):
         r = validar.validar(BORRADOR_OK + "\n¡Excelente semana!", ANUNCIOS)
         self.assertTrue(any(a["tipo"] == "tono" for a in r["avisos"]))
+
+
+class TestAnunciosSinTexto(unittest.TestCase):
+    """Google no publica el texto de los anuncios, y los catálogos dinámicos
+    de Meta devuelven plantillas ({{product.brand}}) en vez de mensaje.
+
+    De esos anuncios sabemos que existen, su formato y sus fechas — nada más.
+    Si el modelo describe lo que 'dicen', lo está inventando, y el cliente lo
+    puede comprobar en un clic porque el anexo linkea a la fuente.
+    """
+
+    ANUNCIOS = [
+        {"referencia": "[A1]", "clasificacion": "nuevo", "sin_texto": True},
+        {"referencia": "[A2]", "clasificacion": "nuevo", "sin_texto": False},
+    ]
+
+    def test_rechaza_que_se_describa_el_mensaje_de_un_anuncio_sin_texto(self):
+        for verbo in ("promete", "ofrece", "anuncia", "destaca"):
+            with self.subTest(verbo):
+                r = validar.validar(
+                    f"## Lo más importante\nEl anuncio {verbo} un descuento [A1]. Y otro [A2].",
+                    self.ANUNCIOS)
+                self.assertFalse(r["aprobado"])
+                self.assertTrue(any(p["tipo"] == "mensaje_inventado" for p in r["problemas"]))
+
+    def test_acepta_hablar_de_formato_y_fechas(self):
+        r = validar.validar(
+            "## Lo más importante\n"
+            "Mantiene un anuncio en video corriendo desde agosto [A1].\n"
+            "## Qué está haciendo cada competidor\n### X\nBajó el precio [A2].\n"
+            "## Movimientos que vale la pena mirar de cerca\nNada.\n"
+            "## Qué haría yo esta semana\nRevisar la oferta propia esta semana con calma.",
+            self.ANUNCIOS)
+        self.assertTrue(r["aprobado"], r["problemas"])
+
+    def test_el_anuncio_con_texto_si_puede_describirse(self):
+        r = validar.validar("## Lo más importante\nEl anuncio ofrece 2x1 [A2].", self.ANUNCIOS)
+        self.assertFalse(any(p["tipo"] == "mensaje_inventado" for p in r["problemas"]))

@@ -9,7 +9,14 @@ from __future__ import annotations
 import sqlite3
 from typing import Any
 
+import re
+
 from .. import db, util
+
+# Los anuncios de catálogo dinámico traen plantillas en vez de texto
+# ("{{product.brand}}"). Meta las rellena al mostrarlas, pero la biblioteca
+# pública las devuelve crudas: citarlas en el reporte sería ridículo.
+PLANTILLA = re.compile(r"\{\{[^}]+\}\}")
 
 CLASIFICACIONES = ("nuevo", "cambiado", "pausado", "continua")
 ORDEN = {"nuevo": 0, "cambiado": 1, "pausado": 2, "continua": 3}
@@ -73,14 +80,22 @@ def clasificar(con: sqlite3.Connection, cliente_id: int, inicio: str, fin: str) 
         else:
             continue  # anuncio viejo que ya no toca este periodo
 
+        texto = util.recortar(f["texto"], 700)
+        es_plantilla = bool(texto) and bool(PLANTILLA.fullmatch(texto.strip())) or (
+            bool(texto) and len(PLANTILLA.sub("", texto).strip()) < 12
+        )
         item = {
             "anuncio_id": int(f["id"]),
             "clasificacion": clase,
             "competidor": f["competidor"],
             "prioridad": f["prioridad"],
             "plataforma": f["plataforma"],
-            "titulo": f["titulo"],
-            "texto": util.recortar(f["texto"], 700),
+            "titulo": None if es_plantilla else f["titulo"],
+            "texto": None if es_plantilla else texto,
+            # Sin texto no se puede hablar del mensaje del anuncio: el reporte
+            # solo puede describir formato, fechas y actividad.
+            "sin_texto": es_plantilla or not (texto or f["titulo"]),
+            "es_catalogo_dinamico": es_plantilla,
             "descripcion": f["descripcion"],
             "cta": f["cta"],
             "link_destino": f["link_destino"],
@@ -91,12 +106,48 @@ def clasificar(con: sqlite3.Connection, cliente_id: int, inicio: str, fin: str) 
             "visto_ultimo_en": ultimo,
             "analisis": db.leer_json(f["analisis_json"]),
             "version_anterior": util.recortar(anteriores[-1]["texto"], 200) if anteriores else None,
+            "metadata": db.leer_json(f["metadata_json"], {}) or {},
         }
         salida.append(item)
 
+    salida = _agrupar_variantes(salida)
     salida.sort(key=lambda x: (ORDEN[x["clasificacion"]], x["prioridad"] or 9, x["competidor"] or ""))
     for i, item in enumerate(salida, start=1):
         item["referencia"] = f"[A{i}]"
+    return salida
+
+
+def _agrupar_variantes(anuncios: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Junta en una sola entrada los anuncios con el mismo texto.
+
+    Un anunciante suele correr el mismo aviso en varias piezas: una por sede,
+    una por público, una por ubicación. La biblioteca los devuelve como
+    anuncios distintos, y sin agrupar el reporte repetiría seis veces el mismo
+    mensaje y el cliente pensaría que no lo leímos.
+
+    Se agrupa solo cuando hay texto: sin texto (el caso de Google) no se puede
+    saber si dos piezas dicen lo mismo, así que cada una queda aparte.
+    """
+    grupos: dict[tuple, dict[str, Any]] = {}
+    salida: list[dict[str, Any]] = []
+    for item in anuncios:
+        texto = util.normalizar_texto(item.get("texto"))[:300]
+        if not texto:
+            salida.append(item)
+            continue
+        clave = (item["competidor"], item["plataforma"], item["clasificacion"], texto)
+        principal = grupos.get(clave)
+        if principal is None:
+            item["variantes"] = 1
+            item["variantes_ids"] = [item["anuncio_id"]]
+            grupos[clave] = item
+            salida.append(item)
+            continue
+        principal["variantes"] += 1
+        principal["variantes_ids"].append(item["anuncio_id"])
+        # Nos quedamos con la fecha de inicio más temprana del grupo.
+        if (item.get("fecha_inicio") or "9999") < (principal.get("fecha_inicio") or "9999"):
+            principal["fecha_inicio"] = item["fecha_inicio"]
     return salida
 
 

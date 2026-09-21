@@ -1,0 +1,2238 @@
+[
+  {
+    "inputUrl": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q=Gollo&search_type=keyword_unordered",
+    "pageInfo": {
+      "adLibrarySystemStatus": {
+        "systemStatus": {
+          "status": "NO_KNOWN_ISSUES",
+          "activeIssues": [
+            {
+              "product": "Ad Library",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library Report",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library API",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Branded Content",
+              "status": "NO_KNOWN_ISSUES"
+            }
+          ]
+        }
+      },
+      "xfbAdLibraryIsCaptchaRequired": false,
+      "page": null,
+      "adLibraryUser": null
+    },
+    "pageID": "107953311029638",
+    "adArchiveID": "27306236999005351",
+    "startDateFormatted": "2026-06-29T07:00:00.000Z",
+    "endDateFormatted": "2026-09-21T07:00:00.000Z",
+    "adArchiveId": "27306236999005351",
+    "collationCount": 1,
+    "collationId": "1019755427305368",
+    "pageId": "107953311029638",
+    "snapshot": {
+      "brandedContent": null,
+      "pageId": "107953311029638",
+      "pageIsDeleted": false,
+      "pageProfileUri": "https://www.facebook.com/Golloopticas/",
+      "rootResharedPost": null,
+      "byline": null,
+      "disclaimerLabel": null,
+      "pageName": "Gollo Ópticas",
+      "pageProfilePictureUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/731094514_27272860859043030_7577431379087492025_n.jpg?stp=dst-jpg_s60x60_tt6&_nc_cat=111&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=pvFvUtjCaqgQ7kNvwHgtPmC&_nc_oc=AdqJ1X0ztb41ckNgcPPkokt7lDZ87EChqJKdfxJCvjnTw6X77eQqlhdmyZVXF75wVxY&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQLC0rJ6PUWxaizTM2x3SljRf7ZBDcjLedU5GXixdyx7BA&oe=6AB737CF",
+      "event": null,
+      "caption": null,
+      "ctaText": "Send message",
+      "cards": [],
+      "body": {
+        "text": "👀 Tu vista te está mandando señales... y es hora de escucharla. ✨\n\n¿Hace cuánto no te realizás un examen visual? 🤔\n\nEn Gollo Ópticas Santa Ana Trade Center te esperamos con atención especializada para ayudarte a ver cada detalle con claridad 👓💙\n\n📅 Agendá tu cita hoy mismo: https://bit.ly/4filx4n\n📍 Visitános en Gollo Santa Ana Trade Center | 📞 6480-7802\n\n#golloópticas  #santaanatradecenter  #saludvisual  #CuidáTuVista  #SantaAna  #ÓpticaCercaDeVos"
+      },
+      "ctaType": "MESSAGE_PAGE",
+      "displayFormat": "IMAGE",
+      "linkDescription": null,
+      "linkUrl": null,
+      "images": [
+        {
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/730771537_1247049074036683_5063716631641321965_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=xMY7Bwt3T5QQ7kNvwERDvfP&_nc_oc=AdrRhGL2wqXpk7mIStFbSCR7CG1UFN-OmHw-CqGRosyKyT0r7Algqpi2Mq2b3wrI_G4&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQLI9kv2UXE_ANi4wKJMJz8HVhhI2k3mjKbGdRGXeqKzkg&oe=6AB72827",
+          "resizedImageUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/730688976_992739080064853_4298111803003345443_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=110&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=QM7SDhW_AWYQ7kNvwEvAHUt&_nc_oc=AdoBg_kmk-tc8f-hSWk1n0HQ_pc3v6Ey3PLigi6DrwQWFrNMMjN_MMzI364-RWMirf4&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQK1Q1yj7jbRMFesju-DiyD-4eqVR1chHi1KupasYoL0ow&oe=6AB723C4",
+          "watermarkedResizedImageUrl": ""
+        }
+      ],
+      "pageCategories": [
+        "Eyewear"
+      ],
+      "pageLikeCount": 25081,
+      "title": null,
+      "videos": [],
+      "isReshared": false,
+      "extraLinks": [],
+      "extraTexts": [],
+      "extraImages": [],
+      "extraVideos": [],
+      "countryIsoCode": null,
+      "brazilTaxId": null,
+      "additionalInfo": null,
+      "ecCertificates": []
+    },
+    "isActive": true,
+    "hasUserReported": false,
+    "reportCount": null,
+    "menuItems": [],
+    "stateMediaRunLabel": null,
+    "pageIsDeleted": false,
+    "pageName": "Gollo Ópticas",
+    "impressionsWithIndex": {
+      "impressionsText": null,
+      "impressionsIndex": -1
+    },
+    "gatedType": "ELIGIBLE",
+    "categories": [
+      "UNKNOWN"
+    ],
+    "isAaaEligible": false,
+    "containsDigitalCreatedMedia": false,
+    "reachEstimate": null,
+    "currency": "",
+    "spend": null,
+    "endDate": 1789974000,
+    "publisherPlatform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "AUDIENCE_NETWORK",
+      "MESSENGER",
+      "WHATSAPP",
+      "THREADS"
+    ],
+    "startDate": 1782716400,
+    "containsSensitiveContent": false,
+    "totalActiveTime": null,
+    "regionalRegulationData": {
+      "finserv": {
+        "isDeemedFinserv": false,
+        "isLimitedDelivery": false
+      },
+      "twAntiScam": {
+        "isLimitedDelivery": false
+      }
+    },
+    "hideDataStatus": "NONE",
+    "fevInfo": null,
+    "adId": null,
+    "targetedOrReachedCountries": []
+  },
+  {
+    "inputUrl": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q=Gollo&search_type=keyword_unordered",
+    "pageInfo": {
+      "adLibrarySystemStatus": {
+        "systemStatus": {
+          "status": "NO_KNOWN_ISSUES",
+          "activeIssues": [
+            {
+              "product": "Ad Library",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library Report",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library API",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Branded Content",
+              "status": "NO_KNOWN_ISSUES"
+            }
+          ]
+        }
+      },
+      "xfbAdLibraryIsCaptchaRequired": false,
+      "page": null,
+      "adLibraryUser": null
+    },
+    "pageID": "118116974879681",
+    "adArchiveID": "1057258633945511",
+    "startDateFormatted": "2026-08-07T07:00:00.000Z",
+    "endDateFormatted": "2026-09-21T07:00:00.000Z",
+    "adArchiveId": "1057258633945511",
+    "collationCount": 1,
+    "collationId": "1521823102550187",
+    "pageId": "118116974879681",
+    "snapshot": {
+      "brandedContent": null,
+      "pageId": "118116974879681",
+      "pageIsDeleted": false,
+      "pageProfileUri": "https://www.facebook.com/GolloCR/",
+      "rootResharedPost": null,
+      "byline": null,
+      "disclaimerLabel": null,
+      "pageName": "Gollo",
+      "pageProfilePictureUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/769294980_1042689818483247_8946450683521145914_n.jpg?stp=dst-jpg_s60x60_tt6&_nc_cat=111&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=-84pcjVjPn8Q7kNvwHe_PZH&_nc_oc=AdqYTIaRP_I0zVnKi7Zb27qI--eOrf3rjbMghhSqFh9AV82uwTWUHPB_hFZXoUE4sHo&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQLECW9jABF9JelM74y8AhgDvh_s5h9NZZbs4cBWS7P1xw&oe=6AB736FA",
+      "event": null,
+      "caption": "gollo.com",
+      "ctaText": null,
+      "cards": [
+        {
+          "body": "¡Resolvé tus gastos imprevistos de una!⚡💵\n\nTe prestamos hasta ₡2.000.000 al instante, solo con tu cédula y hasta 36 meses para pagar. Sin comisiones ocultas ni penalización por adelantar pagos.\n\n📍 Encontranos en Mega Super La Paz, Alajuela, Desamparados y en Alajuela centro (cerca de TUASA).\n\n👉 ¡Visitanos hoy mismo!",
+          "ctaType": null,
+          "caption": "",
+          "linkDescription": null,
+          "linkUrl": null,
+          "title": null,
+          "ctaText": null,
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/769082992_4506522646280477_5373595447487315338_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=0qFFq9aLb8EQ7kNvwHh2Va1&_nc_oc=AdoGyaVFZE3q6jVXogAZcwyMV3NBnPxAx0C_1mgoCL7hI2Heny0BuBksKF3pn1iUDBA&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQKS8BqfJGwFcvsmF7VYUuk_Hf_rt8rhIz6M5gUqakLTIw&oe=6AB71E2A",
+          "resizedImageUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/768969631_3029861500549993_5801180479440326095_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=105&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=E6OAYVGMXoQQ7kNvwEKTgJY&_nc_oc=AdoOTfO-FeIm_5Z1mexx2u5qSuIeqkjYJY6-8pyvREolEfRyTGJeq3176S3VkGHLiDw&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQJnt8RiK3VCyaTv2F7noZGUb58MjdfmiOCB8jlicuHEhQ&oe=6AB7336E",
+          "watermarkedResizedImageUrl": ""
+        },
+        {
+          "body": "¡Resolvé tus gastos imprevistos de una!⚡💵\n\nTe prestamos hasta ₡2.000.000 al instante, solo con tu cédula y hasta 36 meses para pagar. Sin comisiones ocultas ni penalización por adelantar pagos.\n\n📍 Encontranos en Mega Super La Paz, Alajuela, Desamparados y en Alajuela centro (cerca de TUASA).\n\n👉 ¡Visitanos hoy mismo!",
+          "ctaType": null,
+          "caption": "",
+          "linkDescription": null,
+          "linkUrl": null,
+          "title": null,
+          "ctaText": null,
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/767945593_1790265682174917_1591505174160527521_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=kxEj69y5RI0Q7kNvwFmlzrm&_nc_oc=Adr5CB_XD5jKM9FG6NRC-v8PNAWWygTPnk0JCtVbrxZ4tajIZHho991E8hGc8zOEctA&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQJRM4MzOQY30ylvjj6GRGikuuazo4UMG7AKt-tAJN5Buw&oe=6AB73836",
+          "resizedImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/769295032_2086810561949467_2090078256921324483_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=106&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=XIufmiI0f38Q7kNvwFuGbju&_nc_oc=Adoo4MIRArVzhqDbIMGlY2rhDnjsmkPhd8guZ4B245M6jWqViaF-8QSbdSduDlXsmIU&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQKQeJIoYNZfYTJvf9nHbS7_GIooPTu5lMCqqU1xtIJTGw&oe=6AB7292D",
+          "watermarkedResizedImageUrl": ""
+        }
+      ],
+      "body": {
+        "text": "{{product.brand}}"
+      },
+      "ctaType": null,
+      "displayFormat": "DCO",
+      "linkDescription": null,
+      "linkUrl": "https://www.gollo.com/",
+      "images": [],
+      "pageCategories": [
+        "Electronics"
+      ],
+      "pageLikeCount": 776529,
+      "title": "{{product.name}}",
+      "videos": [],
+      "isReshared": false,
+      "extraLinks": [],
+      "extraTexts": [],
+      "extraImages": [],
+      "extraVideos": [],
+      "countryIsoCode": null,
+      "brazilTaxId": null,
+      "additionalInfo": null,
+      "ecCertificates": []
+    },
+    "isActive": true,
+    "hasUserReported": false,
+    "reportCount": null,
+    "menuItems": [],
+    "stateMediaRunLabel": null,
+    "pageIsDeleted": false,
+    "pageName": "Gollo",
+    "impressionsWithIndex": {
+      "impressionsText": null,
+      "impressionsIndex": -1
+    },
+    "gatedType": "ELIGIBLE",
+    "categories": [
+      "UNKNOWN"
+    ],
+    "isAaaEligible": false,
+    "containsDigitalCreatedMedia": false,
+    "reachEstimate": null,
+    "currency": "",
+    "spend": null,
+    "endDate": 1789974000,
+    "publisherPlatform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "AUDIENCE_NETWORK"
+    ],
+    "startDate": 1786086000,
+    "containsSensitiveContent": false,
+    "totalActiveTime": null,
+    "regionalRegulationData": {
+      "finserv": {
+        "isDeemedFinserv": false,
+        "isLimitedDelivery": false
+      },
+      "twAntiScam": {
+        "isLimitedDelivery": false
+      }
+    },
+    "hideDataStatus": "NONE",
+    "fevInfo": null,
+    "adId": null,
+    "targetedOrReachedCountries": []
+  },
+  {
+    "inputUrl": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q=Gollo&search_type=keyword_unordered",
+    "pageInfo": {
+      "adLibrarySystemStatus": {
+        "systemStatus": {
+          "status": "NO_KNOWN_ISSUES",
+          "activeIssues": [
+            {
+              "product": "Ad Library",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library Report",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library API",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Branded Content",
+              "status": "NO_KNOWN_ISSUES"
+            }
+          ]
+        }
+      },
+      "xfbAdLibraryIsCaptchaRequired": false,
+      "page": null,
+      "adLibraryUser": null
+    },
+    "pageID": "107953311029638",
+    "adArchiveID": "1005223542265074",
+    "startDateFormatted": "2026-06-26T07:00:00.000Z",
+    "endDateFormatted": "2026-09-20T07:00:00.000Z",
+    "adArchiveId": "1005223542265074",
+    "collationCount": 1,
+    "collationId": "1587820202933506",
+    "pageId": "107953311029638",
+    "snapshot": {
+      "brandedContent": null,
+      "pageId": "107953311029638",
+      "pageIsDeleted": false,
+      "pageProfileUri": "https://www.facebook.com/Golloopticas/",
+      "rootResharedPost": null,
+      "byline": null,
+      "disclaimerLabel": null,
+      "pageName": "Gollo Ópticas",
+      "pageProfilePictureUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/730382023_1269295065081577_3173174088290147508_n.jpg?stp=dst-jpg_s60x60_tt6&_nc_cat=101&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=n4prk0c51VMQ7kNvwFzpD8q&_nc_oc=AdoUoDfHNjz_7PkcXtNQcMQ-A-8lczJ69MSBC9RBPlM78X3JSdb_c4v8RO5tow_2m6Y&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQL0MGl_Xj46J3OM207CMUHXnz_JZ0Sv-zZTig6cXDlnsg&oe=6AB72AB0",
+      "event": null,
+      "caption": null,
+      "ctaText": "Send message",
+      "cards": [],
+      "body": {
+        "text": "📍 Alajuela | 200 norte de Llobet\n\n👓✨ ¡Tu próxima cita con una mejor visión está más cerca de lo que pensás!\n\nEn Gollo Ópticas Alajuela, te esperamos con atención especializada y estilos que se adaptan a vos. 😎💛\n\n📅 No dejés para mañana el cuidado de tus ojos | 📞 6235-8481  \n\n📍 Visitanos en Alajuela, 200 norte de Llobet y agendá tu cita hoy mismo \n\n#golloópticas  #alajuela  #CuidáTuVista  #SaludVisual  #anteojos  #VisiónPerfecta"
+      },
+      "ctaType": "MESSAGE_PAGE",
+      "displayFormat": "IMAGE",
+      "linkDescription": null,
+      "linkUrl": null,
+      "images": [
+        {
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/732720968_1361987349480714_6675503247953726836_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=qeVdL6VGNM0Q7kNvwH7-ShL&_nc_oc=AdqqfD-d-WoJDIMb6WVi68DO_Lq9jTjYPhBL4j00UFuyj9KKm1s235iqFcvohJRVtCA&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQIm_jJTviSntHQwkv9adtYR4WIMrucdUZoasOHN6MNf4A&oe=6AB72816",
+          "resizedImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/729115509_1352957753596189_5955334666018216216_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=108&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=I3FdTy7n8poQ7kNvwFATEna&_nc_oc=Adq8o-gyd-nqEbQ95BuVHse5idc6kKQ1lsUHt4q48yE2aetCI4B3RBD8H4gNTKLn7dg&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQKtDYzRxpS3_r88_zRB6F2n7lZDObKDK7bmOPZZm891iA&oe=6AB72398",
+          "watermarkedResizedImageUrl": ""
+        }
+      ],
+      "pageCategories": [
+        "Eyewear"
+      ],
+      "pageLikeCount": 25081,
+      "title": null,
+      "videos": [],
+      "isReshared": false,
+      "extraLinks": [],
+      "extraTexts": [],
+      "extraImages": [],
+      "extraVideos": [],
+      "countryIsoCode": null,
+      "brazilTaxId": null,
+      "additionalInfo": null,
+      "ecCertificates": []
+    },
+    "isActive": true,
+    "hasUserReported": false,
+    "reportCount": null,
+    "menuItems": [],
+    "stateMediaRunLabel": null,
+    "pageIsDeleted": false,
+    "pageName": "Gollo Ópticas",
+    "impressionsWithIndex": {
+      "impressionsText": null,
+      "impressionsIndex": -1
+    },
+    "gatedType": "ELIGIBLE",
+    "categories": [
+      "UNKNOWN"
+    ],
+    "isAaaEligible": false,
+    "containsDigitalCreatedMedia": false,
+    "reachEstimate": null,
+    "currency": "",
+    "spend": null,
+    "endDate": 1789887600,
+    "publisherPlatform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "AUDIENCE_NETWORK",
+      "MESSENGER",
+      "WHATSAPP",
+      "THREADS"
+    ],
+    "startDate": 1782457200,
+    "containsSensitiveContent": false,
+    "totalActiveTime": null,
+    "regionalRegulationData": {
+      "finserv": {
+        "isDeemedFinserv": false,
+        "isLimitedDelivery": false
+      },
+      "twAntiScam": {
+        "isLimitedDelivery": false
+      }
+    },
+    "hideDataStatus": "NONE",
+    "fevInfo": null,
+    "adId": null,
+    "targetedOrReachedCountries": []
+  },
+  {
+    "inputUrl": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q=Gollo&search_type=keyword_unordered",
+    "pageInfo": {
+      "adLibrarySystemStatus": {
+        "systemStatus": {
+          "status": "NO_KNOWN_ISSUES",
+          "activeIssues": [
+            {
+              "product": "Ad Library",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library Report",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library API",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Branded Content",
+              "status": "NO_KNOWN_ISSUES"
+            }
+          ]
+        }
+      },
+      "xfbAdLibraryIsCaptchaRequired": false,
+      "page": null,
+      "adLibraryUser": null
+    },
+    "pageID": "107953311029638",
+    "adArchiveID": "1461996889027099",
+    "startDateFormatted": "2026-06-26T07:00:00.000Z",
+    "endDateFormatted": "2026-09-21T07:00:00.000Z",
+    "adArchiveId": "1461996889027099",
+    "collationCount": 3,
+    "collationId": "1552730116199930",
+    "pageId": "107953311029638",
+    "snapshot": {
+      "brandedContent": null,
+      "pageId": "107953311029638",
+      "pageIsDeleted": false,
+      "pageProfileUri": "https://www.facebook.com/Golloopticas/",
+      "rootResharedPost": null,
+      "byline": null,
+      "disclaimerLabel": null,
+      "pageName": "Gollo Ópticas",
+      "pageProfilePictureUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/731916617_27422477704068907_3339825275633222901_n.jpg?stp=dst-jpg_s60x60_tt6&_nc_cat=100&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=5tnnVr2uuT8Q7kNvwEdI4Cv&_nc_oc=AdpI44K018zFDIa_KMpMd7cp5pEjQDWMXvZw3lywr9zJ9y9uIY6b4VZojKnNkYCpbUU&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQIwh2FK-uYMerFL_RhQiNV7Cm-XD5d4A-1FNJRe6LSkCQ&oe=6AB73B12",
+      "event": null,
+      "caption": null,
+      "ctaText": "Send message",
+      "cards": [],
+      "body": {
+        "text": "😵‍💫 ¿Dolores de cabeza?  ¿Cansancio visual?\n📱 ¿Te cuesta enfocar después de pasar horas frente a pantallas?\n\n⚠️ Tu vista podría estar pidiendo atención.\n\n👓✨ Aprovechá tu EXAMEN DE LA VISTA GRATIS en Gollo Ópticas y descubrí cómo mejorar tu bienestar visual.\n\n📍 Disponible en:  Alajuela | Pérez Zeledón | Santa Ana Trade Center ✅\n\nAgendá tu cita 👉 https://bit.ly/4filx4n\n\n#golloópticas  #ExamenVisualGratis  #saludvisual  #SantaAna  #alajuela  #PérezZeledón  #CuidáTuVista  👀"
+      },
+      "ctaType": "MESSAGE_PAGE",
+      "displayFormat": "IMAGE",
+      "linkDescription": null,
+      "linkUrl": null,
+      "images": [
+        {
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/729139311_1723892268636150_7982182161365127444_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=HzJyAsWImc4Q7kNvwGZv4dD&_nc_oc=AdpJPAc9O-zBs7NNSQlygCS8jfEcW_XisJfaXxctkWurej4hFa9Z5wuuPBXk4ybM3-g&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQJgVQ4cVUBHpprIwmXBea_ViTvZApARoYUhzODuvu0a6Q&oe=6AB74FE9",
+          "resizedImageUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/726955229_1331117361826756_8464698480658342163_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=110&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=Tdzx-yzT1-EQ7kNvwEkZXbn&_nc_oc=AdpxErZVIBvYHsCFOT719oPv24GyAhIHYN9AmAPkwDJ_bOsMwjY6V80iBQaiYPRAsSE&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQLWQLVDrLDsqlI3uIZHVW9EX3hf4SD9_mhH8m50l7eugQ&oe=6AB71ED6",
+          "watermarkedResizedImageUrl": ""
+        }
+      ],
+      "pageCategories": [
+        "Eyewear"
+      ],
+      "pageLikeCount": 25081,
+      "title": null,
+      "videos": [],
+      "isReshared": false,
+      "extraLinks": [],
+      "extraTexts": [],
+      "extraImages": [],
+      "extraVideos": [],
+      "countryIsoCode": null,
+      "brazilTaxId": null,
+      "additionalInfo": null,
+      "ecCertificates": []
+    },
+    "isActive": true,
+    "hasUserReported": false,
+    "reportCount": null,
+    "menuItems": [],
+    "stateMediaRunLabel": null,
+    "pageIsDeleted": false,
+    "pageName": "Gollo Ópticas",
+    "impressionsWithIndex": {
+      "impressionsText": null,
+      "impressionsIndex": -1
+    },
+    "gatedType": "ELIGIBLE",
+    "categories": [
+      "UNKNOWN"
+    ],
+    "isAaaEligible": false,
+    "containsDigitalCreatedMedia": false,
+    "reachEstimate": null,
+    "currency": "",
+    "spend": null,
+    "endDate": 1789974000,
+    "publisherPlatform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "AUDIENCE_NETWORK",
+      "MESSENGER",
+      "WHATSAPP",
+      "THREADS"
+    ],
+    "startDate": 1782457200,
+    "containsSensitiveContent": false,
+    "totalActiveTime": null,
+    "regionalRegulationData": {
+      "finserv": {
+        "isDeemedFinserv": false,
+        "isLimitedDelivery": false
+      },
+      "twAntiScam": {
+        "isLimitedDelivery": false
+      }
+    },
+    "hideDataStatus": "NONE",
+    "fevInfo": null,
+    "adId": null,
+    "targetedOrReachedCountries": []
+  },
+  {
+    "inputUrl": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q=Gollo&search_type=keyword_unordered",
+    "pageInfo": {
+      "adLibrarySystemStatus": {
+        "systemStatus": {
+          "status": "NO_KNOWN_ISSUES",
+          "activeIssues": [
+            {
+              "product": "Ad Library",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library Report",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library API",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Branded Content",
+              "status": "NO_KNOWN_ISSUES"
+            }
+          ]
+        }
+      },
+      "xfbAdLibraryIsCaptchaRequired": false,
+      "page": null,
+      "adLibraryUser": null
+    },
+    "pageID": "107953311029638",
+    "adArchiveID": "1818713298829263",
+    "startDateFormatted": "2026-06-29T07:00:00.000Z",
+    "endDateFormatted": "2026-09-21T07:00:00.000Z",
+    "adArchiveId": "1818713298829263",
+    "collationCount": null,
+    "collationId": "1552730116199930",
+    "pageId": "107953311029638",
+    "snapshot": {
+      "brandedContent": null,
+      "pageId": "107953311029638",
+      "pageIsDeleted": false,
+      "pageProfileUri": "https://www.facebook.com/Golloopticas/",
+      "rootResharedPost": null,
+      "byline": null,
+      "disclaimerLabel": null,
+      "pageName": "Gollo Ópticas",
+      "pageProfilePictureUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/732125757_2748949738839301_1408217341592734150_n.jpg?stp=dst-jpg_s60x60_tt6&_nc_cat=100&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=R2l91Jqs99kQ7kNvwFTElKD&_nc_oc=AdoFFLTjCY5A2IujshLrF5N6EXUiQ-m7Yqx6u3lP8nzO1zcHbXLJVWE-5BITpsDgDBk&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQKrnqRY8YL8hqLkDSBYnUTHKooFhdYnFiqQs9KS0ThPhg&oe=6AB72C6E",
+      "event": null,
+      "caption": null,
+      "ctaText": "Send message",
+      "cards": [],
+      "body": {
+        "text": "😵‍💫 ¿Dolores de cabeza?  ¿Cansancio visual?\n📱 ¿Te cuesta enfocar después de pasar horas frente a pantallas?\n\n⚠️ Tu vista podría estar pidiendo atención.\n\n👓✨ Aprovechá tu EXAMEN DE LA VISTA GRATIS en Gollo Ópticas y descubrí cómo mejorar tu bienestar visual.\n\n📍 Disponible en:  Alajuela | Pérez Zeledón | Santa Ana Trade Center ✅\n\nAgendá tu cita 👉 https://bit.ly/4filx4n\n\n#golloópticas  #ExamenVisualGratis  #saludvisual  #SantaAna  #alajuela  #PérezZeledón  #CuidáTuVista  👀"
+      },
+      "ctaType": "MESSAGE_PAGE",
+      "displayFormat": "IMAGE",
+      "linkDescription": null,
+      "linkUrl": null,
+      "images": [
+        {
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/730414257_1569070538268737_4261411137317916971_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=0NgLAZ-UV3QQ7kNvwFq3SMe&_nc_oc=Adq7unJ0g0-Enw9XIvv7ySjXxT_z3w922jlK6Lu2AhQaq0rA2NziPTAcCEJXrujYbZg&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQImL62gaRrbXwp9UfdPb_g7yuyxiQpEPluA-28Sp-rx9w&oe=6AB73E0B",
+          "resizedImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/732934103_1700257391221627_931184428461945955_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=109&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=1eq-IY44YEYQ7kNvwGEejWP&_nc_oc=AdqnxKGI1GNoyrp2NO3i7os8KIokvlFNqqIw9lB0CS4A7RngGODM3We77762IT6Z4pY&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQJIVWqvzFM9gz_r0hXwZAz46-wnhRuhF93N2usZHQsaqw&oe=6AB71C68",
+          "watermarkedResizedImageUrl": ""
+        }
+      ],
+      "pageCategories": [
+        "Eyewear"
+      ],
+      "pageLikeCount": 25081,
+      "title": null,
+      "videos": [],
+      "isReshared": false,
+      "extraLinks": [],
+      "extraTexts": [],
+      "extraImages": [],
+      "extraVideos": [],
+      "countryIsoCode": null,
+      "brazilTaxId": null,
+      "additionalInfo": null,
+      "ecCertificates": []
+    },
+    "isActive": true,
+    "hasUserReported": false,
+    "reportCount": null,
+    "menuItems": [],
+    "stateMediaRunLabel": null,
+    "pageIsDeleted": false,
+    "pageName": "Gollo Ópticas",
+    "impressionsWithIndex": {
+      "impressionsText": null,
+      "impressionsIndex": -1
+    },
+    "gatedType": "ELIGIBLE",
+    "categories": [
+      "UNKNOWN"
+    ],
+    "isAaaEligible": false,
+    "containsDigitalCreatedMedia": false,
+    "reachEstimate": null,
+    "currency": "",
+    "spend": null,
+    "endDate": 1789974000,
+    "publisherPlatform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "AUDIENCE_NETWORK",
+      "MESSENGER",
+      "WHATSAPP",
+      "THREADS"
+    ],
+    "startDate": 1782716400,
+    "containsSensitiveContent": false,
+    "totalActiveTime": null,
+    "regionalRegulationData": {
+      "finserv": {
+        "isDeemedFinserv": false,
+        "isLimitedDelivery": false
+      },
+      "twAntiScam": {
+        "isLimitedDelivery": false
+      }
+    },
+    "hideDataStatus": "NONE",
+    "fevInfo": null,
+    "adId": null,
+    "targetedOrReachedCountries": []
+  },
+  {
+    "inputUrl": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q=Gollo&search_type=keyword_unordered",
+    "pageInfo": {
+      "adLibrarySystemStatus": {
+        "systemStatus": {
+          "status": "NO_KNOWN_ISSUES",
+          "activeIssues": [
+            {
+              "product": "Ad Library",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library Report",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library API",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Branded Content",
+              "status": "NO_KNOWN_ISSUES"
+            }
+          ]
+        }
+      },
+      "xfbAdLibraryIsCaptchaRequired": false,
+      "page": null,
+      "adLibraryUser": null
+    },
+    "pageID": "107953311029638",
+    "adArchiveID": "1801080014401007",
+    "startDateFormatted": "2026-06-26T07:00:00.000Z",
+    "endDateFormatted": "2026-09-21T07:00:00.000Z",
+    "adArchiveId": "1801080014401007",
+    "collationCount": null,
+    "collationId": "1552730116199930",
+    "pageId": "107953311029638",
+    "snapshot": {
+      "brandedContent": null,
+      "pageId": "107953311029638",
+      "pageIsDeleted": false,
+      "pageProfileUri": "https://www.facebook.com/Golloopticas/",
+      "rootResharedPost": null,
+      "byline": null,
+      "disclaimerLabel": null,
+      "pageName": "Gollo Ópticas",
+      "pageProfilePictureUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/731185491_1824417142271890_1583945186936756718_n.jpg?stp=dst-jpg_s60x60_tt6&_nc_cat=110&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=l7mUk5fOxAgQ7kNvwECP1o6&_nc_oc=Adokagp-R6d6nyn0dfKTyWbRiXuHdebh5VBFbfVFoyGZ6u2Atcj82afO7yInAc9spL4&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQLiVC2aT0dDFLmQJu8bdJ66-VI5kEfIe7Cj3h_wsx1jHg&oe=6AB744CF",
+      "event": null,
+      "caption": null,
+      "ctaText": "Send message",
+      "cards": [],
+      "body": {
+        "text": "😵‍💫 ¿Dolores de cabeza?  ¿Cansancio visual?\n📱 ¿Te cuesta enfocar después de pasar horas frente a pantallas?\n\n⚠️ Tu vista podría estar pidiendo atención.\n\n👓✨ Aprovechá tu EXAMEN DE LA VISTA GRATIS en Gollo Ópticas y descubrí cómo mejorar tu bienestar visual.\n\n📍 Disponible en:  Alajuela | Pérez Zeledón | Santa Ana Trade Center ✅\n\nAgendá tu cita 👉 https://bit.ly/4filx4n\n\n#golloópticas  #ExamenVisualGratis  #saludvisual  #SantaAna  #alajuela  #PérezZeledón  #CuidáTuVista  👀"
+      },
+      "ctaType": "MESSAGE_PAGE",
+      "displayFormat": "IMAGE",
+      "linkDescription": null,
+      "linkUrl": null,
+      "images": [
+        {
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/726988471_1312495727707811_6226599466354082912_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=7cUeEbpM9XwQ7kNvwHSAA9x&_nc_oc=Adr3nlNBe2o9Sl42AxaxtBa-PEQRCc5hZVW0rREtjWq7NtJyjxSYxNzqruLIKT2uE-g&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQJunO_G2elwjlGmOlzjak15ABCX0D59s22tJRp8UMbdJQ&oe=6AB724B1",
+          "resizedImageUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/730570444_1443500520917295_1526990978775343286_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=107&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=lqkFmMZxN_gQ7kNvwEz1BKo&_nc_oc=Adqt4ocGCtdgzFRHJR2U1gWt2y3jr2INGG5HRVurwpjPCBq8eN_HIPKzIbsscbVcFAo&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQLeQrFV3Rjzi0H1Qn9SwDfzo4OSYDV8id4ObHyFavPC5Q&oe=6AB719FD",
+          "watermarkedResizedImageUrl": ""
+        }
+      ],
+      "pageCategories": [
+        "Eyewear"
+      ],
+      "pageLikeCount": 25081,
+      "title": null,
+      "videos": [],
+      "isReshared": false,
+      "extraLinks": [],
+      "extraTexts": [],
+      "extraImages": [],
+      "extraVideos": [],
+      "countryIsoCode": null,
+      "brazilTaxId": null,
+      "additionalInfo": null,
+      "ecCertificates": []
+    },
+    "isActive": true,
+    "hasUserReported": false,
+    "reportCount": null,
+    "menuItems": [],
+    "stateMediaRunLabel": null,
+    "pageIsDeleted": false,
+    "pageName": "Gollo Ópticas",
+    "impressionsWithIndex": {
+      "impressionsText": null,
+      "impressionsIndex": -1
+    },
+    "gatedType": "ELIGIBLE",
+    "categories": [
+      "UNKNOWN"
+    ],
+    "isAaaEligible": false,
+    "containsDigitalCreatedMedia": false,
+    "reachEstimate": null,
+    "currency": "",
+    "spend": null,
+    "endDate": 1789974000,
+    "publisherPlatform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "AUDIENCE_NETWORK",
+      "MESSENGER",
+      "WHATSAPP",
+      "THREADS"
+    ],
+    "startDate": 1782457200,
+    "containsSensitiveContent": false,
+    "totalActiveTime": null,
+    "regionalRegulationData": {
+      "finserv": {
+        "isDeemedFinserv": false,
+        "isLimitedDelivery": false
+      },
+      "twAntiScam": {
+        "isLimitedDelivery": false
+      }
+    },
+    "hideDataStatus": "NONE",
+    "fevInfo": null,
+    "adId": null,
+    "targetedOrReachedCountries": []
+  },
+  {
+    "inputUrl": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q=Gollo&search_type=keyword_unordered",
+    "pageInfo": {
+      "adLibrarySystemStatus": {
+        "systemStatus": {
+          "status": "NO_KNOWN_ISSUES",
+          "activeIssues": [
+            {
+              "product": "Ad Library",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library Report",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library API",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Branded Content",
+              "status": "NO_KNOWN_ISSUES"
+            }
+          ]
+        }
+      },
+      "xfbAdLibraryIsCaptchaRequired": false,
+      "page": null,
+      "adLibraryUser": null
+    },
+    "pageID": "107953311029638",
+    "adArchiveID": "1705099913967499",
+    "startDateFormatted": "2026-06-26T07:00:00.000Z",
+    "endDateFormatted": "2026-09-21T07:00:00.000Z",
+    "adArchiveId": "1705099913967499",
+    "collationCount": 1,
+    "collationId": "2004220303556167",
+    "pageId": "107953311029638",
+    "snapshot": {
+      "brandedContent": null,
+      "pageId": "107953311029638",
+      "pageIsDeleted": false,
+      "pageProfileUri": "https://www.facebook.com/Golloopticas/",
+      "rootResharedPost": null,
+      "byline": null,
+      "disclaimerLabel": null,
+      "pageName": "Gollo Ópticas",
+      "pageProfilePictureUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/732036153_2161072961146642_3931495229737917162_n.jpg?stp=dst-jpg_s60x60_tt6&_nc_cat=105&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=AaU-0XJyKCcQ7kNvwE_NF--&_nc_oc=AdqkpA2TwBGArd1SdcuZWg-JtgzI1_d451l4MbJOnB5wfgjL3QW1dhUm4J0lAAFO1I8&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQKJC8sl89D5Pqq5yspUF9OmjfL_1zUPuAx32sXM1n114g&oe=6AB72709",
+      "event": null,
+      "caption": null,
+      "ctaText": "Send message",
+      "cards": [],
+      "body": {
+        "text": "👀🚗 Si estás en Pérez Zeledón, tu próxima cita visual te queda a la vuelta de la esquina.\n\nEn Gollo Ópticas, encontrá atención especializada, asesoría personalizada y aros que van con tu estilo 🤓✨\n\n📅 Agendá tu cita y dale a tu vista el cuidado que merece | 📞6399-9022\n📍 Te esperamos contiguo a McDonald's en Pérez Zeledón.\n\n#golloópticas  #PérezZeledón  #CuidáTuVista  #SaludVisual  #AnteojosConEstilo  #VisiónClara"
+      },
+      "ctaType": "MESSAGE_PAGE",
+      "displayFormat": "IMAGE",
+      "linkDescription": null,
+      "linkUrl": null,
+      "images": [
+        {
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/732152073_1025662609978301_4700451153022051582_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=iTdkNWsNwfQQ7kNvwF8Uf8s&_nc_oc=AdpjbK5VHmifq69XFjt3oq5LHPzc_MU_RmKotPOKaZmkCWmLZRKIWtzjIzA69R9Y0kQ&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQJe3nknvEcQvslb2XQuzwlWuG00FrVtjbOX1-K7vsb7tA&oe=6AB72091",
+          "resizedImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/731059165_857239993735296_9190009404080189946_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=108&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=PFKcZI-Rs28Q7kNvwGuWn5a&_nc_oc=AdoTwStWAjCoJ7OA6O5MylZRU1ALjg6BbRJvHrKuiPp3xsLKN_Ol5BesyWZ_0GeRw0I&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQKJw21igdV1b21PXntTMT-RfFaiPdt5kOagDXyM6hev-Q&oe=6AB73E80",
+          "watermarkedResizedImageUrl": ""
+        }
+      ],
+      "pageCategories": [
+        "Eyewear"
+      ],
+      "pageLikeCount": 25081,
+      "title": null,
+      "videos": [],
+      "isReshared": false,
+      "extraLinks": [],
+      "extraTexts": [],
+      "extraImages": [],
+      "extraVideos": [],
+      "countryIsoCode": null,
+      "brazilTaxId": null,
+      "additionalInfo": null,
+      "ecCertificates": []
+    },
+    "isActive": true,
+    "hasUserReported": false,
+    "reportCount": null,
+    "menuItems": [],
+    "stateMediaRunLabel": null,
+    "pageIsDeleted": false,
+    "pageName": "Gollo Ópticas",
+    "impressionsWithIndex": {
+      "impressionsText": null,
+      "impressionsIndex": -1
+    },
+    "gatedType": "ELIGIBLE",
+    "categories": [
+      "UNKNOWN"
+    ],
+    "isAaaEligible": false,
+    "containsDigitalCreatedMedia": false,
+    "reachEstimate": null,
+    "currency": "",
+    "spend": null,
+    "endDate": 1789974000,
+    "publisherPlatform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "AUDIENCE_NETWORK",
+      "MESSENGER",
+      "WHATSAPP",
+      "THREADS"
+    ],
+    "startDate": 1782457200,
+    "containsSensitiveContent": false,
+    "totalActiveTime": null,
+    "regionalRegulationData": {
+      "finserv": {
+        "isDeemedFinserv": false,
+        "isLimitedDelivery": false
+      },
+      "twAntiScam": {
+        "isLimitedDelivery": false
+      }
+    },
+    "hideDataStatus": "NONE",
+    "fevInfo": null,
+    "adId": null,
+    "targetedOrReachedCountries": []
+  },
+  {
+    "inputUrl": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q=Gollo&search_type=keyword_unordered",
+    "pageInfo": {
+      "adLibrarySystemStatus": {
+        "systemStatus": {
+          "status": "NO_KNOWN_ISSUES",
+          "activeIssues": [
+            {
+              "product": "Ad Library",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library Report",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library API",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Branded Content",
+              "status": "NO_KNOWN_ISSUES"
+            }
+          ]
+        }
+      },
+      "xfbAdLibraryIsCaptchaRequired": false,
+      "page": null,
+      "adLibraryUser": null
+    },
+    "pageID": "118116974879681",
+    "adArchiveID": "940721899037217",
+    "startDateFormatted": "2026-08-04T07:00:00.000Z",
+    "endDateFormatted": "2026-09-21T07:00:00.000Z",
+    "adArchiveId": "940721899037217",
+    "collationCount": 1,
+    "collationId": "1648414316995445",
+    "pageId": "118116974879681",
+    "snapshot": {
+      "brandedContent": null,
+      "pageId": "118116974879681",
+      "pageIsDeleted": false,
+      "pageProfileUri": "https://www.facebook.com/GolloCR/",
+      "rootResharedPost": null,
+      "byline": null,
+      "disclaimerLabel": null,
+      "pageName": "Gollo",
+      "pageProfilePictureUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/765929651_1013173071336737_3874782768746020085_n.jpg?stp=dst-jpg_s60x60_tt6&_nc_cat=111&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=gltA39VeL2MQ7kNvwFMylrM&_nc_oc=AdrjebzzaUt444eIw96PNTeOuPpSDZzHv48TeWiHr8eJnujajeCE41-o1xQSzs1Eb0w&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQK2ljKhb7ZeYxHafu9fawaQQKoAEgYBAAqAVpShSJ0OLA&oe=6AB749C8",
+      "event": null,
+      "caption": "gollo.com",
+      "ctaText": null,
+      "cards": [
+        {
+          "body": "\"¿Gasto inesperado? ¡Solucionalo al instante y cerca de vos! 💵✨\n\nVisitá nuestra tienda Gollo Efectivo Alajuela y solicitá tu préstamo en efectivo de hasta ₡2.000.000 con aprobación y desembolso inmediato.\n\n🆔 Solo con tu cédula\n\n🚫 Sin penalización por pago anticipado\n\n⏱️ Hasta 36 meses para pagar\n\n🆓 Sin comisión por gastos administrativos\n\n📍 Te esperamos en: Alajuela, 75 m norte y 25 m oeste de las paradas de TUASA.\n\n📞 Llámanos al: 2484-0590\n\n👉 ¡Visitanos hoy y salí con el dinero en mano!\"",
+          "ctaType": null,
+          "caption": "",
+          "linkDescription": null,
+          "linkUrl": null,
+          "title": null,
+          "ctaText": null,
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/765008072_1401861085119971_4498169247704275156_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=VJjvp7j74TkQ7kNvwEhJfUR&_nc_oc=AdqDETOJv47nly9qLmtKmUaVRJT1tgvV4rPdG4SXiA4VDT2OmhmWlVdhg7OFYqnJN6U&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQJozG8tFdU65ti_9sVP4sMtMn2VtK7fHHHCkTf1pgDV6g&oe=6AB7472E",
+          "resizedImageUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/766726325_1337527205198366_4663704838218709564_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=102&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=WZ0-JyN73uwQ7kNvwEYLP5l&_nc_oc=AdqUhVLirELhu9TL2HSSGSEv27W4Y7wdAT-B6wV-S2uky7hcxkxENdw6WYoNJmgcWYk&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQJZm4G5vKLVltKRd58KjfSYloflRgWj4F6I-cA6RHQjjg&oe=6AB73514",
+          "watermarkedResizedImageUrl": ""
+        },
+        {
+          "body": "\"¿Gasto inesperado? ¡Solucionalo al instante y cerca de vos! 💵✨\n\nVisitá nuestra tienda Gollo Efectivo Alajuela y solicitá tu préstamo en efectivo de hasta ₡2.000.000 con aprobación y desembolso inmediato.\n\n🆔 Solo con tu cédula\n\n🚫 Sin penalización por pago anticipado\n\n⏱️ Hasta 36 meses para pagar\n\n🆓 Sin comisión por gastos administrativos\n\n📍 Te esperamos en: Alajuela, 75 m norte y 25 m oeste de las paradas de TUASA.\n\n📞 Llámanos al: 2484-0590\n\n👉 ¡Visitanos hoy y salí con el dinero en mano!\"",
+          "ctaType": null,
+          "caption": "",
+          "linkDescription": null,
+          "linkUrl": null,
+          "title": null,
+          "ctaText": null,
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/767002240_1052468327271449_7001251094145871601_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=KZaf1fS31vYQ7kNvwGq1dMR&_nc_oc=AdqolzmqNTAlllwCL5H8YuM5H4RFD8KieCt3oS8L5yU-auXedShu6rh8r-Oik5I8kf8&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQJuMOhgTc6q5P3zwlrJDJyaRlITXStSr8DKl9_S_XeWxA&oe=6AB73200",
+          "resizedImageUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/764676323_1221228036797294_3299493398798148193_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=107&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=o4DetypsPZ8Q7kNvwHfuNro&_nc_oc=AdoOo4P0wpdZiPBPl-8bYT7WUjGGM0hF7Lt5UAkBd4LwVqJ-Dd3C67DMHN3kXld_goU&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQKWfnETseMREK82Jc_h5snWUvkKkfN3zxaRne8LXVihLA&oe=6AB727A8",
+          "watermarkedResizedImageUrl": ""
+        }
+      ],
+      "body": {
+        "text": "{{product.brand}}"
+      },
+      "ctaType": null,
+      "displayFormat": "DCO",
+      "linkDescription": null,
+      "linkUrl": "https://www.gollo.com/",
+      "images": [],
+      "pageCategories": [
+        "Electronics"
+      ],
+      "pageLikeCount": 776529,
+      "title": "{{product.name}}",
+      "videos": [],
+      "isReshared": false,
+      "extraLinks": [],
+      "extraTexts": [],
+      "extraImages": [],
+      "extraVideos": [],
+      "countryIsoCode": null,
+      "brazilTaxId": null,
+      "additionalInfo": null,
+      "ecCertificates": []
+    },
+    "isActive": true,
+    "hasUserReported": false,
+    "reportCount": null,
+    "menuItems": [],
+    "stateMediaRunLabel": null,
+    "pageIsDeleted": false,
+    "pageName": "Gollo",
+    "impressionsWithIndex": {
+      "impressionsText": null,
+      "impressionsIndex": -1
+    },
+    "gatedType": "ELIGIBLE",
+    "categories": [
+      "UNKNOWN"
+    ],
+    "isAaaEligible": false,
+    "containsDigitalCreatedMedia": false,
+    "reachEstimate": null,
+    "currency": "",
+    "spend": null,
+    "endDate": 1789974000,
+    "publisherPlatform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "AUDIENCE_NETWORK",
+      "WHATSAPP",
+      "THREADS"
+    ],
+    "startDate": 1785826800,
+    "containsSensitiveContent": false,
+    "totalActiveTime": null,
+    "regionalRegulationData": {
+      "finserv": {
+        "isDeemedFinserv": false,
+        "isLimitedDelivery": false
+      },
+      "twAntiScam": {
+        "isLimitedDelivery": false
+      }
+    },
+    "hideDataStatus": "NONE",
+    "fevInfo": null,
+    "adId": null,
+    "targetedOrReachedCountries": []
+  },
+  {
+    "inputUrl": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q=Gollo&search_type=keyword_unordered",
+    "pageInfo": {
+      "adLibrarySystemStatus": {
+        "systemStatus": {
+          "status": "NO_KNOWN_ISSUES",
+          "activeIssues": [
+            {
+              "product": "Ad Library",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library Report",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library API",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Branded Content",
+              "status": "NO_KNOWN_ISSUES"
+            }
+          ]
+        }
+      },
+      "xfbAdLibraryIsCaptchaRequired": false,
+      "page": null,
+      "adLibraryUser": null
+    },
+    "pageID": "118116974879681",
+    "adArchiveID": "900393416339080",
+    "startDateFormatted": "2026-09-11T07:00:00.000Z",
+    "endDateFormatted": "2026-09-21T07:00:00.000Z",
+    "adArchiveId": "900393416339080",
+    "collationCount": null,
+    "collationId": null,
+    "pageId": "118116974879681",
+    "snapshot": {
+      "brandedContent": null,
+      "pageId": "118116974879681",
+      "pageIsDeleted": false,
+      "pageProfileUri": "https://www.facebook.com/GolloCR/",
+      "rootResharedPost": null,
+      "byline": null,
+      "disclaimerLabel": null,
+      "pageName": "Gollo",
+      "pageProfilePictureUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/802966350_1840002420775236_8537100893605561540_n.jpg?stp=dst-jpg_s60x60_tt6&_nc_cat=106&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=GUXxudYSgasQ7kNvwHf9rlz&_nc_oc=AdpAtDi1BIy7p14OjV88NvCSUuK9qhnntcwlkKslOqjIRl6p8lYAbX4J8OB7ylQjyZA&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQKfIBOTs2iTLaz2IOR0WoupmIimnfjiQ_deCvMmN46kFg&oe=6AB73518",
+      "event": null,
+      "caption": "fb.com",
+      "ctaText": "Watch more",
+      "cards": [],
+      "body": {
+        "text": "📱 ¡Estrená la mejor tecnología este mes! Llevate un smartphone HONOR con todo lo que buscás en un solo lugar: cámaras de alta resolución, batería de larga duración, entretenimiento y herramientas inteligentes con un diseño elegante.\n\nElegí tu favorito y aprovechá las ofertas que tenemos para vos. ✨\n\n📲 ¡Comprá el tuyo en Gollo.com o visitá nuestras tiendas!\n\n#Gollo #HONOR #Smartphones #Tecnología #OfertasCR #SoloBueno"
+      },
+      "ctaType": "WATCH_MORE",
+      "displayFormat": "IMAGE",
+      "linkDescription": null,
+      "linkUrl": "https://fb.com/canvas_doc/1065666642737228",
+      "images": [
+        {
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/805785368_1104590942224663_320156378239738831_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=SysgkeuIZYYQ7kNvwEHHupr&_nc_oc=AdoJun5FKd0XL9CJnE-JOU8xoEQBKsf4Y53dlS8U7osdK17F8ouUuGDDaI98PdEi448&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQLIRF0LNBNpFyb-FMGYvxdL5SKsqFWJm-7yn5nGawrf2g&oe=6AB73F61",
+          "resizedImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/803071932_2830387977344363_8906778166125504427_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=108&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=Chzu1GT4h0MQ7kNvwEJeGyT&_nc_oc=Adq5BLubaSzlyQo3nXKcazQwCGkvsDktMaP2rfsPlSftppbKDzra6gqPfbCn_n-HnBI&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQKERvGb9XWvePMMLk7W7RLnC2f7q7Re7QuwGwyyMjGbnQ&oe=6AB71F79",
+          "watermarkedResizedImageUrl": ""
+        }
+      ],
+      "pageCategories": [
+        "Electronics"
+      ],
+      "pageLikeCount": 776529,
+      "title": "Honor",
+      "videos": [],
+      "isReshared": false,
+      "extraLinks": [
+        "https://www.gollo.com/celulares-honor"
+      ],
+      "extraTexts": [
+        {
+          "text": "Honor en Gollo"
+        }
+      ],
+      "extraImages": [
+        {
+          "originalImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/805834558_978830508581356_5051090718881494222_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=ZsuiYs4-fggQ7kNvwHbogQH&_nc_oc=AdoLQn4tM4qlRMIVf1NIONM3q3CL7uaxMGR3yBpyNZRAWsTlBPFkcR2VtraXthG74s8&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQLhwaCHF3ZCU4dPqloTTNueze5j9b8rrXrsLVx_RJremA&oe=6AB7279C",
+          "resizedImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/805834558_978830508581356_5051090718881494222_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=108&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=ZsuiYs4-fggQ7kNvwHbogQH&_nc_oc=AdoLQn4tM4qlRMIVf1NIONM3q3CL7uaxMGR3yBpyNZRAWsTlBPFkcR2VtraXthG74s8&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQLR0u__deh9q4df0x0IY_1PUupmll-reZ9JGPcuxy8iRw&oe=6AB7279C",
+          "imageCrops": []
+        }
+      ],
+      "extraVideos": [],
+      "countryIsoCode": null,
+      "brazilTaxId": null,
+      "additionalInfo": null,
+      "ecCertificates": []
+    },
+    "isActive": true,
+    "hasUserReported": false,
+    "reportCount": null,
+    "menuItems": [],
+    "stateMediaRunLabel": null,
+    "pageIsDeleted": false,
+    "pageName": "Gollo",
+    "impressionsWithIndex": {
+      "impressionsText": null,
+      "impressionsIndex": -1
+    },
+    "gatedType": "ELIGIBLE",
+    "categories": [
+      "UNKNOWN"
+    ],
+    "isAaaEligible": false,
+    "containsDigitalCreatedMedia": false,
+    "reachEstimate": null,
+    "currency": "",
+    "spend": null,
+    "endDate": 1789974000,
+    "publisherPlatform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "AUDIENCE_NETWORK",
+      "WHATSAPP",
+      "THREADS"
+    ],
+    "startDate": 1789110000,
+    "containsSensitiveContent": false,
+    "totalActiveTime": null,
+    "regionalRegulationData": {
+      "finserv": {
+        "isDeemedFinserv": false,
+        "isLimitedDelivery": false
+      },
+      "twAntiScam": {
+        "isLimitedDelivery": false
+      }
+    },
+    "hideDataStatus": "NONE",
+    "fevInfo": null,
+    "adId": null,
+    "targetedOrReachedCountries": []
+  },
+  {
+    "inputUrl": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q=Gollo&search_type=keyword_unordered",
+    "pageInfo": {
+      "adLibrarySystemStatus": {
+        "systemStatus": {
+          "status": "NO_KNOWN_ISSUES",
+          "activeIssues": [
+            {
+              "product": "Ad Library",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library Report",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library API",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Branded Content",
+              "status": "NO_KNOWN_ISSUES"
+            }
+          ]
+        }
+      },
+      "xfbAdLibraryIsCaptchaRequired": false,
+      "page": null,
+      "adLibraryUser": null
+    },
+    "pageID": "118116974879681",
+    "adArchiveID": "2464873500689671",
+    "startDateFormatted": "2026-09-01T07:00:00.000Z",
+    "endDateFormatted": "2026-09-21T07:00:00.000Z",
+    "adArchiveId": "2464873500689671",
+    "collationCount": null,
+    "collationId": null,
+    "pageId": "118116974879681",
+    "snapshot": {
+      "brandedContent": null,
+      "pageId": "118116974879681",
+      "pageIsDeleted": false,
+      "pageProfileUri": "https://www.facebook.com/GolloCR/",
+      "rootResharedPost": null,
+      "byline": null,
+      "disclaimerLabel": null,
+      "pageName": "Gollo",
+      "pageProfilePictureUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/790195555_1347671390469044_5031766110447872348_n.jpg?stp=dst-jpg_s60x60_tt6&_nc_cat=102&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=CkOUBXmYXngQ7kNvwGMFFDt&_nc_oc=AdrdyHrW-dkYkfmx9MW2v5KfqAHGZz4hWy9b6ghaD1Yml3H0eLsWnNYL60TobS1u52E&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQIc7lCXSci81kvSUA0wfyfIuY089TbCoPhn308fU9YqOQ&oe=6AB72455",
+      "event": null,
+      "caption": "gollo.com",
+      "ctaText": "Get offer",
+      "cards": [
+        {
+          "body": "Te diste una vuelta por Gollo.com…\n¿Y si volvés y sumás eso que tanto te gustó al carrito?\nHay descuentos de hasta el 50% listos para vos. 🛒💻",
+          "ctaType": "GET_OFFER_VIEW",
+          "caption": "gollo.com",
+          "linkDescription": "¡Solo Bueno! Es poder comprar en línea en la Gollo Tienda, con los mejores precios y promociones.",
+          "linkUrl": "https://www.gollo.com/bateria-automotriz-varta-711-a-76-ah-n70z-0530010232/p",
+          "title": "Gollo",
+          "ctaText": "Get Offer",
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/790425798_4451892341726123_5497684291445328622_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=aWwJZ4_8sAsQ7kNvwG4coGm&_nc_oc=AdpUhibZodcL3Kme8xGoufJTv5neVAqUnNwedLl_GU4Gs-KqnpR557-UddQi60tNI7k&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQLtwt5tpOV6PiVhOAI-Uq9p2UbW0QP8WdNzNUjNpeQ97Q&oe=6AB739A3",
+          "resizedImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/790425798_4451892341726123_5497684291445328622_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=111&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=aWwJZ4_8sAsQ7kNvwG4coGm&_nc_oc=AdpUhibZodcL3Kme8xGoufJTv5neVAqUnNwedLl_GU4Gs-KqnpR557-UddQi60tNI7k&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQK6SHck_flojBYEF5GtEd34W7wkPYO_k5cYFiaOet2dGA&oe=6AB739A3",
+          "watermarkedResizedImageUrl": ""
+        },
+        {
+          "body": "Te diste una vuelta por Gollo.com…\n¿Y si volvés y sumás eso que tanto te gustó al carrito?\nHay descuentos de hasta el 50% listos para vos. 🛒💻",
+          "ctaType": "GET_OFFER_VIEW",
+          "caption": "gollo.com",
+          "linkDescription": "¡Solo Bueno! Es poder comprar en línea en la Gollo Tienda, con los mejores precios y promociones.",
+          "linkUrl": "https://www.gollo.com/bateria-automotriz-varta-580-a-60-ah-ns70l-0530010233/p",
+          "title": "Gollo",
+          "ctaText": "Get Offer",
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/791015269_1066569386226408_5188759022890172399_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=xb_Lr9cQ1hQQ7kNvwH9E70O&_nc_oc=AdqoRQZVn7vsocfh3ZevPOMz5lN5bdf0nzswi9pI9ZoSdMB4WXzOB6lN0j3BFu9Fw_E&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQKBFBVDheMXLBAfiX1u7RRRzB5divpkod4PY6HbSNJbeA&oe=6AB734E9",
+          "resizedImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/791015269_1066569386226408_5188759022890172399_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=108&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=xb_Lr9cQ1hQQ7kNvwH9E70O&_nc_oc=AdqoRQZVn7vsocfh3ZevPOMz5lN5bdf0nzswi9pI9ZoSdMB4WXzOB6lN0j3BFu9Fw_E&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQJipYMZQNUk46LzC8Xvu6eIBklnVvJMuuut5yClDBGHog&oe=6AB734E9",
+          "watermarkedResizedImageUrl": ""
+        },
+        {
+          "body": "Te diste una vuelta por Gollo.com…\n¿Y si volvés y sumás eso que tanto te gustó al carrito?\nHay descuentos de hasta el 50% listos para vos. 🛒💻",
+          "ctaType": "GET_OFFER_VIEW",
+          "caption": "gollo.com",
+          "linkDescription": "¡Solo Bueno! Es poder comprar en línea en la Gollo Tienda, con los mejores precios y promociones.",
+          "linkUrl": "https://www.gollo.com/patineta-truvolt-multicolor-tesb52-0565090005/p",
+          "title": "Gollo",
+          "ctaText": "Get Offer",
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/792408397_1386207486995050_6339762097404251697_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=4HiU5WITPVoQ7kNvwF9Zp6q&_nc_oc=Adqrue3EPu93t2IB0ZKjzxx822K089lZATaNnLpvlDizybP24wN1C71prQwQhok_vuA&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQJdLHAUUguwzPZGqVNAKgSQkLc4j5KLcZBgJ9pzgOTkeg&oe=6AB732F2",
+          "resizedImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/792408397_1386207486995050_6339762097404251697_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=106&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=4HiU5WITPVoQ7kNvwF9Zp6q&_nc_oc=Adqrue3EPu93t2IB0ZKjzxx822K089lZATaNnLpvlDizybP24wN1C71prQwQhok_vuA&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQJhuY7q5AxfHeFHE-cRi1BgeHsYFVybYJgtterlR1cSOg&oe=6AB732F2",
+          "watermarkedResizedImageUrl": ""
+        },
+        {
+          "body": "Te diste una vuelta por Gollo.com…\n¿Y si volvés y sumás eso que tanto te gustó al carrito?\nHay descuentos de hasta el 50% listos para vos. 🛒💻",
+          "ctaType": "GET_OFFER_VIEW",
+          "caption": "gollo.com",
+          "linkDescription": "¡Solo Bueno! Es poder comprar en línea en la Gollo Tienda, con los mejores precios y promociones.",
+          "linkUrl": "https://www.gollo.com/bateria-automotriz-la-14-585h32l-80-ah-0530010048/p",
+          "title": "Gollo",
+          "ctaText": "Get Offer",
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/789326816_1785543675951592_1503660614729797535_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=eMPoulLUO9YQ7kNvwEkiv0R&_nc_oc=AdoiIQITMZRSdgmSxZIpY2ntAnBC6i0Rmrd7f7xNw_L5HLz1SxWzet21AGX66TEeWjI&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQKnzKeZz6BITvfkriI5v8Tqm3ni8XjJDFCefBL5Zt_elQ&oe=6AB726F7",
+          "resizedImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/789326816_1785543675951592_1503660614729797535_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=111&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=eMPoulLUO9YQ7kNvwEkiv0R&_nc_oc=AdoiIQITMZRSdgmSxZIpY2ntAnBC6i0Rmrd7f7xNw_L5HLz1SxWzet21AGX66TEeWjI&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQJ9xA1ZLQB39n6d-hJxsmm4KjH499Udv8ALy2-XHp77PA&oe=6AB726F7",
+          "watermarkedResizedImageUrl": ""
+        },
+        {
+          "body": "Te diste una vuelta por Gollo.com…\n¿Y si volvés y sumás eso que tanto te gustó al carrito?\nHay descuentos de hasta el 50% listos para vos. 🛒💻",
+          "ctaType": "GET_OFFER_VIEW",
+          "caption": "gollo.com",
+          "linkDescription": "¡Solo Bueno! Es poder comprar en línea en la Gollo Tienda, con los mejores precios y promociones.",
+          "linkUrl": "https://www.gollo.com/bateria-automotriz-varta-550-a-55-ah-n50zl-0530010242/p",
+          "title": "Gollo",
+          "ctaText": "Get Offer",
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/791296733_1496475685571981_5959646539688958918_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=_8ylYDj1wMcQ7kNvwE5AOYZ&_nc_oc=Adqg5Lkq_8MhlqZmv39u_9oyGYIKThFppiwTmWQmgK5D8K4lUd9e1QcdHzvB81vjlVY&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQIU17nHakS_hf5DeEPXF7g2FrwFDSYFOiSHXBYBin5ckg&oe=6AB72A7C",
+          "resizedImageUrl": "https://scontent-ord5-2.xx.fbcdn.net/v/t39.35426-6/791296733_1496475685571981_5959646539688958918_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=107&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=_8ylYDj1wMcQ7kNvwE5AOYZ&_nc_oc=Adqg5Lkq_8MhlqZmv39u_9oyGYIKThFppiwTmWQmgK5D8K4lUd9e1QcdHzvB81vjlVY&_nc_zt=14&_nc_ht=scontent-ord5-2.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQKizVZivs0iqCdzFV5hcnMCalj5TUiuY4WrkeRh0o1TlQ&oe=6AB72A7C",
+          "watermarkedResizedImageUrl": ""
+        },
+        {
+          "body": "Te diste una vuelta por Gollo.com…\n¿Y si volvés y sumás eso que tanto te gustó al carrito?\nHay descuentos de hasta el 50% listos para vos. 🛒💻",
+          "ctaType": "GET_OFFER_VIEW",
+          "caption": "gollo.com",
+          "linkDescription": "¡Solo Bueno! Es poder comprar en línea en la Gollo Tienda, con los mejores precios y promociones.",
+          "linkUrl": "https://www.gollo.com/bateria-automotriz-varta-710-a-75-ah-n70zl-0530010231/p",
+          "title": "Gollo",
+          "ctaText": "Get Offer",
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/790803621_948105457584608_6441320763997161233_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=ZxYoqaG9ZY8Q7kNvwF21WGg&_nc_oc=AdobGAk4vQLo6D8tvpIXMMhZy6mkqdFPCiFxynvP1TNbToOpy1MlakAN7SU7M8hQlko&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQKoEk_PKixNtMcAQ-MrJD-IuZdH2icKX3ZNFdb8_VycmQ&oe=6AB7249D",
+          "resizedImageUrl": "https://scontent-ord5-1.xx.fbcdn.net/v/t39.35426-6/790803621_948105457584608_6441320763997161233_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=106&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=ZxYoqaG9ZY8Q7kNvwF21WGg&_nc_oc=AdobGAk4vQLo6D8tvpIXMMhZy6mkqdFPCiFxynvP1TNbToOpy1MlakAN7SU7M8hQlko&_nc_zt=14&_nc_ht=scontent-ord5-1.xx&_nc_gid=LQa7obmpvMgg-UUn4_2LwA&_nc_ss=73289&oh=00_AQJ-FdcvgT77m4jyIkPZfwlIwQmFvx8BqQZU5-HsWDHCUw&oe=6AB7249D",
+          "watermarkedResizedImageUrl": ""
+        }
+      ],
+      "body": {
+        "text": "Te diste una vuelta por Gollo.com…\n¿Y si volvés y sumás eso que tanto te gustó al carrito?\nHay descuentos de hasta el 50% listos para vos. 🛒💻"
+      },
+      "ctaType": "GET_OFFER_VIEW",
+      "displayFormat": "DPA",
+      "linkDescription": null,
+      "linkUrl": "https://www.gollo.com/c/promociones",
+      "images": [],
+      "pageCategories": [
+        "Electronics"
+      ],
+      "pageLikeCount": 776529,
+      "title": "Gollo",
+      "videos": [],
+      "isReshared": false,
+      "extraLinks": [],
+      "extraTexts": [],
+      "extraImages": [],
+      "extraVideos": [],
+      "countryIsoCode": null,
+      "brazilTaxId": null,
+      "additionalInfo": null,
+      "ecCertificates": []
+    },
+    "isActive": true,
+    "hasUserReported": false,
+    "reportCount": null,
+    "menuItems": [],
+    "stateMediaRunLabel": null,
+    "pageIsDeleted": false,
+    "pageName": "Gollo",
+    "impressionsWithIndex": {
+      "impressionsText": null,
+      "impressionsIndex": -1
+    },
+    "gatedType": "ELIGIBLE",
+    "categories": [
+      "UNKNOWN"
+    ],
+    "isAaaEligible": false,
+    "containsDigitalCreatedMedia": false,
+    "reachEstimate": null,
+    "currency": "",
+    "spend": null,
+    "endDate": 1789974000,
+    "publisherPlatform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "AUDIENCE_NETWORK",
+      "MESSENGER",
+      "THREADS"
+    ],
+    "startDate": 1788246000,
+    "containsSensitiveContent": false,
+    "totalActiveTime": null,
+    "regionalRegulationData": {
+      "finserv": {
+        "isDeemedFinserv": false,
+        "isLimitedDelivery": false
+      },
+      "twAntiScam": {
+        "isLimitedDelivery": false
+      }
+    },
+    "hideDataStatus": "NONE",
+    "fevInfo": null,
+    "adId": null,
+    "targetedOrReachedCountries": []
+  },
+  {
+    "inputUrl": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q=Gollo&search_type=keyword_unordered",
+    "pageInfo": {
+      "adLibrarySystemStatus": {
+        "systemStatus": {
+          "status": "NO_KNOWN_ISSUES",
+          "activeIssues": [
+            {
+              "product": "Ad Library",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library Report",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library API",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Branded Content",
+              "status": "NO_KNOWN_ISSUES"
+            }
+          ]
+        }
+      },
+      "xfbAdLibraryIsCaptchaRequired": false,
+      "page": null,
+      "adLibraryUser": null
+    },
+    "pageID": "118116974879681",
+    "adArchiveID": "1752494372611008",
+    "startDateFormatted": "2026-09-10T07:00:00.000Z",
+    "endDateFormatted": "2026-09-21T07:00:00.000Z",
+    "adArchiveId": "1752494372611008",
+    "collationCount": 1,
+    "collationId": "2187307475553255",
+    "pageId": "118116974879681",
+    "snapshot": {
+      "brandedContent": null,
+      "pageId": "118116974879681",
+      "pageIsDeleted": false,
+      "pageProfileUri": "https://www.facebook.com/GolloCR/",
+      "rootResharedPost": null,
+      "byline": null,
+      "disclaimerLabel": null,
+      "pageName": "Gollo",
+      "pageProfilePictureUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/792324047_1726441125870367_4345003430853097365_n.jpg?stp=dst-jpg_s60x60_tt6&_nc_cat=109&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=cQw0lC8LLKAQ7kNvwEfA5XT&_nc_oc=Adq_ijPtsu9ivJcGdybuogUpKjYtiCr96HzgFhuVgTiNYoZ5fCWoqDoa3YKwB1qSxq8&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQIXjY06lG7X27xLix9mFigU_pUhNGhuZPF3LUYRWUsTzA&oe=6AB74391",
+      "event": null,
+      "caption": "gollo.com",
+      "ctaText": "Shop now",
+      "cards": [
+        {
+          "body": "¡Disfrutá una pantalla gigante al mejor precio! 📱💥 Llevate el nuevo Moto G06 de 64 GB por solo ₡69.900 (Precio regular ₡79.900).\n\n📱 La pantalla más grande de la categoría (6.9\"\" con Smart Water Touch)\n\n💾 64 GB de almacenamiento\n\n🔌 Incluye cargador y case\n\n🛒 Aprovechá las Moto Ofertas en Gollo.com.",
+          "ctaType": "SHOP_NOW",
+          "caption": "",
+          "linkDescription": "Comprá YA",
+          "linkUrl": "https://www.gollo.com/celular-motorola-motorola-g06-64-gb-6-88-5003010151-tapestry/p",
+          "title": "Celulares Motorola",
+          "ctaText": "Shop Now",
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/791510157_2182032985687915_824901827899484689_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=hgoAH7aeciYQ7kNvwFa3Uim&_nc_oc=AdrGQDWiY8Tvz0UgzvMmJR5VFDbLYoB6T3SF09KkVmc3ayyK6ec43OBPTjDIVEXAwlU&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQJProGi52c_pe3t6bow7YI_Zs4HNv2EcajRuf_nSFsRTQ&oe=6AB75005",
+          "resizedImageUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/792089640_1624870012545826_8482561010820737494_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=109&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=BCgrv2RI14AQ7kNvwHP3oDV&_nc_oc=AdplXjwDbH_GLI8BA_wPzmOimVpTMZunVDzdf-lqU4KWel83Jw3y_DQNXyV2yz1g2uI&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQLMt7S6-DESRLqfxPpL7RgK-K_fAkMvukA1Xh4PGFzJZw&oe=6AB74D1D",
+          "watermarkedResizedImageUrl": ""
+        },
+        {
+          "body": "¡Disfrutá una pantalla gigante al mejor precio! 📱💥 Llevate el nuevo Moto G06 de 64 GB por solo ₡69.900 (Precio regular ₡79.900).\n\n📱 La pantalla más grande de la categoría (6.9\"\" con Smart Water Touch)\n\n💾 64 GB de almacenamiento\n\n🔌 Incluye cargador y case\n\n🛒 Aprovechá las Moto Ofertas en Gollo.com.",
+          "ctaType": "SHOP_NOW",
+          "caption": "",
+          "linkDescription": "Comprá YA",
+          "linkUrl": "https://www.gollo.com/celular-motorola-motorola-g06-64-gb-6-88-5003010151-tapestry/p",
+          "title": "Celulares Motorola",
+          "ctaText": "Shop Now",
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/793090608_1713185379763858_5510297440111964262_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=3_v7Iyw0k6oQ7kNvwGVqp19&_nc_oc=AdoGqEmi-GW3eKAhLvzI-_qGuUVClTBiORv5LgyPhTWBb3raH2RNBQo-1op1TorJhnc&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQJjgQwvAkNUczggqT4ws5QdpqJ_-ztKQYphSTrOJEsyeA&oe=6AB74B42",
+          "resizedImageUrl": "https://scontent-sea1-1.xx.fbcdn.net/v/t39.35426-6/794225870_1608358707754634_2135061229251111413_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=104&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=OxVd3zOrpH0Q7kNvwENZUD2&_nc_oc=AdpGM7qlPvy6nUcDcNoESAWY7Ge0Ul8DBOrbbnu5O7c2UlKLuK1e3_5Wp2xKtkvPUZI&_nc_zt=14&_nc_ht=scontent-sea1-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQLcf32fVgG6pRtEN8emENDro8hd7jEFsTtTxedWFLeB2g&oe=6AB745BE",
+          "watermarkedResizedImageUrl": ""
+        }
+      ],
+      "body": {
+        "text": "¡Disfrutá una pantalla gigante al mejor precio! 📱💥 Llevate el nuevo Moto G06 de 64 GB por solo ₡69.900 (Precio regular ₡79.900).\n\n📱 La pantalla más grande de la categoría (6.9\"\" con Smart Water Touch)\n\n💾 64 GB de almacenamiento\n\n🔌 Incluye cargador y case\n\n🛒 Aprovechá las Moto Ofertas en Gollo.com."
+      },
+      "ctaType": "SHOP_NOW",
+      "displayFormat": "DCO",
+      "linkDescription": "Comprá YA",
+      "linkUrl": "https://www.gollo.com/celular-motorola-motorola-g06-64-gb-6-88-5003010151-tapestry/p",
+      "images": [],
+      "pageCategories": [
+        "Electronics"
+      ],
+      "pageLikeCount": 776529,
+      "title": "Celulares Motorola",
+      "videos": [],
+      "isReshared": false,
+      "extraLinks": [],
+      "extraTexts": [],
+      "extraImages": [],
+      "extraVideos": [],
+      "countryIsoCode": null,
+      "brazilTaxId": null,
+      "additionalInfo": null,
+      "ecCertificates": []
+    },
+    "isActive": true,
+    "hasUserReported": false,
+    "reportCount": null,
+    "menuItems": [],
+    "stateMediaRunLabel": null,
+    "pageIsDeleted": false,
+    "pageName": "Gollo",
+    "impressionsWithIndex": {
+      "impressionsText": null,
+      "impressionsIndex": -1
+    },
+    "gatedType": "ELIGIBLE",
+    "categories": [
+      "UNKNOWN"
+    ],
+    "isAaaEligible": false,
+    "containsDigitalCreatedMedia": false,
+    "reachEstimate": null,
+    "currency": "",
+    "spend": null,
+    "endDate": 1789974000,
+    "publisherPlatform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "AUDIENCE_NETWORK",
+      "MESSENGER",
+      "WHATSAPP",
+      "THREADS"
+    ],
+    "startDate": 1789023600,
+    "containsSensitiveContent": false,
+    "totalActiveTime": null,
+    "regionalRegulationData": {
+      "finserv": {
+        "isDeemedFinserv": false,
+        "isLimitedDelivery": false
+      },
+      "twAntiScam": {
+        "isLimitedDelivery": false
+      }
+    },
+    "hideDataStatus": "NONE",
+    "fevInfo": null,
+    "adId": null,
+    "targetedOrReachedCountries": []
+  },
+  {
+    "inputUrl": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q=Gollo&search_type=keyword_unordered",
+    "pageInfo": {
+      "adLibrarySystemStatus": {
+        "systemStatus": {
+          "status": "NO_KNOWN_ISSUES",
+          "activeIssues": [
+            {
+              "product": "Ad Library",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library Report",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library API",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Branded Content",
+              "status": "NO_KNOWN_ISSUES"
+            }
+          ]
+        }
+      },
+      "xfbAdLibraryIsCaptchaRequired": false,
+      "page": null,
+      "adLibraryUser": null
+    },
+    "pageID": "118116974879681",
+    "adArchiveID": "1050267704459037",
+    "startDateFormatted": "2026-09-01T07:00:00.000Z",
+    "endDateFormatted": "2026-09-21T07:00:00.000Z",
+    "adArchiveId": "1050267704459037",
+    "collationCount": 1,
+    "collationId": "1433751695275085",
+    "pageId": "118116974879681",
+    "snapshot": {
+      "brandedContent": null,
+      "pageId": "118116974879681",
+      "pageIsDeleted": false,
+      "pageProfileUri": "https://www.facebook.com/GolloCR/",
+      "rootResharedPost": null,
+      "byline": null,
+      "disclaimerLabel": null,
+      "pageName": "Gollo",
+      "pageProfilePictureUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/788453292_1014023344968972_1354029347372740682_n.jpg?stp=dst-jpg_s60x60_tt6&_nc_cat=103&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=Ucw_zGabF0IQ7kNvwGHxdKp&_nc_oc=Adreqc2SNoQoWiyiTFDbIxnNaFCrWKTc_nMT5S-n-3IsaWu-G8cdIi9Vai7NmDzYfT0&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQJn1OyjAzRT4Gl_-OK503Qo_4FiJWiIFFf9Ph3yXP_0kQ&oe=6AB71C7A",
+      "event": null,
+      "caption": "api.whatsapp.com",
+      "ctaText": "Send WhatsApp message",
+      "cards": [
+        {
+          "body": "Estrená ese smartphone que tanto querés. 📱 Cambiá tu cel con la última tecnología y aprovechá hasta un 40% de descuento exclusivo.\n📱 ¡Aprovechá la promo! Escribinos directo a nuestro WhatsApp al 8304-6556 (https://wa.me/50683046556) y hacé tu pedido.",
+          "ctaType": "WHATSAPP_MESSAGE",
+          "caption": "",
+          "linkDescription": "Comprá YA",
+          "linkUrl": "https://api.whatsapp.com/send",
+          "title": "Ofertas en whatsApp",
+          "ctaText": "Send WhatsApp Message",
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/788780254_28110254078625792_4540941649486086895_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=a06lvrHTlagQ7kNvwG8YTJX&_nc_oc=AdqpbPiOWZoaMjVJguQWqe1YPl_RP_8d6IPYmhiAy3zzXeymiHRxmRXZEuakq9gIjis&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQJGTAPiLt5n146TwksGdIliSiM92E7c6yDmo2r2F-bXJw&oe=6AB74ABA",
+          "resizedImageUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/788689870_1604469511397754_510356376398496722_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=108&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=2YokbcKhuyEQ7kNvwFaur7v&_nc_oc=AdoiznWxjWyzy_HRCjkGehUn76vOCot_-65zkAgY97_Hmy_Twu0QRgm14uxgEnBG-dU&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQIp8dmLlmKxqAS42Ly-3PARwIh7ZZxN1hAuEvt5hrvhRw&oe=6AB71BA5",
+          "watermarkedResizedImageUrl": ""
+        },
+        {
+          "body": "Estrená ese smartphone que tanto querés. 📱 Cambiá tu cel con la última tecnología y aprovechá hasta un 40% de descuento exclusivo.\n📱 ¡Aprovechá la promo! Escribinos directo a nuestro WhatsApp al 8304-6556 (https://wa.me/50683046556) y hacé tu pedido.",
+          "ctaType": "WHATSAPP_MESSAGE",
+          "caption": "",
+          "linkDescription": "Comprá YA",
+          "linkUrl": "https://api.whatsapp.com/send",
+          "title": "Ofertas en whatsApp",
+          "ctaText": "Send WhatsApp Message",
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/789327268_898437446672895_1820840015951371985_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=q1C3vrFoO4IQ7kNvwHttkRc&_nc_oc=AdqtCOC6ewjxsMNzwsZNyXmD04zD9dzuip8byL5wg92THyfVWkiJHKEwofl4QOVzeF8&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQL4nQFYTPWrAme_R70idgRDeMovx6fbXqigN5b1EjLgag&oe=6AB719CF",
+          "resizedImageUrl": "https://scontent-sea1-1.xx.fbcdn.net/v/t39.35426-6/787600382_1051489684187509_7703572395321229847_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=104&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=1aNhH-lXi9kQ7kNvwEP8_46&_nc_oc=AdrQLyAj7UikMvzkMg9kCOSz3rQ0555LKOo6-2dWMCEo5byxZmm9494yfK9NIBevJ9M&_nc_zt=14&_nc_ht=scontent-sea1-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQIVa7GFGDg5mluHNbM_r6O_fdJPSojHgQl2pfeFxwksQA&oe=6AB72FF6",
+          "watermarkedResizedImageUrl": ""
+        },
+        {
+          "body": "Estrená ese smartphone que tanto querés. 📱 Cambiá tu cel con la última tecnología y aprovechá hasta un 40% de descuento exclusivo.\n📱 ¡Aprovechá la promo! Escribinos directo a nuestro WhatsApp al 8304-6556 (https://wa.me/50683046556) y hacé tu pedido.",
+          "ctaType": "WHATSAPP_MESSAGE",
+          "caption": "",
+          "linkDescription": "Comprá YA",
+          "linkUrl": "https://api.whatsapp.com/send",
+          "title": "Ofertas en whatsApp",
+          "ctaText": "Send WhatsApp Message",
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/785151315_1599178658254229_2183760548715161093_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=UjdtpEDXoiQQ7kNvwHTeizd&_nc_oc=AdoAuuX9QrzD7kiSzkKoydXJ7SIpNxy71F1HjxTkiJOIKAxbn4d0rvciFtD-fKjYD8U&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQLXiKWuqJmFbn9JIvqYwC-9ljj72_nlRjMgJCNjMzYTqQ&oe=6AB741B3",
+          "resizedImageUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/789845364_1097195089479609_7541458247314040288_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=107&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=FNP_46hL4T8Q7kNvwGPwVJk&_nc_oc=AdqqdqmI1haQUTO5tMYbHKmS5DSogvqs5NQ_eLOHcllXINrzs1PAktsVBL1Qp9LHHbI&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQKvyxvh7nb8ZsLmtBOv7pHDdWbxn0zud_EI_W3LeDYa2Q&oe=6AB7208C",
+          "watermarkedResizedImageUrl": ""
+        }
+      ],
+      "body": {
+        "text": "Estrená ese smartphone que tanto querés. 📱 Cambiá tu cel con la última tecnología y aprovechá hasta un 40% de descuento exclusivo.\n📱 ¡Aprovechá la promo! Escribinos directo a nuestro WhatsApp al 8304-6556 (https://wa.me/50683046556) y hacé tu pedido."
+      },
+      "ctaType": "WHATSAPP_MESSAGE",
+      "displayFormat": "DCO",
+      "linkDescription": "Comprá YA",
+      "linkUrl": "https://api.whatsapp.com/send",
+      "images": [],
+      "pageCategories": [
+        "Electronics"
+      ],
+      "pageLikeCount": 776529,
+      "title": "Ofertas en whatsApp",
+      "videos": [],
+      "isReshared": false,
+      "extraLinks": [],
+      "extraTexts": [],
+      "extraImages": [],
+      "extraVideos": [],
+      "countryIsoCode": null,
+      "brazilTaxId": null,
+      "additionalInfo": null,
+      "ecCertificates": []
+    },
+    "isActive": true,
+    "hasUserReported": false,
+    "reportCount": null,
+    "menuItems": [],
+    "stateMediaRunLabel": null,
+    "pageIsDeleted": false,
+    "pageName": "Gollo",
+    "impressionsWithIndex": {
+      "impressionsText": null,
+      "impressionsIndex": -1
+    },
+    "gatedType": "ELIGIBLE",
+    "categories": [
+      "UNKNOWN"
+    ],
+    "isAaaEligible": false,
+    "containsDigitalCreatedMedia": false,
+    "reachEstimate": null,
+    "currency": "",
+    "spend": null,
+    "endDate": 1789974000,
+    "publisherPlatform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "AUDIENCE_NETWORK",
+      "MESSENGER",
+      "WHATSAPP"
+    ],
+    "startDate": 1788246000,
+    "containsSensitiveContent": false,
+    "totalActiveTime": null,
+    "regionalRegulationData": {
+      "finserv": {
+        "isDeemedFinserv": false,
+        "isLimitedDelivery": false
+      },
+      "twAntiScam": {
+        "isLimitedDelivery": false
+      }
+    },
+    "hideDataStatus": "NONE",
+    "fevInfo": null,
+    "adId": null,
+    "targetedOrReachedCountries": []
+  },
+  {
+    "inputUrl": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q=Gollo&search_type=keyword_unordered",
+    "pageInfo": {
+      "adLibrarySystemStatus": {
+        "systemStatus": {
+          "status": "NO_KNOWN_ISSUES",
+          "activeIssues": [
+            {
+              "product": "Ad Library",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library Report",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library API",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Branded Content",
+              "status": "NO_KNOWN_ISSUES"
+            }
+          ]
+        }
+      },
+      "xfbAdLibraryIsCaptchaRequired": false,
+      "page": null,
+      "adLibraryUser": null
+    },
+    "pageID": "118116974879681",
+    "adArchiveID": "1713518783467335",
+    "startDateFormatted": "2026-09-17T07:00:00.000Z",
+    "endDateFormatted": "2026-09-21T07:00:00.000Z",
+    "adArchiveId": "1713518783467335",
+    "collationCount": 1,
+    "collationId": "3567461510098042",
+    "pageId": "118116974879681",
+    "snapshot": {
+      "brandedContent": null,
+      "pageId": "118116974879681",
+      "pageIsDeleted": false,
+      "pageProfileUri": "https://www.facebook.com/GolloCR/",
+      "rootResharedPost": null,
+      "byline": null,
+      "disclaimerLabel": null,
+      "pageName": "Gollo",
+      "pageProfilePictureUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/813837249_1620066359490924_5057814559325522155_n.jpg?stp=dst-jpg_s60x60_tt6&_nc_cat=103&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=wcxK8dzKlT8Q7kNvwHzFjc_&_nc_oc=Ado51vyzwrPJHMI3q2XzKnFH9I_xMBX7DvaFdYiN5NaPwv5zN94hwM9D6JTACPvYPLU&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQImIjNGo_lhb6Jv9ew1ItqUrG4XT68kOaoiwrmhHj1CTA&oe=6AB7357F",
+      "event": null,
+      "caption": "gollo.com",
+      "ctaText": "Shop now",
+      "cards": [
+        {
+          "body": "¡Porque vos te lo merecés, equipá tu área de lavado con la mejor calidad! 🔥\n\nLlegó la Frigimania a gollo.com con un 30% de descuento en esta Lavadora Semiautomática Frigidaire. Llevátela a solo ₡159.900 (antes ₡239.900) 🤩\n\nAprovechá y pagá a 24 meses con Tasa Cero de BAC Credomatic, Credix o Emma.\n\nComprá ya en gollo.com o descubrí más ofertas por WhatsApp 👉 https://bit.ly/3HB5Q60\n\n*Válido del 4 al 30 de setiembre de 2026.\n\n*Ver condiciones en: www.gollo.com/terminos-y-condiciones\n\n#Frigimania #GolloCom #TasaCero #SoloBueno #Gollo",
+          "ctaType": "SHOP_NOW",
+          "caption": "",
+          "linkDescription": "Comprá YA",
+          "linkUrl": "https://www.gollo.com/lavadora-semiautomatica-frigidaire-superior-analogo-20-kgs-fwtt20m4ubuzw-6080010236/p",
+          "title": "Ofertas en Gollo.com",
+          "ctaText": "Shop Now",
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-sea1-1.xx.fbcdn.net/v/t39.35426-6/813623878_2007505116841208_5580085664143421219_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=4qeX7ikc0UUQ7kNvwHnHE7a&_nc_oc=AdqUClh4uHXgEj4Xw1t-KY6NAuHVMTdNzsk_tdWnddBEc2fUbV-Iz1W6ktTNtIXQ6ik&_nc_zt=14&_nc_ht=scontent-sea1-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQIHAlKYBFaQ6d4_ZxheF_olrOjVEBX7b4m8j-RmYmCqMQ&oe=6AB748C3",
+          "resizedImageUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/813837171_3615561928592003_2639000706458777732_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=107&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=_zGK5H5TwCoQ7kNvwFn8Y_b&_nc_oc=AdrV06xm1N85RKlWZJopIcnBNNqaWh6EMqlHW1fJ3o022PKIRG1Ob4z9_4ZfFLhadf0&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQI6Q7nXeZddBJEv1apzmc6GdSXbxfyY8u8X2Tim-lMTrQ&oe=6AB71B69",
+          "watermarkedResizedImageUrl": ""
+        },
+        {
+          "body": "¡Porque vos te lo merecés, equipá tu área de lavado con la mejor calidad! 🔥\n\nLlegó la Frigimania a gollo.com con un 30% de descuento en esta Lavadora Semiautomática Frigidaire. Llevátela a solo ₡159.900 (antes ₡239.900) 🤩\n\nAprovechá y pagá a 24 meses con Tasa Cero de BAC Credomatic, Credix o Emma.\n\nComprá ya en gollo.com o descubrí más ofertas por WhatsApp 👉 https://bit.ly/3HB5Q60\n\n*Válido del 4 al 30 de setiembre de 2026.\n\n*Ver condiciones en: www.gollo.com/terminos-y-condiciones\n\n#Frigimania #GolloCom #TasaCero #SoloBueno #Gollo",
+          "ctaType": "SHOP_NOW",
+          "caption": "",
+          "linkDescription": "Comprá YA",
+          "linkUrl": "https://www.gollo.com/lavadora-semiautomatica-frigidaire-superior-analogo-20-kgs-fwtt20m4ubuzw-6080010236/p",
+          "title": "Ofertas en Gollo.com",
+          "ctaText": "Shop Now",
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/813841650_964607889238062_1743855040458741976_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=Y-qft2s1Y3IQ7kNvwG-g2Jv&_nc_oc=AdrQeYuVM0HU_RoLoJ5WP6uE0wFNZBnynBDrY8823A8Yi5rEcCP9L_7-6GvCUeXWDYQ&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQIRxxooYw42RWoeM0ge-ULz8ueAV6iyvN4w1EWG1JhnZQ&oe=6AB74D03",
+          "resizedImageUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/813623865_1430783028997671_1937289719895272943_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=105&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=GLCY_9l2AL8Q7kNvwEK_qiq&_nc_oc=AdpkU5hx2MBcuTYdrHiu17IK7qtK2dmtnuahGUpgQFIxgetMZCi9W-jn7nVpZ4mpHl4&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQJSDGIq7CxEVE53lQLv2HZIgiBk2Q90duKGiyramh9SNQ&oe=6AB72D6A",
+          "watermarkedResizedImageUrl": ""
+        }
+      ],
+      "body": {
+        "text": "¡Porque vos te lo merecés, equipá tu área de lavado con la mejor calidad! 🔥\n\nLlegó la Frigimania a gollo.com con un 30% de descuento en esta Lavadora Semiautomática Frigidaire. Llevátela a solo ₡159.900 (antes ₡239.900) 🤩\n\nAprovechá y pagá a 24 meses con Tasa Cero de BAC Credomatic, Credix o Emma.\n\nComprá ya en gollo.com o descubrí más ofertas por WhatsApp 👉 https://bit.ly/3HB5Q60\n\n*Válido del 4 al 30 de setiembre de 2026.\n\n*Ver condiciones en: www.gollo.com/terminos-y-condiciones\n\n#Frigimania #GolloCom #TasaCero #SoloBueno #Gollo"
+      },
+      "ctaType": "SHOP_NOW",
+      "displayFormat": "DCO",
+      "linkDescription": "Comprá YA",
+      "linkUrl": "https://www.gollo.com/lavadora-semiautomatica-frigidaire-superior-analogo-20-kgs-fwtt20m4ubuzw-6080010236/p",
+      "images": [],
+      "pageCategories": [
+        "Electronics"
+      ],
+      "pageLikeCount": 776529,
+      "title": "Ofertas en Gollo.com",
+      "videos": [],
+      "isReshared": false,
+      "extraLinks": [],
+      "extraTexts": [],
+      "extraImages": [],
+      "extraVideos": [],
+      "countryIsoCode": null,
+      "brazilTaxId": null,
+      "additionalInfo": null,
+      "ecCertificates": []
+    },
+    "isActive": true,
+    "hasUserReported": false,
+    "reportCount": null,
+    "menuItems": [],
+    "stateMediaRunLabel": null,
+    "pageIsDeleted": false,
+    "pageName": "Gollo",
+    "impressionsWithIndex": {
+      "impressionsText": null,
+      "impressionsIndex": -1
+    },
+    "gatedType": "ELIGIBLE",
+    "categories": [
+      "UNKNOWN"
+    ],
+    "isAaaEligible": false,
+    "containsDigitalCreatedMedia": false,
+    "reachEstimate": null,
+    "currency": "",
+    "spend": null,
+    "endDate": 1789974000,
+    "publisherPlatform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "AUDIENCE_NETWORK",
+      "WHATSAPP",
+      "THREADS"
+    ],
+    "startDate": 1789628400,
+    "containsSensitiveContent": false,
+    "totalActiveTime": null,
+    "regionalRegulationData": {
+      "finserv": {
+        "isDeemedFinserv": false,
+        "isLimitedDelivery": false
+      },
+      "twAntiScam": {
+        "isLimitedDelivery": false
+      }
+    },
+    "hideDataStatus": "NONE",
+    "fevInfo": null,
+    "adId": null,
+    "targetedOrReachedCountries": []
+  },
+  {
+    "inputUrl": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q=Gollo&search_type=keyword_unordered",
+    "pageInfo": {
+      "adLibrarySystemStatus": {
+        "systemStatus": {
+          "status": "NO_KNOWN_ISSUES",
+          "activeIssues": [
+            {
+              "product": "Ad Library",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library Report",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library API",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Branded Content",
+              "status": "NO_KNOWN_ISSUES"
+            }
+          ]
+        }
+      },
+      "xfbAdLibraryIsCaptchaRequired": false,
+      "page": null,
+      "adLibraryUser": null
+    },
+    "pageID": "118116974879681",
+    "adArchiveID": "1029284180126565",
+    "startDateFormatted": "2026-09-17T07:00:00.000Z",
+    "endDateFormatted": "2026-09-21T07:00:00.000Z",
+    "adArchiveId": "1029284180126565",
+    "collationCount": 1,
+    "collationId": "1403460155322015",
+    "pageId": "118116974879681",
+    "snapshot": {
+      "brandedContent": null,
+      "pageId": "118116974879681",
+      "pageIsDeleted": false,
+      "pageProfileUri": "https://www.facebook.com/GolloCR/",
+      "rootResharedPost": null,
+      "byline": null,
+      "disclaimerLabel": null,
+      "pageName": "Gollo",
+      "pageProfilePictureUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/814761630_954796527666636_6427083401859122086_n.jpg?stp=dst-jpg_s60x60_tt6&_nc_cat=103&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=H-HeYnidcgkQ7kNvwFbnz44&_nc_oc=Adrnxi-5jRsvMNZnz8Q-g9w6DeXEvFI9WWBq-oI9cCK4Le3p7ErIfo-VRiur7CPQHwI&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQKXosDX2zbeyI563oNABffJ8j8MSiq16f-p_xQvSV8zkA&oe=6AB744F3",
+      "event": null,
+      "caption": "gollo.com",
+      "ctaText": "Shop now",
+      "cards": [
+        {
+          "body": "¡Asegurá el mejor descanso con la Gran Liquidación del Compratón! 😴✨\n\nLlevate este Colchón Coruña Premium Pillow Top y disfrutá del máximo confort que tu cuerpo necesita a un precio increíble. 😴☁️\n\nLlevátelo con las mejores facilidades de pago o cuotas a tu medida.\n\n📍 Visitanos en nuestras tiendas Gollo o comprá desde casa en gollo.com. ¡Renová tu descanso hoy mismo!\n\n*Ver condiciones en tienda o en gollo.com\n\n#Gollo #Compratón #GranLiquidación #Coruña #ElMejorDescanso #SoloBueno #OfertasCR",
+          "ctaType": "SHOP_NOW",
+          "caption": "",
+          "linkDescription": "Comprá YA",
+          "linkUrl": "https://www.gollo.com/colchon-coruna-premium-pillow-top-matrimonial-4501040090/p",
+          "title": "Ofertas en Gollo.com",
+          "ctaText": "Shop Now",
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-sea1-1.xx.fbcdn.net/v/t39.35426-6/793324314_1705181770575139_3372334725205887446_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=_dxQm64PzT0Q7kNvwGxbDK-&_nc_oc=AdpGcMZkkB6aUl8kCD2h-Oa2SvqVyKh9zuMuy0uH4Fg2Xi87CTVxAg0esEnbhd3LLN0&_nc_zt=14&_nc_ht=scontent-sea1-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQLTI2RceUPghT6luBUTaQtyIt7IeuDMgTZhS6fsNdnk3A&oe=6AB74E13",
+          "resizedImageUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/794394840_2822736494765405_2711897265312100543_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=108&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=gsSBXx9552YQ7kNvwG_CApc&_nc_oc=AdrsOkUB3uM3ZC6u_XCGVgC_BbT36jjsbCh_0_7ePTqZdpftdEBD68GqlcZKmcdY0pA&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQKOsRuIIXNdoW3gWeYLSpp-iQ54-GanPo6wU8gwIgZBcw&oe=6AB731AF",
+          "watermarkedResizedImageUrl": ""
+        },
+        {
+          "body": "¡Asegurá el mejor descanso con la Gran Liquidación del Compratón! 😴✨\n\nLlevate este Colchón Coruña Premium Pillow Top y disfrutá del máximo confort que tu cuerpo necesita a un precio increíble. 😴☁️\n\nLlevátelo con las mejores facilidades de pago o cuotas a tu medida.\n\n📍 Visitanos en nuestras tiendas Gollo o comprá desde casa en gollo.com. ¡Renová tu descanso hoy mismo!\n\n*Ver condiciones en tienda o en gollo.com\n\n#Gollo #Compratón #GranLiquidación #Coruña #ElMejorDescanso #SoloBueno #OfertasCR",
+          "ctaType": "SHOP_NOW",
+          "caption": "",
+          "linkDescription": "Comprá YA",
+          "linkUrl": "https://www.gollo.com/colchon-coruna-premium-pillow-top-matrimonial-4501040090/p",
+          "title": "Ofertas en Gollo.com",
+          "ctaText": "Shop Now",
+          "videoHdUrl": null,
+          "videoPreviewImageUrl": null,
+          "videoSdUrl": null,
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null,
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-sea1-1.xx.fbcdn.net/v/t39.35426-6/794473515_28601852306140256_3512387791602051579_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=9r4HB2exKNIQ7kNvwERAYZ8&_nc_oc=AdqUY789LUbA91DkoO74lyf4_hjZkZf_70maaUt7inmxW3apu1-Gr9R2E2OFZqe9uAU&_nc_zt=14&_nc_ht=scontent-sea1-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQKBZ8256_agLJCszfb7sCxTAM7_6fWZMicu4Zz3m5-hLw&oe=6AB73DCC",
+          "resizedImageUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/797991850_3584991938335842_184910132461283409_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=105&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=Y85k5GAdsrwQ7kNvwFCj8EZ&_nc_oc=AdrA6NNxFgZSrQpWQFFYp52YhNuOscE6HbIdmZQYA7LtQj9FGinzdK7Vo5xmvh1xsZ4&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQJDyyIHlwZLkmawjX7qxSSgkxtwFdvg87b8qTYGSvdbFw&oe=6AB73F45",
+          "watermarkedResizedImageUrl": ""
+        }
+      ],
+      "body": {
+        "text": "¡Asegurá el mejor descanso con la Gran Liquidación del Compratón! 😴✨\n\nLlevate este Colchón Coruña Premium Pillow Top y disfrutá del máximo confort que tu cuerpo necesita a un precio increíble. 😴☁️\n\nLlevátelo con las mejores facilidades de pago o cuotas a tu medida.\n\n📍 Visitanos en nuestras tiendas Gollo o comprá desde casa en gollo.com. ¡Renová tu descanso hoy mismo!\n\n*Ver condiciones en tienda o en gollo.com\n\n#Gollo #Compratón #GranLiquidación #Coruña #ElMejorDescanso #SoloBueno #OfertasCR"
+      },
+      "ctaType": "SHOP_NOW",
+      "displayFormat": "DCO",
+      "linkDescription": "Comprá YA",
+      "linkUrl": "https://www.gollo.com/colchon-coruna-premium-pillow-top-matrimonial-4501040090/p",
+      "images": [],
+      "pageCategories": [
+        "Electronics"
+      ],
+      "pageLikeCount": 776529,
+      "title": "Ofertas en Gollo.com",
+      "videos": [],
+      "isReshared": false,
+      "extraLinks": [],
+      "extraTexts": [],
+      "extraImages": [],
+      "extraVideos": [],
+      "countryIsoCode": null,
+      "brazilTaxId": null,
+      "additionalInfo": null,
+      "ecCertificates": []
+    },
+    "isActive": true,
+    "hasUserReported": false,
+    "reportCount": null,
+    "menuItems": [],
+    "stateMediaRunLabel": null,
+    "pageIsDeleted": false,
+    "pageName": "Gollo",
+    "impressionsWithIndex": {
+      "impressionsText": null,
+      "impressionsIndex": -1
+    },
+    "gatedType": "ELIGIBLE",
+    "categories": [
+      "UNKNOWN"
+    ],
+    "isAaaEligible": false,
+    "containsDigitalCreatedMedia": false,
+    "reachEstimate": null,
+    "currency": "",
+    "spend": null,
+    "endDate": 1789974000,
+    "publisherPlatform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "AUDIENCE_NETWORK",
+      "WHATSAPP",
+      "THREADS"
+    ],
+    "startDate": 1789628400,
+    "containsSensitiveContent": false,
+    "totalActiveTime": null,
+    "regionalRegulationData": {
+      "finserv": {
+        "isDeemedFinserv": false,
+        "isLimitedDelivery": false
+      },
+      "twAntiScam": {
+        "isLimitedDelivery": false
+      }
+    },
+    "hideDataStatus": "NONE",
+    "fevInfo": null,
+    "adId": null,
+    "targetedOrReachedCountries": []
+  },
+  {
+    "inputUrl": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q=Gollo&search_type=keyword_unordered",
+    "pageInfo": {
+      "adLibrarySystemStatus": {
+        "systemStatus": {
+          "status": "NO_KNOWN_ISSUES",
+          "activeIssues": [
+            {
+              "product": "Ad Library",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library Report",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library API",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Branded Content",
+              "status": "NO_KNOWN_ISSUES"
+            }
+          ]
+        }
+      },
+      "xfbAdLibraryIsCaptchaRequired": false,
+      "page": null,
+      "adLibraryUser": null
+    },
+    "pageID": "248567762331550",
+    "adArchiveID": "2372937883135122",
+    "startDateFormatted": "2026-02-13T08:00:00.000Z",
+    "endDateFormatted": "2026-09-21T07:00:00.000Z",
+    "adArchiveId": "2372937883135122",
+    "collationCount": 1,
+    "collationId": "1675030423816087",
+    "pageId": "248567762331550",
+    "snapshot": {
+      "brandedContent": null,
+      "pageId": "248567762331550",
+      "pageIsDeleted": false,
+      "pageProfileUri": "https://www.facebook.com/100066776265893/",
+      "rootResharedPost": null,
+      "byline": null,
+      "disclaimerLabel": null,
+      "pageName": "Super Ofertas 3000",
+      "pageProfilePictureUrl": "https://scontent-sea5-1.xx.fbcdn.net/v/t39.35426-6/631385857_1151150886950221_2392400345138523089_n.jpg?stp=dst-jpg_s60x60_tt6&_nc_cat=105&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=gOxSIxGtQmcQ7kNvwFJpr3I&_nc_oc=AdpCut62-XIPs-cT_SxCTj7vYa4V8UWcd6pho_uMhg7QIc0LLi5Y6hHyaBPLeAc3DeQ&_nc_zt=14&_nc_ht=scontent-sea5-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQIew2lPzPTfjhFvjDJrUA7a9EStMe_49z5_P2dcebmowg&oe=6AB73752",
+      "event": null,
+      "caption": null,
+      "ctaText": "Send message",
+      "cards": [],
+      "body": {
+        "text": "Todavía no nos conoces?, no te preocupes que nosotros te lo mostramos😉\n\nSomos Super Ofertas 3000 y tenemos gran variedad de productos, y lo mejor SÚPER ECONÓMICOS.\n\n¿Que esperas para venir a visitarnos?, Ven que te esperamos 😉 \n\nEstamos ubicados ÚNICAMENTE frente al Gollo plaza ferias, Alajuela Centro💥💥\n\n¡LOS ESPERAMOS!✅️\n@fansdestacados \n\nMás info:📞 6280 5649 \n#SUPER_OFERTAS_3000 \n#alajuelacostarica"
+      },
+      "ctaType": "MESSAGE_PAGE",
+      "displayFormat": "VIDEO",
+      "linkDescription": null,
+      "linkUrl": null,
+      "images": [],
+      "pageCategories": [
+        "Product/service"
+      ],
+      "pageLikeCount": 38299,
+      "title": null,
+      "videos": [
+        {
+          "videoHdUrl": "https://video-sea1-1.xx.fbcdn.net/o1/v/t2/f2/m366/AQMkzbr6JCuQ6fQTMcZRxu4TZgy7VMo7YE9yaja7SMy9YXNRJS_gf04oCjfFWNWvGrZ4WF-mw4YrPXbfvZBFL8poGUud2MGQ2pKDdK6pSBIHyQ.mp4?_nc_cat=104&_nc_sid=b66105&_nc_ht=video-sea1-1.xx.fbcdn.net&_nc_ohc=jwJZCjGSm7UQ7kNvwH_V_V7&efg=eyJ2ZW5jb2RlX3RhZyI6Inhwdl9wcm9ncmVzc2l2ZS5WSV9VU0VDQVNFX1BST0RVQ1RfVFlQRS4uQzMuNzIwLmRhc2hfaDI2NC1iYXNpYy1nZW4yXzcyMHAiLCJ4cHZfYXNzZXRfaWQiOjE2ODI1NTUwODk1NzQzMDQsImFzc2V0X2FnZV9kYXlzIjoyMjAsInZpX3VzZWNhc2VfaWQiOjEwMTIyLCJkdXJhdGlvbl9zIjoyNTEsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&vs=d82f4fad2fce5241&_nc_vs=HBksFQIYRWZiX2VwaGVtZXJhbC9GMzQ1RDBENzc1REQxMUE4MkE2RkY1MjlFMTZBMDQ4RF9tdF8xX3ZpZGVvX2Rhc2hpbml0Lm1wNBUAAsgBEgAVAhhAZmJfcGVybWFuZW50L0RGNDlCOTc1QjA4OEIzRkU0QjIxMDE5QkZERjFDQzhDX2F1ZGlvX2Rhc2hpbml0Lm1wNBUCAsgBEgAoABgAGwKIB3VzZV9vaWwBMRJwcm9ncmVzc2l2ZV9yZWNpcGUBMRUAACbA5u6mzJH9BRUCKAJDMywXQG9u6XjU_fQYGWRhc2hfaDI2NC1iYXNpYy1nZW4yXzcyMHARAHUAZZSeAQA&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&_nc_zt=28&oh=00_AQIRRonGGhN5SVXDpXELUNUZS9l9jT-EgZagdqJy7LHE0w&oe=6AB73B44",
+          "videoPreviewImageUrl": "https://scontent-sea1-1.xx.fbcdn.net/v/t39.35426-6/629869462_2038878813651130_2121809199380317993_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=N8O2LrhoaicQ7kNvwH5pv9X&_nc_oc=AdqEKs0QdNFP60nm9ppIn6GrIdvYbZaYcNt6I8-JDxvCYTvBb2U5pIQAcwIR07CfovQ&_nc_zt=14&_nc_ht=scontent-sea1-1.xx&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&oh=00_AQIzY-m1UxT4mfoQa3ZBJuMQUFazZZ5GfcstsTOcA1nAGw&oe=6AB74CC1",
+          "videoSdUrl": "https://video-sea1-1.xx.fbcdn.net/o1/v/t2/f2/m412/AQO_br3tTjMo8XPxRjbPCdGRzWLLzCp03NSCA2tcZ7_4LooPbyZDLzmU_ELCHblgo5xWIjlPD2DtjUT1B_xJdJ5rurjBDQVEm5xYxAuKaA.mp4?_nc_cat=104&_nc_sid=ef5aa3&_nc_ht=video-sea1-1.xx.fbcdn.net&_nc_ohc=ZNVHTy8C8DEQ7kNvwGPfXih&efg=eyJ2ZW5jb2RlX3RhZyI6Inhwdl9wcm9ncmVzc2l2ZS5WSV9VU0VDQVNFX1BST0RVQ1RfVFlQRS4uQzMuMzYwLnN2ZV9zZCIsInhwdl9hc3NldF9pZCI6MTY4MjU1NTA4OTU3NDMwNCwiYXNzZXRfYWdlX2RheXMiOjIyMCwidmlfdXNlY2FzZV9pZCI6MTAxMjIsImR1cmF0aW9uX3MiOjI1MSwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=nMs2QXCL0VyilsnVlmXd2A&_nc_ss=73289&_nc_zt=28&oh=00_AQK_1ueO2zHYbLQLXgsLkWOJG_0XXtsjf6T6tXV0jY8cGw&oe=6AB7349A",
+          "watermarkedVideoHdUrl": null,
+          "watermarkedVideoSdUrl": null
+        }
+      ],
+      "isReshared": false,
+      "extraLinks": [],
+      "extraTexts": [],
+      "extraImages": [],
+      "extraVideos": [],
+      "countryIsoCode": null,
+      "brazilTaxId": null,
+      "additionalInfo": null,
+      "ecCertificates": []
+    },
+    "isActive": true,
+    "hasUserReported": false,
+    "reportCount": null,
+    "menuItems": [],
+    "stateMediaRunLabel": null,
+    "pageIsDeleted": false,
+    "pageName": "Super Ofertas 3000",
+    "impressionsWithIndex": {
+      "impressionsText": null,
+      "impressionsIndex": -1
+    },
+    "gatedType": "ELIGIBLE",
+    "categories": [
+      "UNKNOWN"
+    ],
+    "isAaaEligible": false,
+    "containsDigitalCreatedMedia": false,
+    "reachEstimate": null,
+    "currency": "",
+    "spend": null,
+    "endDate": 1789974000,
+    "publisherPlatform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "MESSENGER"
+    ],
+    "startDate": 1770969600,
+    "containsSensitiveContent": false,
+    "totalActiveTime": null,
+    "regionalRegulationData": {
+      "finserv": {
+        "isDeemedFinserv": false,
+        "isLimitedDelivery": false
+      },
+      "twAntiScam": {
+        "isLimitedDelivery": false
+      }
+    },
+    "hideDataStatus": "NONE",
+    "fevInfo": null,
+    "adId": null,
+    "targetedOrReachedCountries": []
+  }
+]

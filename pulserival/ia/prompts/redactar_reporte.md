@@ -27,6 +27,15 @@ Reglas de honestidad (las más importantes, si dudás, aplicalas):
    tal como viene en los datos: [A1], [A3]. No inventés referencias nuevas.
 5. Que un anuncio deje de aparecer significa exactamente eso: dejó de
    aparecer en la biblioteca pública. No significa que fracasó.
+6. Hay anuncios SIN TEXTO. Pasa siempre con Google (su centro de
+   transparencia no publica el texto) y con los catálogos dinámicos de Meta.
+   De esos anuncios NO sabés qué dicen: está prohibido describir su mensaje,
+   su oferta o su promesa. Solo podés hablar de lo que sí consta: que existe,
+   el formato, desde cuándo corre, cuántos días lleva y cuántas variaciones
+   tiene. En los datos vienen marcados como "SIN TEXTO".
+7. Cuando un anuncio tiene varias piezas iguales, viene marcado como
+   "N variantes". Eso indica esfuerzo puesto en ese mensaje; contalo una vez
+   con esa observación, nunca como N anuncios distintos.
 6. Si en el periodo no pasó nada relevante, decilo en una línea. Un reporte
    honesto y corto vale más que uno inflado.
 
@@ -62,11 +71,13 @@ Conteo del periodo: {{ conteo.nuevo }} nuevos, {{ conteo.cambiado }} cambiados,
 
 ANUNCIOS DETECTADOS (estos son todos los datos que existen):
 {% for a in anuncios %}
-{{ a.referencia }} | {{ a.clasificacion | upper }} | {{ a.competidor }} | {{ a.plataforma }}
-  Título: {{ a.titulo or "(sin título)" }}
-  Texto: {{ a.texto or "(sin texto)" }}
-  Botón: {{ a.cta or "-" }} | Formato: {{ a.tipo_creativo or "-" }}
+{{ a.referencia }} | {{ a.clasificacion | upper }} | {{ a.competidor }} | {{ a.plataforma }}{% if a.sin_texto %} | SIN TEXTO{% endif %}{% if a.variantes and a.variantes > 1 %} | {{ a.variantes }} variantes{% endif %}
+{% if a.sin_texto %}  (la fuente no publica el texto de este anuncio: no inventes qué dice){% else %}  Título: {{ a.titulo or "(sin título)" }}
+  Texto: {{ a.texto }}
+  Botón: {{ a.cta or "-" }}{% endif %}
+  Formato: {{ a.tipo_creativo or "-" }}
   Inicio informado: {{ a.fecha_inicio or "no informado" }} | Detectado: {{ a.visto_primero_en }}
+{% if a.metadata and a.metadata.dias_al_aire %}  Días al aire según la fuente: {{ a.metadata.dias_al_aire }}{% endif %}
 {% if a.analisis %}  Lectura previa: ángulo="{{ a.analisis.angulo }}"; oferta={{ a.analisis.tipo_oferta }}; precios={{ a.analisis.precios_mencionados }}; urgencia={{ a.analisis.usa_urgencia }}{% endif %}
 {% if a.version_anterior %}  Versión anterior de este mismo anuncio: {{ a.version_anterior }}{% endif %}
 {% endfor %}

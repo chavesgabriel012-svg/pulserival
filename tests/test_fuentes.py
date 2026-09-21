@@ -225,3 +225,66 @@ class TestMapeoConAnuncioReal(unittest.TestCase):
     def test_el_anuncio_no_queda_vacio(self):
         self.assertFalse(self.anuncio.vacio())
         self.assertTrue(self.anuncio.huella())
+
+
+class TestRespuestasRealesCompletas(unittest.TestCase):
+    """Las 15+15 respuestas reales de la prueba B, congeladas.
+
+    Sirven para que cualquier cambio futuro en el mapeo se pueda verificar
+    contra datos de verdad, sin volver a pagar una corrida.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        from pathlib import Path
+
+        base = Path(__file__).parent / "fixtures"
+        cls.meta = json.loads((base / "meta_anuncios_reales.json").read_text(encoding="utf-8"))
+        cls.google = json.loads((base / "google_anuncios_reales.json").read_text(encoding="utf-8"))
+
+    def test_meta_mapea_los_quince_sin_perder_campos(self):
+        fuente = FuenteApify("meta", token="prueba")
+        anuncios = [fuente.mapear(i) for i in self.meta]
+        self.assertEqual(len(anuncios), 15)
+        self.assertEqual(sum(1 for a in anuncios if a.vacio()), 0, "ninguno debe quedar vacío")
+        self.assertEqual(sum(1 for a in anuncios if not a.fecha_inicio), 0)
+        self.assertEqual(sum(1 for a in anuncios if not a.url_anuncio), 0)
+        self.assertEqual(len({a.huella() for a in anuncios}), 15, "las huellas deben ser únicas")
+
+    def test_google_mapea_los_quince_y_respeta_el_formato_declarado(self):
+        fuente = FuenteApify("google", token="prueba")
+        anuncios = [fuente.mapear(i) for i in self.google]
+        self.assertEqual(len(anuncios), 15)
+        formatos = {}
+        for a in anuncios:
+            formatos[a.tipo_creativo] = formatos.get(a.tipo_creativo, 0) + 1
+        # El actor declara 3 TEXT, 7 IMAGE y 5 VIDEO.
+        self.assertEqual(formatos, {"texto": 3, "imagen": 7, "video": 5})
+        self.assertTrue(all(a.url_anuncio and "adstransparency.google.com" in a.url_anuncio
+                            for a in anuncios))
+
+    def test_google_no_trae_texto_y_eso_esta_asumido(self):
+        """Dato de producto, no un bug: el centro de transparencia de Google
+        no publica el texto. Si algún día lo hace, este test falla y hay que
+        actualizar el reporte para aprovecharlo."""
+        fuente = FuenteApify("google", token="prueba")
+        anuncios = [fuente.mapear(i) for i in self.google]
+        con_texto = [a for a in anuncios if a.texto or a.titulo]
+        self.assertEqual(con_texto, [], "el actor empezó a traer texto: aprovechalo en el reporte")
+        # Lo que sí trae, y es con lo único que el reporte puede hablar:
+        self.assertTrue(all(a.metadata.get("dias_al_aire") for a in anuncios))
+        con_creativo = [a for a in anuncios if a.creativo_url]
+        self.assertGreaterEqual(len(con_creativo), 13,
+                                "casi todos deben traer algo que mirar en el anexo")
+        videos = [a for a in anuncios if a.tipo_creativo == "video"]
+        self.assertTrue(all(a.creativo_url for a in videos),
+                        "los de video no traen imagen: se arma la miniatura de YouTube")
+
+    def test_meta_trae_catalogos_dinamicos_con_plantillas(self):
+        """Real: 6 de 15 anuncios eran de catálogo y traían '{{product.brand}}'
+        en vez de texto. El reporte los marca como sin texto."""
+        fuente = FuenteApify("meta", token="prueba")
+        plantillas = [a for a in (fuente.mapear(i) for i in self.meta)
+                      if "{{" in (a.texto or "")]
+        self.assertTrue(plantillas, "el fixture debe incluir catálogos dinámicos")
