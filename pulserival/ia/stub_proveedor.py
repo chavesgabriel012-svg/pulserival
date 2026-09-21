@@ -51,8 +51,10 @@ class ProveedorStub:
         )
         plano = util.normalizar_texto(texto)
         precios = [m.strip() for m in PRECIO_RE.findall(texto)]
-        oferta = [p for p in PALABRAS_OFERTA if p in plano]
-        urgencia = [p for p in PALABRAS_URGENCIA if p in plano]
+        # `plano` viene sin acentos: la palabra buscada también tiene que ir
+        # normalizada, o "matrícula" y "liquidación" nunca calzan.
+        oferta = [p for p in PALABRAS_OFERTA if util.normalizar_texto(p) in plano]
+        urgencia = [p for p in PALABRAS_URGENCIA if util.normalizar_texto(p) in plano]
         return json.dumps(
             {
                 "angulo": util.recortar(datos.get("titulo") or texto, 90) or "sin texto",

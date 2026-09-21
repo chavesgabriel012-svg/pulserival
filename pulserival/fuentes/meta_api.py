@@ -57,7 +57,13 @@ class FuenteMetaApiOficial:
             r = requests.get(f"{BASE}/{self.version}/ads_archive", params=params, timeout=60)
         except requests.RequestException as e:
             raise FuenteError(f"No se pudo consultar la Graph API: {e}") from e
-        cuerpo = r.json() if r.content else {}
+        try:
+            cuerpo = r.json() if r.content else {}
+        except ValueError as e:
+            raise FuenteError(
+                f"La Graph API devolvió algo que no es JSON ({r.status_code}): "
+                f"{util.recortar(r.text, 200)}"
+            ) from e
         if r.status_code >= 400:
             error = (cuerpo.get("error") or {}).get("message", r.text)
             raise FuenteError(f"Graph API respondió {r.status_code}: {util.recortar(error, 300)}")

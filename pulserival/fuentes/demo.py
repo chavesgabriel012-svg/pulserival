@@ -144,18 +144,25 @@ _DATOS = {
 
 
 class FuenteDemo:
-    def __init__(self, plataforma: str, aviso: bool = False):
+    def __init__(self, plataforma: str):
         self.plataforma = plataforma
+        # El nombre queda guardado en cada anuncio (columna `fuente`), así que
+        # un dato de demo siempre es identificable en la base.
         self.nombre = f"demo:{plataforma}"
-        self.aviso = aviso
 
     def traer(self, competidor: dict, limite: int = 40) -> list[AnuncioCrudo]:
         semana = int(os.environ.get("PULSERIVAL_DEMO_SEMANA", "1"))
         # Hay dos juegos de anuncios de ejemplo ("a" y "b"). Cada competidor
         # recibe uno, de forma estable, para que no se mezclen entre ellos.
+        items = _DATOS.get((self.plataforma, semana), [])
+        grupos = {it.get("grupo", "a") for it in items}
         grupo_comp = "b" if int(competidor.get("id") or 1) % 2 == 0 else "a"
+        if grupo_comp not in grupos:
+            # Google solo tiene el juego "a": sin esto, los competidores con id
+            # par no verían ningún anuncio de Google en la demo.
+            grupo_comp = "a"
         salida = []
-        for item in _DATOS.get((self.plataforma, semana), []):
+        for item in items:
             item = dict(item)
             if item.pop("grupo", "a") != grupo_comp:
                 continue

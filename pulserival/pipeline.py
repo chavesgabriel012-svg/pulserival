@@ -25,6 +25,7 @@ class Corrida:
     resultados: list[priorizar.ResultadoCompetidor] = field(default_factory=list)
     errores: list[dict[str, str]] = field(default_factory=list)
     saltados: list[dict[str, str]] = field(default_factory=list)
+    sospechosas: list[dict[str, str]] = field(default_factory=list)
 
     def totales(self) -> dict[str, int]:
         t = {"nuevos": 0, "cambiados": 0, "continuan": 0, "pausados": 0}
@@ -76,9 +77,21 @@ def recolectar(
                     continue
                 res = priorizar.conciliar(con, competidor, plataforma, vistos, corrida.id)
                 corrida.resultados.append(res)
+                if res.sospechosa:
+                    corrida.sospechosas.append({
+                        "competidor": comp["nombre"], "plataforma": plataforma,
+                        "motivo": "la fuente no devolvió ningún anuncio pero antes había "
+                                  "activos: no se marcó nada como pausado. Verificá a mano "
+                                  "en la biblioteca pública antes de reportarlo.",
+                    })
                 con.commit()
 
-    estado = "ok" if not corrida.errores else ("parcial" if corrida.resultados else "error")
+    if corrida.errores:
+        estado = "parcial" if corrida.resultados else "error"
+    elif corrida.sospechosas:
+        estado = "parcial"
+    else:
+        estado = "ok"
     db.actualizar(con, "corridas_recoleccion", corrida.id, {
         "terminada_en": util.ahora_iso(),
         "estado": estado,
@@ -90,9 +103,33 @@ def recolectar(
             ],
             "errores": corrida.errores,
             "saltados": corrida.saltados,
+            "sospechosas": corrida.sospechosas,
         }),
     })
     return corrida
+
+
+def _toca_reportar(con: sqlite3.Connection, cliente_id: int, periodicidad: str, inicio: str) -> bool:
+    """¿Le toca reporte a este cliente hoy?
+
+    El cron corre todas las semanas, pero un cliente mensual paga un reporte
+    por mes: sin este chequeo, una corrida semanal le generaría cuatro
+    borradores mensuales al mes, cada uno cobrando IA y solapándose con el
+    anterior.
+
+    La regla: se reporta solo si el último reporte de ese cliente cerró antes
+    de que arrancara el periodo actual. Para un cliente semanal eso es todas
+    las semanas; para uno mensual, una vez cada 30 días.
+    """
+    ultimo = db.fila(
+        con,
+        "SELECT periodo_fin FROM reportes_generados WHERE cliente_id = ? "
+        "ORDER BY date(periodo_fin) DESC LIMIT 1",
+        (cliente_id,),
+    )
+    if not ultimo or not ultimo["periodo_fin"]:
+        return True
+    return str(ultimo["periodo_fin"])[:10] < inicio
 
 
 def ciclo_completo(
@@ -116,7 +153,12 @@ def ciclo_completo(
     reportes: list[dict[str, Any]] = []
 
     for cliente in db.clientes_activos(con, cliente_id):
-        inicio, fin = util.periodo(cliente["periodicidad"] or "semanal")
+        periodicidad = cliente["periodicidad"] or "semanal"
+        inicio, fin = util.periodo(periodicidad)
+        if not _toca_reportar(con, int(cliente["id"]), periodicidad, inicio):
+            reportes.append({"cliente": cliente["nombre_empresa"],
+                             "omitido": "todavía no cierra el periodo de este cliente"})
+            continue
         try:
             rep = generar_mod.generar(con, cliente, inicio, fin, presupuesto=presupuesto)
         except (ProveedorError, RuntimeError) as e:
@@ -139,6 +181,7 @@ def ciclo_completo(
         "totales": corrida.totales(),
         "errores": corrida.errores,
         "saltados": corrida.saltados,
+        "sospechosas": corrida.sospechosas,
         "reportes": reportes,
         "costo_ia_usd": round(presupuesto.gastado_usd, 5),
     }

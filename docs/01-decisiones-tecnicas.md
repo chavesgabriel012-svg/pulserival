@@ -24,15 +24,21 @@ es un cambio acotado a `pulserival/db.py`.
 terreno natural, y es el lenguaje con más ejemplos y más ayuda disponible
 cuando te trabés.
 
-## Solo dos librerías externas
+## Solo tres librerías externas
 
-`requirements.txt` tiene dos líneas: `Jinja2` (plantillas del email) y
-`requests` (llamadas HTTP). Todo lo demás es la biblioteca estándar de
-Python, incluido el lector de `.env`, el diff y el conversor de Markdown.
+`requirements.txt` tiene tres líneas: `PyYAML` (leer `config/`), `Jinja2`
+(plantillas del email) y `requests` (llamadas HTTP). Todo lo demás es la
+biblioteca estándar de Python, incluido el lector de `.env`, el diff y el
+conversor de Markdown.
 
 Cada librería que se instala es algo que en seis meses se actualiza, cambia
-de comportamiento y rompe la corrida del lunes. Dos es un número que podés
+de comportamiento y rompe la corrida del lunes. Tres es un número que podés
 mantener sin pensar.
+
+Y por eso mismo el workflow de pruebas existe: la primera versión de este
+archivo se olvidó de `PyYAML` (estaba instalado en la máquina donde se
+escribió el código, pero no en una limpia). El CI lo detectó en 10 segundos.
+Ese es exactamente el trabajo que hace.
 
 ## Línea de comandos, no interfaz web
 

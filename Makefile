@@ -8,7 +8,7 @@ PY ?= python3
 ayuda:
 	@echo "PulseRival — comandos disponibles"
 	@echo ""
-	@echo "  make instalar    instala las 2 librerías necesarias"
+	@echo "  make instalar    instala las 3 librerías necesarias"
 	@echo "  make demo        prueba TODO el flujo con datos de ejemplo (sin claves, sin costo)"
 	@echo "  make init        crea la base de datos real"
 	@echo "  make ciclo       recolecta + genera borradores (lo que corre el cron)"

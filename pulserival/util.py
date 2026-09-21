@@ -38,15 +38,23 @@ def huella(*partes: Any) -> str:
     return hashlib.sha256(crudo.encode("utf-8")).hexdigest()[:32]
 
 
-def periodo(periodicidad: str, referencia: date | None = None) -> tuple[str, str]:
-    """Devuelve (inicio, fin) del periodo que se está reportando.
+# Días que cubre cada periodicidad, contando ambos extremos.
+DIAS_PERIODO = {"semanal": 7, "mensual": 30}
 
-    Semanal  -> los 7 días anteriores a hoy.
-    Mensual  -> los 30 días anteriores a hoy.
+
+def periodo(periodicidad: str, referencia: date | None = None) -> tuple[str, str]:
+    """Devuelve (inicio, fin) del periodo que se está reportando, ambos incluidos.
+
+    Semanal  -> 7 días: de hoy-6 a hoy.
+    Mensual  -> 30 días: de hoy-29 a hoy.
+
+    El -1 importa: las comparaciones de fecha del reporte incluyen los dos
+    extremos, así que con `hoy - 7` el día del borde caía dentro de dos
+    periodos seguidos y el mismo anuncio se reportaba dos veces como nuevo.
     """
     fin = referencia or hoy()
-    dias = 7 if periodicidad == "semanal" else 30
-    return (fin - timedelta(days=dias)).isoformat(), fin.isoformat()
+    dias = DIAS_PERIODO.get(periodicidad, 30)
+    return (fin - timedelta(days=dias - 1)).isoformat(), fin.isoformat()
 
 
 def recortar(texto: str | None, largo: int = 180) -> str:

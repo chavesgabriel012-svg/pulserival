@@ -6,11 +6,20 @@ import tempfile
 import unittest
 from pathlib import Path
 
-os.environ.pop("GROQ_API_KEY", None)
-os.environ.pop("GEMINI_API_KEY", None)
-os.environ.pop("APIFY_TOKEN", None)
-os.environ.pop("RESEND_API_KEY", None)
-os.environ.pop("SMTP_HOST", None)
+# Los tests nunca deben llamar a un servicio real ni gastar crédito.
+#
+# Ojo con el detalle: borrar estas variables NO alcanza. config.cargar_env()
+# lee el .env del proyecto y usa setdefault, así que una clave borrada vuelve
+# a aparecer y los tests terminan haciendo llamadas de verdad (esto pasó: un
+# test unitario recibió un 401 de la API de correo). Ponerlas en vacío sí
+# funciona: setdefault no pisa una variable que ya existe, y config.env()
+# devuelve None cuando el valor está vacío.
+CLAVES_BLOQUEADAS = (
+    "GROQ_API_KEY", "GEMINI_API_KEY", "APIFY_TOKEN",
+    "RESEND_API_KEY", "SMTP_HOST", "META_AD_LIBRARY_TOKEN",
+)
+for _clave in CLAVES_BLOQUEADAS:
+    os.environ[_clave] = ""
 
 from pulserival import config, db  # noqa: E402
 

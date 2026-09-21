@@ -36,7 +36,7 @@ Abrí el `.html` que deja en `salida/` para verlo como lo recibe el cliente.
 ## Puesta en marcha real
 
 ```bash
-make instalar                         # instala Jinja2 y requests, nada más
+make instalar                         # instala las 3 librerías necesarias
 cp .env.example .env                  # y llená las claves que vayas usando
 make init                             # crea datos/pulserival.db
 
@@ -97,14 +97,18 @@ cambiar de modelo o arreglar un campo de un scraper no requiere tocar código.
 | [04 · Modelos de IA](docs/04-modelos-ia.md) | qué modelo para qué tarea, con tus $9 de Gemini y Groq gratis |
 | [05 · Qué necesito de vos](docs/05-que-necesito-de-vos.md) | la lista concreta antes de la primera corrida real |
 | [06 · Operación semanal](docs/06-operacion-semanal.md) | tu rutina de 20 minutos y qué hacer cuando algo falla |
+| [07 · Presupuesto](docs/07-presupuesto.md) | qué se paga y qué no, con precios verificados, y el dominio |
 
 ## Pruebas
 
 ```bash
-make prueba     # 53 tests, sin red, en menos de un segundo
+make prueba     # 95 tests, sin red, en menos de un segundo
 ```
 
 Cubren lo que más duele si se rompe: la detección de cambios, la clasificación
 del periodo, el control de calidad del borrador, el registro del diff, el
 mapeo de los scrapers y los seguros de envío (nunca se manda un borrador sin
 revisar, nunca se manda dos veces).
+
+`tests/test_regresiones.py` tiene un test por cada bug que encontró la revisión
+de código, con el comentario de qué pasaba antes. Si alguno vuelve, falla.

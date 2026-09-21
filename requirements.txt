@@ -1,4 +1,5 @@
 # PulseRival - dependencias mínimas a propósito.
-# Solo dos librerías externas: una para plantillas de email, otra para llamadas HTTP.
-Jinja2>=3.1
-requests>=2.31
+# Tres librerías externas, nada más:
+PyYAML>=6.0        # leer los archivos de configuración de config/
+Jinja2>=3.1        # plantillas del email y de los prompts
+requests>=2.31     # llamadas HTTP a los scrapers, la IA y el envío de correo
