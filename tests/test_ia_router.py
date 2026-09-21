@@ -6,6 +6,7 @@ import unittest
 from pulserival.ia import Peticion, Presupuesto, PresupuestoExcedido, ejecutar
 from pulserival.ia import prompts
 from pulserival.ia.base import extraer_json
+from pulserival import config
 from pulserival.ia.router import candidatos, costo
 
 
@@ -27,8 +28,16 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(datos["precios_mencionados"], ["¢19.900"])
 
     def test_calculo_de_costo(self):
-        self.assertAlmostEqual(costo("gemini", "gemini-2.5-pro", 1_000_000, 0), 1.25, places=4)
-        self.assertAlmostEqual(costo("groq", "llama-3.1-8b-instant", 0, 1_000_000), 0.08, places=4)
+        # La tarifa se lee del YAML en vez de fijar un nombre de modelo: los
+        # nombres se retiran y este test quedaba en rojo por eso, no por la
+        # cuenta, que es lo que se está probando.
+        precios = config.config_modelos()["precios_usd_por_millon"]
+        clave, tarifa = next(iter(p for p in precios.items() if p[0] != "stub/stub"))
+        proveedor, modelo = clave.split("/", 1)
+        self.assertAlmostEqual(costo(proveedor, modelo, 1_000_000, 0),
+                               tarifa["entrada"], places=4)
+        self.assertAlmostEqual(costo(proveedor, modelo, 0, 1_000_000),
+                               tarifa["salida"], places=4)
         self.assertEqual(costo("proveedor-inexistente", "x", 1000, 1000), 0.0)
 
     def test_tope_de_gasto_corta(self):
@@ -70,3 +79,112 @@ class TestPrompts(unittest.TestCase):
             periodo_anterior="nada")
         self.assertIn("[A1]", usuario)
         self.assertIn("NUEVO", usuario)
+
+
+class TestRegistroDeFallos(unittest.TestCase):
+    """Cada intento fallido queda registrado, no solo el fracaso total.
+
+    Antes solo se anotaba si fallaban TODOS los proveedores. Como el último
+    candidato es 'stub' y nunca falla, un reporte podía salir sin IA —seco,
+    sin interpretación— sin dejar rastro de por qué. Pasó con un reporte real
+    y no había forma de saber si fue un 429, una clave vencida o un modelo
+    mal escrito.
+    """
+
+    def setUp(self):
+        import sqlite3
+        import tempfile
+        from pathlib import Path
+
+        from pulserival import db
+
+        self.ruta = Path(tempfile.mkdtemp()) / "p.db"
+        db.inicializar(self.ruta)
+        self.con: sqlite3.Connection = db.conectar(self.ruta)
+        self.addCleanup(self.con.close)
+
+    def filas(self):
+        return [dict(f) for f in self.con.execute(
+            "SELECT proveedor, modelo, exito, detalle FROM uso_ia ORDER BY id")]
+
+    def test_un_proveedor_sin_clave_queda_registrado(self):
+        from pulserival.ia import ejecutar
+
+        r = ejecutar(Peticion(tarea="analizar_anuncio", sistema="s", usuario="u",
+                              datos={"titulo": "x"}), con=self.con)
+        self.assertEqual(r.proveedor, "stub")
+        fallos = [f for f in self.filas() if not f["exito"]]
+        self.assertTrue(fallos, "los proveedores sin clave tienen que quedar anotados")
+        self.assertTrue(all("sin clave" in f["detalle"] for f in fallos))
+
+    def test_un_error_del_proveedor_queda_registrado_con_su_motivo(self):
+        from unittest import mock
+
+        from pulserival.ia import ejecutar
+        from pulserival.ia.base import ProveedorError
+
+        with mock.patch("pulserival.ia.groq_proveedor.ProveedorGroq.disponible", return_value=True), \
+             mock.patch("pulserival.ia.groq_proveedor.ProveedorGroq.generar",
+                        side_effect=ProveedorError("429 límite por minuto")):
+            ejecutar(Peticion(tarea="analizar_anuncio", sistema="s", usuario="u",
+                              datos={"titulo": "x"}), con=self.con, reintentos=1)
+        detalles = " ".join(f["detalle"] or "" for f in self.filas() if not f["exito"])
+        self.assertIn("429", detalles, "el motivo real tiene que quedar en la base")
+
+    def test_el_comando_costos_muestra_los_fallos(self):
+        from pulserival.ia import ejecutar
+
+        ejecutar(Peticion(tarea="analizar_anuncio", sistema="s", usuario="u",
+                          datos={"titulo": "x"}), con=self.con)
+        self.con.commit()
+        fallos = self.con.execute("SELECT SUM(1-exito) FROM uso_ia").fetchone()[0]
+        self.assertGreater(fallos, 0)
+
+
+class TestPausaEntreLlamadas(unittest.TestCase):
+    def test_el_proveedor_local_no_espera(self):
+        """La pausa existe por los límites de tasa de Groq y Gemini. Aplicarla
+        también al proveedor local volvía la suite de tests 40 veces más lenta
+        sin ganar nada."""
+        import time
+
+        from pulserival.ia import ejecutar
+
+        inicio = time.monotonic()
+        for _ in range(5):
+            ejecutar(Peticion(tarea="analizar_anuncio", sistema="s", usuario="u",
+                              datos={"titulo": "x"}))
+        self.assertLess(time.monotonic() - inicio, 1.0)
+
+    def test_la_pausa_esta_configurada_para_los_proveedores_reales(self):
+        from pulserival import config
+
+        self.assertGreater(config.pausa_entre_llamadas(), 0,
+                           "sin pausa, 99 llamadas seguidas agotan el tier gratuito")
+        self.assertGreater(config.max_anuncios_analizados(), 0)
+
+
+class TestConfiguracionDeModelos(unittest.TestCase):
+    """El YAML de modelos tiene que ser internamente consistente."""
+
+    def test_todo_modelo_usado_tiene_precio(self):
+        # Sin precio el costo de esa llamada se registra en 0, y el tope de
+        # gasto por corrida deja de proteger sin que nada avise.
+        cfg = config.config_modelos()
+        precios = cfg.get("precios_usd_por_millon") or {}
+        sin_precio = []
+        for tarea, candidatos in (cfg.get("tareas") or {}).items():
+            for cand in candidatos or []:
+                modelo = cand.get("modelo")
+                if not modelo:
+                    continue
+                clave = f"{cand.get('proveedor')}/{modelo.replace('/', '-')}"
+                if clave not in precios:
+                    sin_precio.append(f"{tarea}: {clave}")
+        self.assertEqual(sin_precio, [], "faltan precios en config/modelos.yaml")
+
+    def test_la_cadena_de_cada_tarea_termina_en_stub(self):
+        # El stub es lo que garantiza que el pipeline nunca se caiga entero.
+        for tarea, candidatos in (config.config_modelos().get("tareas") or {}).items():
+            with self.subTest(tarea):
+                self.assertEqual((candidatos or [])[-1].get("proveedor"), "stub")

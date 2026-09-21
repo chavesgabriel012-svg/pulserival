@@ -72,52 +72,59 @@ class ProveedorStub:
 
     # ── borrador de reporte, con plantilla ───────────────────────────
     def _redactar(self, datos: dict) -> str:
-        cliente = datos.get("cliente", "cliente")
-        periodo = f"{datos.get('periodo_inicio','')} al {datos.get('periodo_fin','')}"
-        grupos = datos.get("anuncios") or []
-        nuevos = [a for a in grupos if a.get("clasificacion") == "nuevo"]
-        cambiados = [a for a in grupos if a.get("clasificacion") == "cambiado"]
-        pausados = [a for a in grupos if a.get("clasificacion") == "pausado"]
-        siguen = [a for a in grupos if a.get("clasificacion") == "continua"]
+        """Borrador de respaldo, sin interpretación.
 
-        L: list[str] = []
-        L.append("## Lo más importante de esta semana")
-        L.append("")
+        No repite la lista de anuncios: el correo ya la trae al final,
+        agrupada por competidor. Acá solo van los conteos, para que el
+        editor tenga sobre qué escribir.
+        """
+        cliente = datos.get("cliente", "el cliente")
+        anuncios = datos.get("anuncios") or []
+        por_clase = {}
+        for a in anuncios:
+            por_clase.setdefault(a.get("clasificacion"), []).append(a)
+        competidores = sorted({a.get("competidor") for a in anuncios if a.get("competidor")})
+
+        L: list[str] = ["## Resumen ejecutivo", ""]
         L.append(
-            f"Entre el {periodo} detectamos {len(nuevos)} anuncio(s) nuevo(s), "
-            f"{len(cambiados)} con cambios y {len(pausados)} que dejaron de aparecer, "
-            f"entre los competidores que seguimos para {cliente}."
+            f"Entre el {datos.get('periodo_inicio','')} y el {datos.get('periodo_fin','')} se "
+            f"detectaron {len(por_clase.get('nuevo', []))} anuncios nuevos, "
+            f"{len(por_clase.get('cambiado', []))} con cambios y "
+            f"{len(por_clase.get('pausado', []))} que dejaron de publicarse, entre los "
+            f"competidores que seguimos para {cliente}."
         )
+        L += ["", "_(borrador generado sin IA: los conteos son correctos, la "
+              "interpretación queda pendiente de revisión)_", ""]
+
+        L += ["## Panorama de la competencia", ""]
+        for nombre in competidores:
+            propios = [a for a in anuncios if a.get("competidor") == nombre]
+            nuevos = sum(1 for a in propios if a.get("clasificacion") == "nuevo")
+            L.append(f"- {nombre}: {len(propios)} anuncios detectados, {nuevos} nuevos "
+                     "en el periodo.")
+        if not competidores:
+            L.append("Sin actividad detectada en el periodo.")
         L.append("")
 
-        def bloque(titulo: str, items: list[dict], vacio: str) -> None:
-            L.append(f"## {titulo}")
+        L += ["## Qué está haciendo cada competidor", ""]
+        for nombre in competidores:
+            L.append(f"### {nombre}")
             L.append("")
-            if not items:
-                L.append(f"_{vacio}_")
-                L.append("")
-                return
-            for a in items:
-                L.append(
-                    f"- **{a.get('competidor')}** ({a.get('plataforma')}): "
-                    f"{util.recortar(a.get('titulo') or a.get('texto'), 120)} {a.get('referencia','')}"
-                )
-            L.append("")
-
-        L.append("## Qué está haciendo cada competidor")
-        L.append("")
-        L.append("_(borrador sin IA: abajo están los anuncios agrupados, sin interpretación)_")
-        L.append("")
-        bloque("Anuncios nuevos", nuevos, "No hubo anuncios nuevos en el periodo.")
-        bloque("Cambios en anuncios que ya corrían", cambiados, "Nadie cambió sus anuncios activos.")
-        bloque("Anuncios que dejaron de aparecer", pausados, "No se cayó ningún anuncio.")
-        bloque("Movimientos que vale la pena mirar de cerca", siguen,
-               "Sin anuncios sostenidos en el periodo.")
-
-        L.append("## Qué haría yo esta semana")
-        L.append("")
-        L.append("_(borrador armado sin IA: revisá y escribí acá la recomendación)_")
-        L.append("")
+            for plataforma, etiqueta in (("meta", "Meta (Facebook e Instagram)"),
+                                         ("google", "Google")):
+                propios = [a for a in anuncios
+                           if a.get("competidor") == nombre and a.get("plataforma") == plataforma]
+                if not propios:
+                    continue
+                sin_texto = sum(1 for a in propios if a.get("sin_texto"))
+                detalle = f"{len(propios)} anuncios detectados"
+                if sin_texto:
+                    detalle += f", {sin_texto} sin texto publicado por la plataforma"
+                L += [f"**{etiqueta}** — {detalle}.", ""]
+        L += ["## Movimientos que vale la pena mirar de cerca", "",
+              "_(pendiente de revisión)_", "",
+              "## Qué haría yo esta semana", "",
+              "_(pendiente de revisión)_", ""]
         return "\n".join(L)
 
     def _etiquetar(self, datos: dict) -> str:

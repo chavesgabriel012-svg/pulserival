@@ -13,13 +13,15 @@ from typing import Any
 
 from jinja2 import Environment
 
+from .. import util
+
 PLANTILLAS = Path(__file__).parent / "plantillas"
 
 NEGRITA = re.compile(r"\*\*(.+?)\*\*")
 ITALICA = re.compile(r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)")
 CURSIVA_ = re.compile(r"_(.+?)_")
 ENLACE = re.compile(r"\[([^\]]+)\]\((https?://[^)]+)\)")
-REF = re.compile(r"\[(A\d+)\]")
+REF = re.compile(r"\[(A\d+(?:\s*,\s*A\d+)*)\]")
 
 
 def _inline(texto: str) -> str:
@@ -37,7 +39,7 @@ def _inline(texto: str) -> str:
     def guardar(m: re.Match) -> str:
         etiqueta, url = m.group(1), m.group(2)
         apartados.append(
-            f'<a href="{url}" style="color:#1a56db;text-decoration:none">{etiqueta}</a>'
+            f'<a href="{url}" style="color:#000000;text-decoration:underline">{etiqueta}</a>'
         )
         return f"\x00{len(apartados) - 1}\x00"
 
@@ -45,7 +47,7 @@ def _inline(texto: str) -> str:
     t = NEGRITA.sub(r"<strong>\1</strong>", t)
     t = CURSIVA_.sub(r"<em>\1</em>", t)
     t = ITALICA.sub(r"<em>\1</em>", t)
-    t = REF.sub(r'<span style="color:#6b7280;font-size:12px">[\1]</span>', t)
+    t = REF.sub(r'<span style="color:#8a8a8a;font-size:11px">[\1]</span>', t)
     for i, enlace in enumerate(apartados):
         t = t.replace(f"\x00{i}\x00", enlace)
     return t
@@ -70,31 +72,32 @@ def markdown_a_html(md: str) -> str:
         if cruda.startswith("### "):
             cerrar_lista()
             salida.append(
-                '<h3 style="margin:22px 0 6px;font-size:16px;color:#111827">'
+                '<h3 style="margin:22px 0 6px;font-size:15px;color:#000000;font-weight:600">'
                 f"{_inline(cruda[4:])}</h3>"
             )
         elif cruda.startswith("## "):
             cerrar_lista()
             salida.append(
-                '<h2 style="margin:28px 0 8px;font-size:18px;color:#111827;'
-                'border-bottom:1px solid #e5e7eb;padding-bottom:6px">'
+                '<h2 style="margin:30px 0 10px;font-size:16px;color:#000000;font-weight:600;'
+                'text-transform:uppercase;letter-spacing:.8px;'
+                'border-bottom:2px solid #000000;padding-bottom:7px">'
                 f"{_inline(cruda[3:])}</h2>"
             )
         elif cruda.startswith("# "):
             cerrar_lista()
-            salida.append(f'<h1 style="font-size:20px;margin:0 0 10px">{_inline(cruda[2:])}</h1>')
+            salida.append(f'<h1 style="font-size:19px;margin:0 0 10px;color:#000000">{_inline(cruda[2:])}</h1>')
         elif cruda.lstrip().startswith(("- ", "* ")):
             if not en_lista:
                 salida.append('<ul style="margin:8px 0 8px 18px;padding:0">')
                 en_lista = True
             salida.append(
-                '<li style="margin:6px 0;line-height:1.55">'
+                '<li style="margin:7px 0;line-height:1.6;color:#2b2b2b">'
                 f"{_inline(cruda.lstrip()[2:])}</li>"
             )
         else:
             cerrar_lista()
             salida.append(
-                '<p style="margin:10px 0;line-height:1.6;color:#374151">'
+                '<p style="margin:11px 0;line-height:1.65;color:#2b2b2b">'
                 f"{_inline(cruda)}</p>"
             )
     cerrar_lista()
@@ -122,6 +125,16 @@ def email_texto(reporte: dict[str, Any]) -> str:
         "-" * 60,
         "",
     ]
+    for f in reporte.get("senales") or []:
+        donde = "Meta" if f["plataforma"] == "meta" else "Google"
+        dias = f.get("dias_mensaje_mas_viejo")
+        lineas.append(
+            f"  {f['competidor']} [{donde}]: {f['mensajes']} mensajes en {f['piezas']} piezas"
+            f" · {f['nuevos']} nuevos"
+            + (f" · el más viejo lleva {dias} días" if dias is not None else "")
+        )
+    if reporte.get("senales"):
+        lineas += ["", "-" * 60, ""]
     for linea in reporte["cuerpo_md"].splitlines():
         l = linea.rstrip()
         if l.startswith("## "):
@@ -130,12 +143,23 @@ def email_texto(reporte: dict[str, Any]) -> str:
             lineas += ["", l[4:], ""]
         else:
             lineas.append(NEGRITA.sub(r"\1", CURSIVA_.sub(r"\1", l)))
+    for g in reporte.get("por_competidor") or []:
+        lineas += ["", f"{g['competidor']} — {g['total']} anuncio"
+                       f"{'' if g['total'] == 1 else 's'}"]
+        for plataforma, etiqueta in (("meta", "Meta"), ("google", "Google")):
+            for a in g.get(plataforma) or []:
+                titulo = "(sin texto publicado)" if a.get("sin_texto") else util.recortar(
+                    a.get("titulo") or a.get("texto"), 90)
+                lineas.append(f"  [{etiqueta}] {a['referencia']} {titulo}")
+                if a.get("url_anuncio"):
+                    lineas.append(f"           {a['url_anuncio']}")
     lineas += [
         "",
         "-" * 60,
-        "Fuentes: Biblioteca de Anuncios de Meta y Centro de Transparencia de "
-        "Anuncios de Google, ambas públicas.",
-        "PulseRival · Costa Rica",
+        "Fuentes: Biblioteca de Anuncios de Meta y Centro de Transparencia de Anuncios",
+        "de Google, ambas públicas. Las plataformas no publican inversión, alcance ni",
+        "clics de los anuncios comerciales, de modo que este reporte no los incluye.",
+        f"{reporte.get('marca') or 'PulseRival'}",
     ]
     return "\n".join(lineas)
 

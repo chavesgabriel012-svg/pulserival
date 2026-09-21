@@ -20,6 +20,7 @@ from .. import db, util
 from ..ia import Peticion, Presupuesto, ProveedorError, ejecutar
 from ..ia import prompts
 from . import datos as datos_mod
+from . import metricas as metricas_mod
 from . import validar as validar_mod
 
 TITULO = "Reporte de anuncios de la competencia"
@@ -30,14 +31,37 @@ def enriquecer_anuncios(
     anuncios: list[dict[str, Any]],
     presupuesto: Presupuesto | None = None,
     forzar: bool = False,
+    maximo: int | None = None,
 ) -> int:
-    """Llama al modelo barato por cada anuncio que aún no tiene análisis."""
+    """Llama al modelo barato por cada anuncio que aún no tiene análisis.
+
+    Con un tope: son los tiers gratuitos los que pagan esto, y cien llamadas
+    seguidas terminan en 429 para todo lo que venga después, incluida la
+    redacción del reporte, que es lo que de verdad importa. Se priorizan los
+    competidores de prioridad 1 y los anuncios más recientes; los que quedan
+    fuera igual salen en el reporte con su texto y su enlace, solo que sin la
+    lectura previa.
+    """
+    from .. import config as _config
+
+    maximo = _config.max_anuncios_analizados() if maximo is None else maximo
+    pendientes = [
+        a for a in anuncios
+        if a["clasificacion"] in ("nuevo", "cambiado")
+        and (forzar or not a.get("analisis")
+             or (a["analisis"] or {}).get("generado_por") == "reglas")
+    ]
+    pendientes.sort(key=lambda a: (a.get("prioridad") or 9,
+                                   -(a.get("variantes") or 1),
+                                   a.get("fecha_inicio") or ""), reverse=False)
     procesados = 0
-    for a in anuncios:
-        if a.get("analisis") and not forzar:
-            continue
-        if a["clasificacion"] not in ("nuevo", "cambiado"):
-            continue  # no gastamos IA en anuncios que ya reportamos antes
+    fallos_seguidos = 0
+    for a in pendientes[:maximo]:
+        if fallos_seguidos >= 3:
+            # La fuente de IA está caída o sin cuota. Seguir insistiendo solo
+            # consume lo que le queda a la redacción del reporte, que es la
+            # llamada que de verdad importa.
+            break
         sistema, usuario = prompts.armar("analizar_anuncio", **a)
         try:
             resp = ejecutar(
@@ -52,10 +76,13 @@ def enriquecer_anuncios(
                 presupuesto=presupuesto,
             )
         except ProveedorError:
+            fallos_seguidos += 1
             continue
         analisis = resp.json()
         if not isinstance(analisis, dict):
+            fallos_seguidos += 1
             continue
+        fallos_seguidos = 0
         a["analisis"] = analisis
         db.actualizar(con, "anuncios_detectados", a["anuncio_id"],
                       {"analisis_json": db.json_o_nada(analisis)})
@@ -94,9 +121,16 @@ def generar(
     anuncios = datos_mod.clasificar(con, int(cliente["id"]), inicio, fin)
     competidores = [dict(c)["nombre"] for c in db.competidores_de(con, int(cliente["id"]))]
     conteo = datos_mod.conteo(anuncios)
+    # Las señales se calculan en código, no las estima el modelo: contar es
+    # justo lo que los modelos hacen mal, y acá los números tienen que ser
+    # exactos porque el cliente los puede verificar uno por uno.
+    senales = metricas_mod.por_competidor(anuncios, inicio, fin)
 
     enriquecer_anuncios(con, anuncios, presupuesto)
 
+    # El modelo ve una selección; el reporte los lista todos. Con 99 anuncios
+    # el prompt se pasaba del límite de tamaño de algunos modelos (413).
+    anuncios_prompt = _seleccionar_para_prompt(anuncios)
     contexto = {
         "cliente": cliente.get("nombre_empresa"),
         "industria": cliente.get("industria"),
@@ -105,16 +139,21 @@ def generar(
         "periodo_fin": fin,
         "competidores": competidores,
         "conteo": conteo,
-        "anuncios": anuncios,
+        "anuncios": anuncios_prompt,
+        "anuncios_omitidos": len(anuncios) - len(anuncios_prompt),
+        "anuncios_totales": len(anuncios),
+        "senales": metricas_mod.resumir_para_prompt(senales),
         "periodo_anterior": datos_mod.resumen_periodo_anterior(con, int(cliente["id"]), inicio),
     }
 
     if not anuncios:
         borrador = (
-            "## Lo más importante de esta semana\n\n"
+            "## Resumen ejecutivo\n\n"
             f"En el periodo del {inicio} al {fin} no detectamos actividad publicitaria "
             f"nueva de {', '.join(competidores) or 'los competidores seguidos'} en las "
             "bibliotecas públicas de anuncios de Meta y Google.\n\n"
+            "## Panorama de la competencia\n\n"
+            "Ningún competidor seguido tuvo anuncios detectables en el periodo.\n\n"
             "## Qué está haciendo cada competidor\n\n"
             "Sin movimientos detectados en el periodo.\n\n"
             "## Movimientos que vale la pena mirar de cerca\n\n"
@@ -124,6 +163,7 @@ def generar(
             "_(revisar y completar)_\n"
         )
         resp_proveedor, resp_modelo, costo, version = "-", "-", 0.0, "-"
+        anuncios_prompt = anuncios
     else:
         sistema, usuario = prompts.armar("redactar_reporte", **contexto)
         resp = ejecutar(
@@ -135,7 +175,9 @@ def generar(
         resp_proveedor, resp_modelo, costo = resp.proveedor, resp.modelo, resp.costo_usd
         version = prompts.version("redactar_reporte")
 
-    validacion = validar_mod.validar(borrador, anuncios)
+    validacion = validar_mod.validar(borrador, anuncios, competidores,
+                                     anuncios_vistos=anuncios_prompt,
+                                     proveedor=resp_proveedor)
     asunto = _asunto(cliente, inicio, fin, conteo)
     fila_datos = {
         "cliente_id": int(cliente["id"]),
@@ -144,7 +186,8 @@ def generar(
         "asunto": asunto,
         "borrador_md": borrador,
         "datos_json": db.json_o_nada({"anuncios": anuncios, "conteo": conteo,
-                                      "competidores": competidores}),
+                                      "competidores": competidores, "senales": senales,
+                                      "totales": metricas_mod.totales(senales)}),
         "estado": "borrador",
         "proveedor_ia": resp_proveedor,
         "modelo_ia": resp_modelo,
@@ -177,6 +220,7 @@ def generar(
         "reporte_id": reporte_id,
         "ya_existia": False,
         "asunto": asunto,
+        "senales": senales,
         "borrador_md": borrador,
         "conteo": conteo,
         "anuncios": anuncios,
@@ -185,6 +229,29 @@ def generar(
         "modelo": resp_modelo,
         "costo_usd": costo,
     }
+
+
+def _seleccionar_para_prompt(anuncios: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Los anuncios más relevantes para escribir el análisis.
+
+    Criterio: primero lo que es noticia (nuevo, cambiado, apagado), después
+    el competidor prioritario, después los mensajes con más variantes —que
+    es donde el competidor está poniendo más esfuerzo— y por último los que
+    tienen texto, porque de los que no lo tienen no hay nada que interpretar.
+    """
+    from .. import config as _config
+
+    orden = {"nuevo": 0, "cambiado": 1, "pausado": 2, "continua": 3}
+    ordenados = sorted(
+        anuncios,
+        key=lambda a: (
+            orden.get(a["clasificacion"], 9),
+            a.get("prioridad") or 9,
+            1 if a.get("sin_texto") else 0,
+            -(a.get("variantes") or 1),
+        ),
+    )
+    return ordenados[: _config.max_anuncios_en_prompt()]
 
 
 def _asunto(cliente: dict, inicio: str, fin: str, conteo: dict[str, int]) -> str:

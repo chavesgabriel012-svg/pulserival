@@ -70,5 +70,25 @@ def config_fuentes() -> dict[str, Any]:
     return _yaml("fuentes.yaml")
 
 
+def huella_incluye_creativo() -> bool:
+    return bool((config_fuentes().get("deteccion") or {}).get("huella_incluye_creativo", True))
+
+
 def tope_gasto_usd() -> float:
     return float(config_modelos().get("tope_gasto_usd_por_corrida", 1.0))
+
+
+def max_anuncios_analizados() -> int:
+    return int(config_modelos().get("max_anuncios_analizados", 25))
+
+
+def max_anuncios_en_prompt() -> int:
+    return int(config_modelos().get("max_anuncios_en_prompt", 45))
+
+
+def max_anuncios_en_detalle() -> int:
+    return int(config_modelos().get("max_anuncios_en_detalle", 12))
+
+
+def pausa_entre_llamadas() -> float:
+    return float(config_modelos().get("pausa_entre_llamadas_seg", 0))

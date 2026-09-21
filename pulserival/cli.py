@@ -18,6 +18,7 @@ Todo se opera desde acá. Los comandos están en español y hacen una sola cosa:
   dataset                      exportar el dataset de ediciones y ver métricas
   demo                         probar todo el flujo sin claves ni costo
   costos                       cuánto se gastó en IA
+  diagnostico                  probar los proveedores de IA y ver cuál responde
   presupuesto                  proyección del gasto mensual antes de gastarlo
 """
 from __future__ import annotations
@@ -253,7 +254,8 @@ def cmd_reporte(args) -> int:
 
 def cmd_ciclo(args) -> int:
     with db.sesion() as con:
-        res = pipeline.ciclo_completo(con, cliente_id=args.cliente, modo=args.modo)
+        res = pipeline.ciclo_completo(con, cliente_id=args.cliente, modo=args.modo,
+                                      limite=args.limite, solo_reporte=args.solo_reporte)
     t = res["totales"]
     ok(f"Corrida #{res['corrida_id']}: {t['nuevos']} nuevos · {t['cambiados']} cambiados · "
        f"{t['pausados']} se cayeron · costo IA ${res['costo_ia_usd']}")
@@ -267,8 +269,13 @@ def cmd_ciclo(args) -> int:
         val = r.get("validacion") or {}
         estado = "APROBADO" if val.get("aprobado") else "REVISAR"
         marca = " (ya existía)" if r.get("ya_existia") else ""
-        print(f"    {r['cliente']}: reporte #{r['reporte_id']}{marca} · {estado} "
-              f"· {r.get('archivo','')}")
+        print(f"    {r['cliente']}: reporte #{r['reporte_id']}{marca} · {estado}")
+        if r.get("archivo"):
+            print(f"       borrador para editar: {r['archivo']}")
+        if r.get("previsualizacion"):
+            print(f"       correo armado:        {r['previsualizacion']}")
+        if r.get("previsualizacion_error"):
+            aviso(f"no se pudo armar la previa del correo: {r['previsualizacion_error']}")
     for e in res["errores"]:
         error(f"{e['competidor']} [{e['plataforma']}]: {e['error']}")
     for s in res.get("sospechosas", []):
@@ -406,6 +413,86 @@ def cmd_prueba_scraper(args) -> int:
     crudos = sorted((config.DIR_DATOS / "crudo").glob("*.json"))
     if crudos:
         print(f"\n  Respuesta cruda guardada en: {crudos[-1]}")
+    return 0
+
+
+def cmd_mantenimiento(args) -> int:
+    """Recalcula las huellas guardadas tras un cambio en cómo se calculan."""
+    from . import mantenimiento
+
+    with db.sesion() as con:
+        res = mantenimiento.recalcular_huellas(con, aplicar=not args.simular)
+    ok(f"{res['revisados']} anuncios revisados · {res['huellas_actualizadas']} huellas "
+       f"actualizadas · {res['duplicados_fusionados']} duplicados fusionados"
+       + ("  (simulación, no se guardó nada)" if args.simular else ""))
+    return 0
+
+
+def cmd_diagnostico(args) -> int:
+    """Prueba cada proveedor de IA con una llamada mínima y dice cuál responde."""
+    from .ia.router import diagnostico
+
+    filas = diagnostico()
+    tabla(filas, ["proveedor", "modelo", "estado", "detalle"])
+    rotos = [f for f in filas if f["estado"] != "ok" and f["proveedor"] != "stub"]
+    if rotos:
+        aviso(f"{len(rotos)} proveedor(es) no responden. Con todos caídos el reporte sale "
+              "sin interpretación, solo con los conteos.")
+        return 1
+    ok("Todos los proveedores de IA responden.")
+    return 0
+
+
+def cmd_modelos(args) -> int:
+    """Lista los modelos que cada llave puede usar HOY y marca los del YAML.
+
+    Existe porque Google y Groq retiran modelos sin avisar: un reporte salió
+    escrito por el stub porque los cuatro modelos de la cadena habían dejado
+    de existir, con config/modelos.yaml sin tocar.
+    """
+    from .ia.base import ProveedorError
+    from .ia.router import _proveedor as _proveedor_ia
+    from .ia.router import proveedores_configurados
+
+    configurados = proveedores_configurados()
+    problemas = 0
+    verificados = 0
+    for nombre in sorted(configurados):
+        pedidos = configurados[nombre]
+        try:
+            prov = _proveedor_ia(nombre)
+        except KeyError:
+            aviso(f"{nombre}: no existe ese proveedor en el código")
+            problemas += 1
+            continue
+        listar = getattr(prov, "listar_modelos", None)
+        if not prov.disponible() or listar is None:
+            print(f"  {nombre}: sin clave o sin listado disponible "
+                  f"(pedidos en el YAML: {', '.join(sorted(pedidos)) or 'ninguno'})")
+            continue
+        try:
+            disponibles = listar()
+        except ProveedorError as e:
+            aviso(f"{nombre}: {e}")
+            problemas += 1
+            continue
+        verificados += 1
+        faltan = sorted(m for m in pedidos if m not in disponibles)
+        print(f"\n  {nombre}: {len(disponibles)} modelos disponibles")
+        for m in disponibles:
+            print(f"    {'<-- en el YAML' if m in pedidos else '':<15}{m}")
+        if faltan:
+            aviso(f"{nombre}: config/modelos.yaml pide modelos que ya no existen: "
+                  f"{', '.join(faltan)}")
+            problemas += len(faltan)
+    if problemas:
+        return 1
+    if not verificados:
+        # Sin llaves no se verificó nada. Decir "todo bien" aquí sería
+        # exactamente el silencio que hizo falta detectar.
+        aviso("No se pudo verificar ningún proveedor: faltan las llaves de API.")
+        return 1
+    ok("Todos los modelos de config/modelos.yaml existen.")
     return 0
 
 
@@ -588,6 +675,11 @@ def construir_parser() -> argparse.ArgumentParser:
     y = sub.add_parser("ciclo", help="recolectar + generar + exportar (lo que corre el cron)")
     y.add_argument("--cliente", type=int)
     y.add_argument("--modo", default="auto", choices=["auto", "demo", "apify"])
+    y.add_argument("--limite", type=int, default=40,
+                   help="máximo de anuncios por competidor y plataforma (se paga por anuncio)")
+    y.add_argument("--solo-reporte", dest="solo_reporte", action="store_true",
+                   help="rehacer el reporte con lo que ya está en la base, sin volver a "
+                        "llamar al scraper (no cuesta anuncios)")
     y.set_defaults(func=cmd_ciclo)
 
     # feedback
@@ -604,6 +696,20 @@ def construir_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("dataset", help="exportar el dataset de ediciones (Fase 2)").set_defaults(func=cmd_dataset)
     sub.add_parser("costos", help="cuánto se gastó en IA").set_defaults(func=cmd_costos)
+    m = sub.add_parser("mantenimiento",
+                       help="recalcular las huellas de los anuncios ya guardados")
+    m.add_argument("accion", nargs="?", default="recalcular-huellas",
+                   choices=["recalcular-huellas"])
+    m.add_argument("--simular", action="store_true", help="mostrar qué haría, sin guardar")
+    m.set_defaults(func=cmd_mantenimiento)
+
+    sub.add_parser("diagnostico",
+                   help="probar los proveedores de IA y ver cuál responde").set_defaults(
+        func=cmd_diagnostico)
+
+    sub.add_parser("modelos",
+                   help="ver qué modelos de IA existen hoy y si el YAML pide alguno "
+                        "que ya se retiró").set_defaults(func=cmd_modelos)
 
     b = sub.add_parser("presupuesto", help="cuánto va a costar al mes, antes de gastarlo")
     b.add_argument("--limite", type=int, default=40,

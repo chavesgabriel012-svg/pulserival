@@ -1,0 +1,42 @@
+# ─────────────────────────────────────────────────────────────────────
+#  Qué modelos de IA existen hoy, a demanda. No cuesta nada.
+#
+#  Para qué sirve: Google y Groq retiran modelos sin avisar. Un reporte
+#  real salió escrito por el respaldo del código (sin interpretación)
+#  porque los cuatro modelos de config/modelos.yaml habían dejado de
+#  existir, con el archivo sin tocar. Esto lo dice en 20 segundos, en vez
+#  de descubrirlo cuando ya hay un reporte malo.
+#
+#  Cómo se corre: pestaña Actions -> "Modelos de IA disponibles" ->
+#  Run workflow. Sale en verde solo si todos los modelos del YAML existen.
+# ─────────────────────────────────────────────────────────────────────
+name: Modelos de IA disponibles
+
+on:
+  workflow_dispatch:
+
+jobs:
+  listar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Listar los modelos y comparar con config/modelos.yaml
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python -m pulserival.cli modelos
+
+      - name: Probar que cada proveedor responde de verdad
+        if: always()
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python -m pulserival.cli diagnostico

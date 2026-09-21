@@ -24,7 +24,7 @@ on:
         description: "auto (scrapers reales) o demo (datos de ejemplo)"
         default: "auto"
         type: choice
-        options: [auto, demo]
+        options: [auto, demo, solo-reporte]
 
 concurrency:
   group: recoleccion
@@ -60,13 +60,45 @@ jobs:
           PULSERIVAL_DB: datos/pulserival.db
         run: python -m pulserival.cli aplicar-config
 
+      - name: Poner al día las huellas de los anuncios guardados
+        env:
+          PULSERIVAL_DB: datos/pulserival.db
+        run: python -m pulserival.cli mantenimiento recalcular-huellas
+
+      # Google y Groq retiran modelos sin avisar. Un reporte salió escrito
+      # por el respaldo del código, sin interpretación, porque los cuatro
+      # modelos de config/modelos.yaml habían dejado de existir. Esto lo
+      # deja anotado en el log de la corrida en vez de que se descubra
+      # leyendo un borrador malo.
+      - name: Revisar que los modelos de config/modelos.yaml sigan existiendo
+        continue-on-error: true
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python -m pulserival.cli modelos
+
+      - name: Diagnóstico de los proveedores de IA
+        continue-on-error: true
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          PULSERIVAL_DB: datos/pulserival.db
+        run: python -m pulserival.cli diagnostico
+
       - name: Recolectar y generar borradores
         env:
           APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PULSERIVAL_DB: datos/pulserival.db
-        run: python -m pulserival.cli ciclo --modo "${{ inputs.modo || 'auto' }}"
+        run: |
+          MODO="${{ inputs.modo || 'auto' }}"
+          if [ "$MODO" = "solo-reporte" ]; then
+            python -m pulserival.cli ciclo --modo auto --solo-reporte
+          else
+            python -m pulserival.cli ciclo --modo "$MODO" \
+              --limite "${{ vars.LIMITE_ANUNCIOS || 50 }}"
+          fi
 
       - name: Guardar borradores y base como artefacto descargable
         uses: actions/upload-artifact@v7
@@ -74,6 +106,7 @@ jobs:
           name: pulserival-${{ github.run_number }}
           path: |
             borradores/
+            salida/
             datos/pulserival.db
           retention-days: 90
 

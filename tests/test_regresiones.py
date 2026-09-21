@@ -296,3 +296,81 @@ class TestCodigoDeSalida(CasoBase):
         cli = self.cliente()
         self.competidor(cli)
         self.assertEqual(self.cli("ciclo", "--modo", "apify"), 1)
+
+
+class TestHuellaDelCreativo(unittest.TestCase):
+    """El CDN de Meta firma cada URL y rota de servidor en cada consulta.
+
+    Medido en una corrida real: 68 de 77 anuncios aparecían como "cambiados"
+    con el texto idéntico, solo porque la firma y el servidor eran otros. Un
+    reporte que cada semana le anuncia al cliente 77 cambios que no
+    ocurrieron deja de ser creíble a la segunda semana.
+    """
+
+    BASE = dict(plataforma="meta", fuente="t", id_externo="X1",
+                titulo="Matrícula gratis", texto="Plan mensual")
+
+    def anuncio(self, creativo):
+        from pulserival.fuentes.base import AnuncioCrudo
+
+        return AnuncioCrudo(creativo_url=creativo, **self.BASE)
+
+    def test_la_firma_y_el_servidor_del_cdn_no_cuentan_como_cambio(self):
+        a = self.anuncio("https://scontent-phl2-1.xx.fbcdn.net/v/t39.35426-6/"
+                         "795697003_1373407654959818_n.jpg?_nc_gid=Dzl7&oh=00_AQLlSK&oe=6AB7")
+        b = self.anuncio("https://scontent-lax3-1.xx.fbcdn.net/v/t39.35426-6/"
+                         "795697003_1373407654959818_n.jpg?_nc_gid=NsmEr&oh=00_AQJdnd&oe=6AB7")
+        self.assertEqual(a.huella(), b.huella())
+
+    def test_cambiar_de_verdad_la_pieza_si_cuenta_como_cambio(self):
+        a = self.anuncio("https://cdn.test/v/795697003_1373407654959818_n.jpg?x=1")
+        b = self.anuncio("https://cdn.test/v/111111111_9999999999999999_n.jpg?x=1")
+        self.assertNotEqual(a.huella(), b.huella())
+
+    def test_se_puede_apagar_el_creativo_de_la_huella(self):
+        from unittest import mock
+
+        with mock.patch("pulserival.config.huella_incluye_creativo", return_value=False):
+            a = self.anuncio("https://cdn.test/a.jpg")
+            b = self.anuncio("https://cdn.test/b.jpg")
+            self.assertEqual(a.huella(), b.huella(),
+                             "apagado, solo el texto y el destino definen el anuncio")
+
+
+class TestRecalculoDeHuellas(CasoBase):
+    """Cambiar cómo se calcula la huella no puede producir un falso
+    'todo cambió' en la corrida siguiente."""
+
+    def test_recalcula_y_fusiona_los_duplicados_que_dejo_la_url_firmada(self):
+        from pulserival import mantenimiento
+
+        cli = self.cliente()
+        comp = self.competidor(cli)
+        base = dict(competidor_id=comp, plataforma="meta", fuente="t", id_externo="X1",
+                    titulo="Promo", texto="mismo texto", estado="activo")
+        # Dos filas del mismo anuncio, separadas solo por la firma del CDN.
+        db.insertar(self.con, "anuncios_detectados", dict(
+            base, huella="vieja1",
+            creativo_url="https://scontent-a.xx.fbcdn.net/v/t39/795697003_n.jpg?oh=AAA"))
+        db.insertar(self.con, "anuncios_detectados", dict(
+            base, huella="vieja2",
+            creativo_url="https://scontent-b.xx.fbcdn.net/v/t39/795697003_n.jpg?oh=BBB"))
+        self.con.commit()
+
+        res = mantenimiento.recalcular_huellas(self.con)
+        self.assertEqual(res["duplicados_fusionados"], 1)
+        quedan = db.fila(self.con, "SELECT COUNT(*) n FROM anuncios_detectados")["n"]
+        self.assertEqual(quedan, 1, "las dos filas eran el mismo anuncio")
+
+    def test_la_simulacion_no_toca_nada(self):
+        from pulserival import mantenimiento
+
+        cli = self.cliente()
+        comp = self.competidor(cli)
+        db.insertar(self.con, "anuncios_detectados", {
+            "competidor_id": comp, "plataforma": "meta", "fuente": "t",
+            "huella": "vieja", "texto": "x"})
+        self.con.commit()
+        mantenimiento.recalcular_huellas(self.con, aplicar=False)
+        self.assertEqual(
+            db.fila(self.con, "SELECT huella FROM anuncios_detectados")["huella"], "vieja")
