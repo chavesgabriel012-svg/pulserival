@@ -18,6 +18,7 @@ Todo se opera desde acá. Los comandos están en español y hacen una sola cosa:
   dataset                      exportar el dataset de ediciones y ver métricas
   demo                         probar todo el flujo sin claves ni costo
   costos                       cuánto se gastó en IA
+  diagnostico                  probar los proveedores de IA y ver cuál responde
   presupuesto                  proyección del gasto mensual antes de gastarlo
 """
 from __future__ import annotations
@@ -254,7 +255,7 @@ def cmd_reporte(args) -> int:
 def cmd_ciclo(args) -> int:
     with db.sesion() as con:
         res = pipeline.ciclo_completo(con, cliente_id=args.cliente, modo=args.modo,
-                                      limite=args.limite)
+                                      limite=args.limite, solo_reporte=args.solo_reporte)
     t = res["totales"]
     ok(f"Corrida #{res['corrida_id']}: {t['nuevos']} nuevos · {t['cambiados']} cambiados · "
        f"{t['pausados']} se cayeron · costo IA ${res['costo_ia_usd']}")
@@ -412,6 +413,21 @@ def cmd_prueba_scraper(args) -> int:
     crudos = sorted((config.DIR_DATOS / "crudo").glob("*.json"))
     if crudos:
         print(f"\n  Respuesta cruda guardada en: {crudos[-1]}")
+    return 0
+
+
+def cmd_diagnostico(args) -> int:
+    """Prueba cada proveedor de IA con una llamada mínima y dice cuál responde."""
+    from .ia.router import diagnostico
+
+    filas = diagnostico()
+    tabla(filas, ["proveedor", "modelo", "estado", "detalle"])
+    rotos = [f for f in filas if f["estado"] != "ok" and f["proveedor"] != "stub"]
+    if rotos:
+        aviso(f"{len(rotos)} proveedor(es) no responden. Con todos caídos el reporte sale "
+              "sin interpretación, solo con los conteos.")
+        return 1
+    ok("Todos los proveedores de IA responden.")
     return 0
 
 
@@ -596,6 +612,9 @@ def construir_parser() -> argparse.ArgumentParser:
     y.add_argument("--modo", default="auto", choices=["auto", "demo", "apify"])
     y.add_argument("--limite", type=int, default=40,
                    help="máximo de anuncios por competidor y plataforma (se paga por anuncio)")
+    y.add_argument("--solo-reporte", dest="solo_reporte", action="store_true",
+                   help="rehacer el reporte con lo que ya está en la base, sin volver a "
+                        "llamar al scraper (no cuesta anuncios)")
     y.set_defaults(func=cmd_ciclo)
 
     # feedback
@@ -612,6 +631,9 @@ def construir_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("dataset", help="exportar el dataset de ediciones (Fase 2)").set_defaults(func=cmd_dataset)
     sub.add_parser("costos", help="cuánto se gastó en IA").set_defaults(func=cmd_costos)
+    sub.add_parser("diagnostico",
+                   help="probar los proveedores de IA y ver cuál responde").set_defaults(
+        func=cmd_diagnostico)
 
     b = sub.add_parser("presupuesto", help="cuánto va a costar al mes, antes de gastarlo")
     b.add_argument("--limite", type=int, default=40,

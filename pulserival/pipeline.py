@@ -138,6 +138,7 @@ def ciclo_completo(
     modo: str = "auto",
     exportar: bool = True,
     limite: int = 40,
+    solo_reporte: bool = False,
 ) -> dict[str, Any]:
     """Recolecta y genera los borradores de todos los clientes que toca hoy.
 
@@ -149,7 +150,12 @@ def ciclo_completo(
     from .reporte import generar as generar_mod
     from .revision import flujo
 
-    corrida = recolectar(con, cliente_id, modo=modo, limite=limite, disparada_por="cron")
+    if solo_reporte:
+        # Regenerar el reporte con lo que ya está en la base, sin volver a
+        # llamar al scraper. Los anuncios ya se pagaron una vez.
+        corrida = Corrida(id=None)
+    else:
+        corrida = recolectar(con, cliente_id, modo=modo, limite=limite, disparada_por="cron")
     presupuesto = Presupuesto()
     reportes: list[dict[str, Any]] = []
 
@@ -161,7 +167,8 @@ def ciclo_completo(
                              "omitido": "todavía no cierra el periodo de este cliente"})
             continue
         try:
-            rep = generar_mod.generar(con, cliente, inicio, fin, presupuesto=presupuesto)
+            rep = generar_mod.generar(con, cliente, inicio, fin, presupuesto=presupuesto,
+                                      regenerar=solo_reporte)
         except (ProveedorError, RuntimeError) as e:
             reportes.append({"cliente": cliente["nombre_empresa"], "error": str(e)})
             continue
@@ -173,7 +180,7 @@ def ciclo_completo(
             "validacion": rep.get("validacion", {}),
             "conteo": rep.get("conteo"),
         }
-        if exportar and not rep.get("ya_existia"):
+        if exportar and (solo_reporte or not rep.get("ya_existia")):
             item["archivo"] = str(flujo.exportar(con, rep["reporte_id"]))
             # Además del .md para editar, se deja el correo armado: es la
             # única forma de ver el reporte como lo recibe el cliente sin

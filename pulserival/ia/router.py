@@ -80,16 +80,33 @@ def ejecutar(
         presupuesto.revisar()
 
     errores: list[str] = []
+
+    def anotar_fallo(proveedor: str, modelo: str, detalle: str) -> None:
+        """Deja registro de CADA intento fallido, no solo del fracaso total.
+
+        Antes solo se registraba si fallaban todos los proveedores. Como el
+        último candidato es 'stub' y nunca falla, un reporte podía salir sin
+        IA —seco, sin interpretación— y no quedaba rastro de por qué: ni un
+        429, ni una clave vencida, nada. Se descubrió justamente así, con un
+        reporte real que salió en modo respaldo sin explicación.
+        """
+        errores.append(f"{proveedor}/{modelo}: {detalle}")
+        if con is not None:
+            db.registrar_uso_ia(
+                con, tarea=peticion.tarea, proveedor=proveedor, modelo=modelo,
+                exito=0, detalle=detalle[:500],
+            )
+
     for cand in candidatos(peticion.tarea):
         nombre = cand.get("proveedor", "stub")
         modelo = cand.get("modelo", "stub")
         try:
             prov = _proveedor(nombre)
         except KeyError:
-            errores.append(f"{nombre}: proveedor desconocido en modelos.yaml")
+            anotar_fallo(nombre, modelo, "proveedor desconocido en config/modelos.yaml")
             continue
         if not prov.disponible():
-            errores.append(f"{nombre}: sin clave configurada")
+            anotar_fallo(nombre, modelo, "sin clave configurada en el entorno")
             continue
 
         pet = Peticion(
@@ -106,7 +123,7 @@ def ejecutar(
             try:
                 resp = prov.generar(pet, modelo)
             except ProveedorError as e:
-                errores.append(f"{nombre}/{modelo} (intento {intento}): {e}")
+                anotar_fallo(nombre, modelo, f"intento {intento}: {e}")
                 if intento < reintentos:
                     time.sleep(2 * intento)
                 continue
@@ -128,8 +145,44 @@ def ejecutar(
             return resp
 
     detalle = " | ".join(errores) or "sin proveedores configurados"
-    if con is not None:
-        db.registrar_uso_ia(
-            con, tarea=peticion.tarea, proveedor="-", modelo="-", exito=0, detalle=detalle
-        )
     raise ProveedorError(f"Ningún proveedor de IA pudo atender '{peticion.tarea}': {detalle}")
+
+
+def diagnostico(con: sqlite3.Connection | None = None) -> list[dict]:
+    """Prueba cada proveedor configurado con una llamada mínima.
+
+    Sirve para responder "¿por qué salió sin IA?" antes de gastar una
+    corrida entera averiguándolo.
+    """
+    from .base import Peticion as _P
+
+    vistos: dict[tuple[str, str], dict] = {}
+    for tarea, lista in (config.config_modelos().get("tareas") or {}).items():
+        for cand in lista:
+            nombre, modelo = cand.get("proveedor", "stub"), cand.get("modelo", "stub")
+            if (nombre, modelo) in vistos:
+                vistos[(nombre, modelo)]["tareas"].append(tarea)
+                continue
+            fila = {"proveedor": nombre, "modelo": modelo, "tareas": [tarea]}
+            try:
+                prov = _proveedor(nombre)
+            except KeyError:
+                fila["estado"] = "desconocido"
+                fila["detalle"] = "no existe ese proveedor en el código"
+                vistos[(nombre, modelo)] = fila
+                continue
+            if not prov.disponible():
+                fila["estado"] = "sin clave"
+                fila["detalle"] = "la variable de entorno no está configurada"
+                vistos[(nombre, modelo)] = fila
+                continue
+            try:
+                r = prov.generar(_P(tarea="diagnostico", sistema="Responda solo: ok",
+                                    usuario="ok", max_tokens=5), modelo)
+                fila["estado"] = "ok"
+                fila["detalle"] = f"respondió {r.tokens_salida or 0} tokens"
+            except ProveedorError as e:
+                fila["estado"] = "error"
+                fila["detalle"] = str(e)[:300]
+            vistos[(nombre, modelo)] = fila
+    return list(vistos.values())

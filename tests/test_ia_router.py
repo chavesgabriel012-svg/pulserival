@@ -70,3 +70,63 @@ class TestPrompts(unittest.TestCase):
             periodo_anterior="nada")
         self.assertIn("[A1]", usuario)
         self.assertIn("NUEVO", usuario)
+
+
+class TestRegistroDeFallos(unittest.TestCase):
+    """Cada intento fallido queda registrado, no solo el fracaso total.
+
+    Antes solo se anotaba si fallaban TODOS los proveedores. Como el último
+    candidato es 'stub' y nunca falla, un reporte podía salir sin IA —seco,
+    sin interpretación— sin dejar rastro de por qué. Pasó con un reporte real
+    y no había forma de saber si fue un 429, una clave vencida o un modelo
+    mal escrito.
+    """
+
+    def setUp(self):
+        import sqlite3
+        import tempfile
+        from pathlib import Path
+
+        from pulserival import db
+
+        self.ruta = Path(tempfile.mkdtemp()) / "p.db"
+        db.inicializar(self.ruta)
+        self.con: sqlite3.Connection = db.conectar(self.ruta)
+        self.addCleanup(self.con.close)
+
+    def filas(self):
+        return [dict(f) for f in self.con.execute(
+            "SELECT proveedor, modelo, exito, detalle FROM uso_ia ORDER BY id")]
+
+    def test_un_proveedor_sin_clave_queda_registrado(self):
+        from pulserival.ia import ejecutar
+
+        r = ejecutar(Peticion(tarea="analizar_anuncio", sistema="s", usuario="u",
+                              datos={"titulo": "x"}), con=self.con)
+        self.assertEqual(r.proveedor, "stub")
+        fallos = [f for f in self.filas() if not f["exito"]]
+        self.assertTrue(fallos, "los proveedores sin clave tienen que quedar anotados")
+        self.assertTrue(all("sin clave" in f["detalle"] for f in fallos))
+
+    def test_un_error_del_proveedor_queda_registrado_con_su_motivo(self):
+        from unittest import mock
+
+        from pulserival.ia import ejecutar
+        from pulserival.ia.base import ProveedorError
+
+        with mock.patch("pulserival.ia.groq_proveedor.ProveedorGroq.disponible", return_value=True), \
+             mock.patch("pulserival.ia.groq_proveedor.ProveedorGroq.generar",
+                        side_effect=ProveedorError("429 límite por minuto")):
+            ejecutar(Peticion(tarea="analizar_anuncio", sistema="s", usuario="u",
+                              datos={"titulo": "x"}), con=self.con, reintentos=1)
+        detalles = " ".join(f["detalle"] or "" for f in self.filas() if not f["exito"])
+        self.assertIn("429", detalles, "el motivo real tiene que quedar en la base")
+
+    def test_el_comando_costos_muestra_los_fallos(self):
+        from pulserival.ia import ejecutar
+
+        ejecutar(Peticion(tarea="analizar_anuncio", sistema="s", usuario="u",
+                          datos={"titulo": "x"}), con=self.con)
+        self.con.commit()
+        fallos = self.con.execute("SELECT SUM(1-exito) FROM uso_ia").fetchone()[0]
+        self.assertGreater(fallos, 0)

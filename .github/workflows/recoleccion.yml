@@ -24,7 +24,7 @@ on:
         description: "auto (scrapers reales) o demo (datos de ejemplo)"
         default: "auto"
         type: choice
-        options: [auto, demo]
+        options: [auto, demo, solo-reporte]
 
 concurrency:
   group: recoleccion
@@ -60,6 +60,14 @@ jobs:
           PULSERIVAL_DB: datos/pulserival.db
         run: python -m pulserival.cli aplicar-config
 
+      - name: Diagnóstico de los proveedores de IA
+        continue-on-error: true
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          PULSERIVAL_DB: datos/pulserival.db
+        run: python -m pulserival.cli diagnostico
+
       - name: Recolectar y generar borradores
         env:
           APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
@@ -67,9 +75,13 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PULSERIVAL_DB: datos/pulserival.db
         run: |
-          python -m pulserival.cli ciclo \
-            --modo "${{ inputs.modo || 'auto' }}" \
-            --limite "${{ vars.LIMITE_ANUNCIOS || 30 }}"
+          MODO="${{ inputs.modo || 'auto' }}"
+          if [ "$MODO" = "solo-reporte" ]; then
+            python -m pulserival.cli ciclo --modo auto --solo-reporte
+          else
+            python -m pulserival.cli ciclo --modo "$MODO" \
+              --limite "${{ vars.LIMITE_ANUNCIOS || 30 }}"
+          fi
 
       - name: Guardar borradores y base como artefacto descargable
         uses: actions/upload-artifact@v7
