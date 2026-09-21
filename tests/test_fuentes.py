@@ -366,3 +366,12 @@ class TestPaginaPorId(unittest.TestCase):
              "meta_pagina_url": "https://www.facebook.com/ArtelecCR/"}, 10)
         self.assertEqual(entrada["startUrls"][0]["url"],
                          "https://www.facebook.com/ArtelecCR/")
+
+
+class TestDescartadosSeReportan(unittest.TestCase):
+    """Descartar anuncios en silencio es cómo se cuelan los errores."""
+
+    def test_el_atributo_existe_aunque_no_se_haya_llamado_a_traer(self):
+        from pulserival.fuentes.apify import FuenteApify
+        self.assertEqual(FuenteApify("google", token="t").descartados, {})
+        self.assertEqual(FuenteApify("meta", token="t").descartados, {})

@@ -39,6 +39,10 @@ class FuenteApify:
                 "https://console.apify.com/account/integrations"
             )
         self.nombre = f"apify:{self.actor}"
+        # Anuncios de OTRAS empresas que la búsqueda por dominio arrastró y
+        # el filtro dejó fuera, por nombre de anunciante. Se reporta en la
+        # corrida: descartar en silencio es cómo se cuelan los errores.
+        self.descartados: dict[str, int] = {}
 
     # ── entrada que se le manda al actor ─────────────────────────────
     def construir_entrada(self, competidor: dict, limite: int) -> dict[str, Any]:

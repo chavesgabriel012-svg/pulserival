@@ -75,6 +75,15 @@ def recolectar(
                         "competidor": comp["nombre"], "plataforma": plataforma, "error": str(e),
                     })
                     continue
+                descartados = getattr(fuente, "descartados", None)
+                if descartados:
+                    detalle = ", ".join(f"{n} ({c})" for n, c in sorted(descartados.items()))
+                    corrida.saltados.append({
+                        "competidor": comp["nombre"], "plataforma": plataforma,
+                        "motivo": f"se dejaron fuera anuncios de otros anunciantes que pautan "
+                                  f"el mismo dominio: {detalle}. Si alguno SÍ es de este "
+                                  "competidor, fijá google_anunciante_id en config/clientes.yaml.",
+                    })
                 res = priorizar.conciliar(con, competidor, plataforma, vistos, corrida.id)
                 corrida.resultados.append(res)
                 if res.sospechosa:
