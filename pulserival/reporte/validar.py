@@ -177,6 +177,31 @@ def validar(borrador: str, anuncios: list[dict[str, Any]],
                 })
                 break
 
+    # 4b. recomendaciones apoyadas en la ausencia de un competidor
+    # Que no hayamos detectado anuncios no prueba que no esté pautando. Un
+    # reporte real recomendó "aproveche la ausencia total de pauta de
+    # Artelec": Artelec sí pautaba, el scraper no la había encontrado, y el
+    # cliente habría invertido sobre un hueco inexistente.
+    sin_datos = [n for n in (competidores or []) if n and n not in con_datos]
+    if sin_datos:
+        cuerpo = _cuerpo_de_seccion(borrador, "que haria yo") or ""
+        for oracion in re.split(r"(?<=[.!?])\s+|\n", cuerpo):
+            plano_oracion = util.normalizar_texto(oracion)
+            nombrado = next((n for n in sin_datos if n.lower() in oracion.lower()), None)
+            if not nombrado:
+                continue
+            if _menciona(plano_oracion, ("ausencia", "ausente", "vacio", "hueco",
+                                         "no pauta", "no esta pautando", "silencio",
+                                         "abandonado", "desaparecio")):
+                problemas.append({
+                    "tipo": "recomendacion_sobre_ausencia",
+                    "detalle": f"Una recomendación se apoya en que {nombrado} no aparece: "
+                               f"\"{util.recortar(oracion.strip(), 120)}\". No haber detectado "
+                               "anuncios no prueba que no esté pautando; puede ser que la "
+                               "recolección no lo encontró.",
+                })
+                break
+
     # 5. cobertura de lo importante
     base = anuncios_vistos if anuncios_vistos is not None else anuncios
     importantes = [a for a in base if a["clasificacion"] in ("nuevo", "cambiado")]
