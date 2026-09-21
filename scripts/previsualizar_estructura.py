@@ -58,13 +58,16 @@ with db.sesion(ruta) as con:
     print(metricas.resumir_para_prompt(senales))
 
     cuerpo = ProveedorStub()._redactar({
-        "cliente": "Gollo", "periodo_inicio": inicio, "periodo_fin": fin, "anuncios": anuncios})
+        "cliente": "Gollo", "periodo_inicio": inicio, "periodo_fin": fin,
+        "anuncios": anuncios})
 
+    por_comp = datos_mod.agrupar_por_competidor(anuncios)
     rep = {
         "asunto": f"Competencia de Gollo · {fin}", "preheader": "vista previa de estructura",
         "cliente": "Gollo", "periodo_inicio": inicio, "periodo_fin": fin,
         "conteo": conteo, "senales": senales, "competidores": list(comps),
-        "anuncios": anuncios, "cuerpo_md": cuerpo, "marca": "PulseRival",
+        "anuncios": anuncios, "por_competidor": por_comp,
+        "cuerpo_md": cuerpo, "marca": "PulseRival",
         "miniaturas": True, "contacto_remitente": "reportes@pulserival.com",
     }
     destino = Path("/home/user/pulserival/salida/vista-previa-estructura.html")

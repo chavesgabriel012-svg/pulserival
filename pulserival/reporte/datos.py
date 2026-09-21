@@ -80,7 +80,7 @@ def clasificar(con: sqlite3.Connection, cliente_id: int, inicio: str, fin: str) 
         else:
             continue  # anuncio viejo que ya no toca este periodo
 
-        texto = util.recortar(f["texto"], 700)
+        texto = util.sin_emojis(util.recortar(f["texto"], 700))
         es_plantilla = bool(texto) and bool(PLANTILLA.fullmatch(texto.strip())) or (
             bool(texto) and len(PLANTILLA.sub("", texto).strip()) < 12
         )
@@ -90,13 +90,13 @@ def clasificar(con: sqlite3.Connection, cliente_id: int, inicio: str, fin: str) 
             "competidor": f["competidor"],
             "prioridad": f["prioridad"],
             "plataforma": f["plataforma"],
-            "titulo": None if es_plantilla else f["titulo"],
+            "titulo": None if es_plantilla else util.sin_emojis(f["titulo"]),
             "texto": None if es_plantilla else texto,
             # Sin texto no se puede hablar del mensaje del anuncio: el reporte
             # solo puede describir formato, fechas y actividad.
             "sin_texto": es_plantilla or not (texto or f["titulo"]),
             "es_catalogo_dinamico": es_plantilla,
-            "descripcion": f["descripcion"],
+            "descripcion": util.sin_emojis(f["descripcion"]),
             "cta": f["cta"],
             "link_destino": f["link_destino"],
             "tipo_creativo": f["tipo_creativo"],
@@ -172,3 +172,28 @@ def resumen_periodo_anterior(con: sqlite3.Connection, cliente_id: int, inicio: s
     if not filas:
         return "Es el primer reporte de este cliente: no hay periodo anterior con el que comparar."
     return "; ".join(f"{f['competidor']} ({f['plataforma']}): {f['n']} anuncios ya conocidos" for f in filas)
+
+
+def agrupar_por_competidor(anuncios: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Los anuncios ordenados por competidor, para el detalle del reporte.
+
+    Una lista plana de treinta anuncios no se puede leer. Agrupados por
+    competidor —y dentro, por plataforma— el cliente encuentra de un vistazo
+    lo suyo: "Monge, 7 anuncios" y abajo el desglose con su enlace.
+    """
+    grupos: dict[str, dict[str, Any]] = {}
+    for a in anuncios:
+        nombre = a["competidor"]
+        g = grupos.setdefault(nombre, {
+            "competidor": nombre, "prioridad": a.get("prioridad") or 9,
+            "total": 0, "piezas": 0, "meta": [], "google": [],
+        })
+        g["total"] += 1
+        g["piezas"] += a.get("variantes", 1)
+        g[a["plataforma"]].append(a)
+    orden = {"nuevo": 0, "cambiado": 1, "continua": 2, "pausado": 3}
+    for g in grupos.values():
+        for plataforma in ("meta", "google"):
+            g[plataforma].sort(key=lambda x: (orden.get(x["clasificacion"], 9),
+                                              x.get("fecha_inicio") or ""))
+    return sorted(grupos.values(), key=lambda g: (g["prioridad"], -g["total"]))

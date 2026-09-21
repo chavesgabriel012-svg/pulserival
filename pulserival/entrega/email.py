@@ -20,6 +20,7 @@ from typing import Any
 import requests
 
 from .. import config, db, util
+from ..reporte import datos as render_datos
 from ..reporte import render
 
 URL_RESEND = "https://api.resend.com/emails"
@@ -57,6 +58,8 @@ def _armar(con: sqlite3.Connection, reporte_id: int) -> dict[str, Any]:
         "senales": datos.get("senales") or [],
         "competidores": datos.get("competidores") or [],
         "anuncios": datos.get("anuncios") or [],
+        "por_competidor": datos.get("por_competidor")
+        or render_datos.agrupar_por_competidor(datos.get("anuncios") or []),
         "marca": config.env("MARCA_REPORTE") or "PulseRival",
         "contacto_remitente": config.env("EMAIL_RESPONDER_A"),
         # Las miniaturas se sirven desde los CDN de Meta y Google. Se pueden

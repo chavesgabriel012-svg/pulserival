@@ -88,5 +88,36 @@ def primer_valor(datos: dict, rutas: list[str]) -> Any:
     return None
 
 
+# Rangos Unicode de emojis, pictogramas, banderas y símbolos decorativos.
+EMOJIS = re.compile(
+    "[" 
+    "\U0001F300-\U0001FAFF"   # pictogramas, emoticones, objetos
+    "\U00002600-\U000027BF"   # símbolos varios y dingbats
+    "\U0001F1E6-\U0001F1FF"   # banderas
+    "\U00002190-\U000021FF"   # flechas
+    "\U0000FE00-\U0000FE0F"   # selectores de variación
+    "\U00002B00-\U00002BFF"
+    "\U0000200D"              # unión de emojis
+    "]+",
+    flags=re.UNICODE,
+)
+
+
+def sin_emojis(texto: str | None) -> str | None:
+    """Quita emojis y limpia los espacios que dejan.
+
+    Los anuncios vienen llenos de emojis. En el reporte quedan mal: es un
+    documento de trabajo, no una publicación de redes. Se limpian acá, en la
+    capa de datos, para que no puedan llegar al cliente por ninguna vía: ni
+    citados del anuncio, ni copiados por el modelo.
+    """
+    if not texto:
+        return texto
+    limpio = EMOJIS.sub("", str(texto))
+    limpio = re.sub(r"[ \t]{2,}", " ", limpio)
+    limpio = re.sub(r"\n{3,}", "\n\n", limpio)
+    return "\n".join(linea.strip() for linea in limpio.splitlines()).strip()
+
+
 def contar_palabras(texto: str | None) -> int:
     return len((texto or "").split())
