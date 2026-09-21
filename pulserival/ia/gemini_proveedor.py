@@ -68,15 +68,32 @@ class ProveedorGemini:
             ) from e
         uso = datos.get("usageMetadata") or {}
         texto = ""
+        motivo = None
         for cand in datos.get("candidates") or []:
+            motivo = cand.get("finishReason") or motivo
             for parte in (cand.get("content") or {}).get("parts") or []:
                 texto += parte.get("text") or ""
         if not texto.strip():
-            raise ProveedorError(f"Gemini devolvió texto vacío: {str(datos)[:300]}")
+            raise ProveedorError(
+                f"Gemini devolvió texto vacío (finishReason={motivo}): {str(datos)[:200]}")
+        # Una respuesta cortada NO se acepta. Pasó en un reporte real: el
+        # modelo agotó el presupuesto razonando y el borrador terminó en
+        # "Promociona un 20% de". Mejor que falle y entre el siguiente modelo
+        # de la lista que entregarle media frase al cliente.
+        if motivo and str(motivo).upper() not in ("STOP", "FINISH_REASON_STOP"):
+            raise ProveedorError(
+                f"Gemini cortó la respuesta (finishReason={motivo}) tras "
+                f"{uso.get('candidatesTokenCount') or 0} tokens de texto y "
+                f"{uso.get('thoughtsTokenCount') or 0} de razonamiento. "
+                "Subí max_tokens o bajá nivel_razonamiento en config/modelos.yaml."
+            )
         return Respuesta(
             texto=texto,
             proveedor=self.nombre,
             modelo=modelo,
             tokens_entrada=int(uso.get("promptTokenCount") or 0),
-            tokens_salida=int(uso.get("candidatesTokenCount") or 0),
+            # El razonamiento se factura como salida: si no se suma, el
+            # registro de gasto queda por debajo de lo que se está pagando.
+            tokens_salida=int(uso.get("candidatesTokenCount") or 0)
+            + int(uso.get("thoughtsTokenCount") or 0),
         )
