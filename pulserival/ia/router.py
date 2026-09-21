@@ -227,8 +227,12 @@ def diagnostico(con: sqlite3.Connection | None = None) -> list[dict]:
                 vistos[(nombre, modelo)] = fila
                 continue
             try:
+                # permitir_cortado: se piden 5 tokens a propósito. Sin esto
+                # los modelos que razonan salen marcados como caídos por
+                # agotar un presupuesto que se les dio a propósito.
                 r = prov.generar(_P(tarea="diagnostico", sistema="Responda solo: ok",
-                                    usuario="ok", max_tokens=5), modelo)
+                                    usuario="ok", max_tokens=5,
+                                    permitir_cortado=True), modelo)
                 fila["estado"] = "ok"
                 fila["detalle"] = f"respondió {r.tokens_salida or 0} tokens"
             except ProveedorError as e:

@@ -6,6 +6,7 @@ import unittest
 from pulserival.ia import Peticion, Presupuesto, PresupuestoExcedido, ejecutar
 from pulserival.ia import prompts
 from pulserival.ia.base import extraer_json
+from pulserival import config
 from pulserival.ia.router import candidatos, costo
 
 
@@ -27,8 +28,16 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(datos["precios_mencionados"], ["¢19.900"])
 
     def test_calculo_de_costo(self):
-        self.assertAlmostEqual(costo("gemini", "gemini-2.5-pro", 1_000_000, 0), 1.25, places=4)
-        self.assertAlmostEqual(costo("groq", "llama-3.1-8b-instant", 0, 1_000_000), 0.08, places=4)
+        # La tarifa se lee del YAML en vez de fijar un nombre de modelo: los
+        # nombres se retiran y este test quedaba en rojo por eso, no por la
+        # cuenta, que es lo que se está probando.
+        precios = config.config_modelos()["precios_usd_por_millon"]
+        clave, tarifa = next(iter(p for p in precios.items() if p[0] != "stub/stub"))
+        proveedor, modelo = clave.split("/", 1)
+        self.assertAlmostEqual(costo(proveedor, modelo, 1_000_000, 0),
+                               tarifa["entrada"], places=4)
+        self.assertAlmostEqual(costo(proveedor, modelo, 0, 1_000_000),
+                               tarifa["salida"], places=4)
         self.assertEqual(costo("proveedor-inexistente", "x", 1000, 1000), 0.0)
 
     def test_tope_de_gasto_corta(self):
@@ -153,3 +162,29 @@ class TestPausaEntreLlamadas(unittest.TestCase):
         self.assertGreater(config.pausa_entre_llamadas(), 0,
                            "sin pausa, 99 llamadas seguidas agotan el tier gratuito")
         self.assertGreater(config.max_anuncios_analizados(), 0)
+
+
+class TestConfiguracionDeModelos(unittest.TestCase):
+    """El YAML de modelos tiene que ser internamente consistente."""
+
+    def test_todo_modelo_usado_tiene_precio(self):
+        # Sin precio el costo de esa llamada se registra en 0, y el tope de
+        # gasto por corrida deja de proteger sin que nada avise.
+        cfg = config.config_modelos()
+        precios = cfg.get("precios_usd_por_millon") or {}
+        sin_precio = []
+        for tarea, candidatos in (cfg.get("tareas") or {}).items():
+            for cand in candidatos or []:
+                modelo = cand.get("modelo")
+                if not modelo:
+                    continue
+                clave = f"{cand.get('proveedor')}/{modelo.replace('/', '-')}"
+                if clave not in precios:
+                    sin_precio.append(f"{tarea}: {clave}")
+        self.assertEqual(sin_precio, [], "faltan precios en config/modelos.yaml")
+
+    def test_la_cadena_de_cada_tarea_termina_en_stub(self):
+        # El stub es lo que garantiza que el pipeline nunca se caiga entero.
+        for tarea, candidatos in (config.config_modelos().get("tareas") or {}).items():
+            with self.subTest(tarea):
+                self.assertEqual((candidatos or [])[-1].get("proveedor"), "stub")

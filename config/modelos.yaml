@@ -8,9 +8,13 @@ tareas:
   # Tarea de ALTO VOLUMEN: leer cada anuncio y sacar campos estructurados
   # (ángulo, oferta, público, formato). Se ejecuta 1 vez por anuncio nuevo.
   # Barato y rápido manda. Si falla, se intenta el siguiente de la lista.
+  #
+  # Nombres verificados con `cli modelos` el 2026-09-21 contra las llaves
+  # reales. No se adivinan: los llama-3.x de Groq y los gemini-2.5-* que
+  # estaban acá antes devolvían 404 y tumbaban la cadena entera.
   analizar_anuncio:
     - proveedor: groq
-      modelo: llama-3.3-70b-versatile
+      modelo: openai/gpt-oss-20b
       temperatura: 0.1
       max_tokens: 900
     - proveedor: gemini
@@ -18,7 +22,7 @@ tareas:
       temperatura: 0.1
       max_tokens: 900
     - proveedor: gemini
-      modelo: gemini-2.5-flash-lite
+      modelo: gemini-3.1-flash-lite
       temperatura: 0.1
       max_tokens: 900
     - proveedor: stub   # último recurso: sin IA, reglas simples. Nunca deja caer el pipeline.
@@ -46,11 +50,12 @@ tareas:
       max_tokens: 12000
       nivel_razonamiento: low
     - proveedor: gemini
-      modelo: gemini-2.5-flash
+      modelo: gemini-3.6-flash
       temperatura: 0.4
-      max_tokens: 8000
+      max_tokens: 12000
+      nivel_razonamiento: low
     - proveedor: groq
-      modelo: llama-3.3-70b-versatile
+      modelo: openai/gpt-oss-120b
       temperatura: 0.4
       max_tokens: 4000
     - proveedor: stub
@@ -59,7 +64,7 @@ tareas:
   # Alimenta el dataset de la Fase 2. Volumen mínimo, modelo barato.
   etiquetar_edicion:
     - proveedor: groq
-      modelo: llama-3.1-8b-instant
+      modelo: openai/gpt-oss-20b
       temperatura: 0.0
       max_tokens: 200
     - proveedor: stub
@@ -67,16 +72,18 @@ tareas:
 # Precio en USD por 1 millón de tokens. Solo se usa para ESTIMAR costo y
 # que sepas cuánto de tu crédito consumiste. Actualizalo cuando cambien.
 # Última verificación: 2026-09-20 (ai.google.dev/gemini-api/docs/pricing, console.groq.com/docs/models)
+#
+# Los modelos de esta tabla tienen que ser los mismos de `tareas` arriba. Si
+# falta uno, el costo de esa llamada se registra en 0 y el tope de gasto por
+# corrida deja de proteger.
 precios_usd_por_millon:
   gemini/gemini-3.8-flash:          {entrada: 0.75,  salida: 3.75}
+  gemini/gemini-3.6-flash:          {entrada: 0.60,  salida: 3.00}
   gemini/gemini-3.5-flash:          {entrada: 1.50,  salida: 9.00}
   gemini/gemini-3.5-flash-lite:     {entrada: 0.30,  salida: 2.50}
-  gemini/gemini-2.5-pro:            {entrada: 1.25,  salida: 10.00}
-  gemini/gemini-2.5-flash:          {entrada: 0.30,  salida: 2.50}
-  gemini/gemini-2.5-flash-lite:     {entrada: 0.10,  salida: 0.40}
-  groq/llama-3.3-70b-versatile:     {entrada: 0.59,  salida: 0.79}
-  groq/llama-3.1-8b-instant:        {entrada: 0.05,  salida: 0.08}
+  gemini/gemini-3.1-flash-lite:     {entrada: 0.10,  salida: 0.40}
   groq/openai-gpt-oss-120b:         {entrada: 0.15,  salida: 0.75}
+  groq/openai-gpt-oss-20b:          {entrada: 0.10,  salida: 0.50}
   stub/stub:                        {entrada: 0.0,   salida: 0.0}
 
 # Cuántos anuncios se enriquecen con IA por reporte.

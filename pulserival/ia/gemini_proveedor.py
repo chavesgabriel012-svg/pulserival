@@ -83,7 +83,8 @@ class ProveedorGemini:
         # modelo agotó el presupuesto razonando y el borrador terminó en
         # "Promociona un 20% de". Mejor que falle y entre el siguiente modelo
         # de la lista que entregarle media frase al cliente.
-        if motivo and str(motivo).upper() not in ("STOP", "FINISH_REASON_STOP"):
+        cortada = motivo and str(motivo).upper() not in ("STOP", "FINISH_REASON_STOP")
+        if cortada and not peticion.permitir_cortado:
             raise ProveedorError(
                 f"Gemini cortó la respuesta (finishReason={motivo}) tras "
                 f"{uso.get('candidatesTokenCount') or 0} tokens de texto y "

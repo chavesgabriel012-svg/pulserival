@@ -28,6 +28,10 @@ class Peticion:
     # Solo Gemini 3.x: minimal | low | medium | high. Controla cuánto razona
     # antes de responder, y ese razonamiento consume el presupuesto de salida.
     nivel_razonamiento: str | None = None
+    # Solo para el diagnóstico: ahí se piden 5 tokens a propósito, así que
+    # una respuesta cortada significa que el modelo SÍ contestó. En un
+    # reporte de verdad una respuesta cortada nunca se acepta.
+    permitir_cortado: bool = False
 
 
 @dataclass

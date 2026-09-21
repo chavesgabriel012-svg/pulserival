@@ -59,8 +59,11 @@ class TestValidar(unittest.TestCase):
         self.assertTrue(any(p["tipo"] == "referencia_inexistente" for p in r["problemas"]))
 
     def test_avisa_si_no_menciona_lo_importante(self):
-        r = validar.validar("## Lo más importante\nNada pasó.", ANUNCIOS)
+        # Cita [A1] pero no [A2], que también es importante: eso es cobertura
+        # parcial. Citar cero anuncios ya no es un aviso, es un problema.
+        r = validar.validar("## Lo más importante\nBajó el precio [A1].", ANUNCIOS)
         self.assertTrue(any(a["tipo"] == "cobertura_incompleta" for a in r["avisos"]))
+        self.assertEqual(r["cobertura_importantes"], "1/2")
 
     def test_avisa_tono_exclamativo(self):
         r = validar.validar(BORRADOR_OK + "\n¡Excelente semana!", ANUNCIOS)
@@ -231,3 +234,100 @@ class TestSeccionesObligatorias(unittest.TestCase):
             self.ANUNCIOS)
         self.assertTrue(any(a["tipo"] == "seccion_faltante" for a in r["avisos"]))
         self.assertFalse(any(p["tipo"] == "seccion_faltante" for p in r["problemas"]))
+
+
+class TestBorradorSinAnalisis(unittest.TestCase):
+    """Un reporte con los conteos pero sin análisis no puede salir aprobado.
+
+    Salió aprobado en una corrida real: los cuatro modelos de la cadena
+    habían dejado de existir, el respaldo del código armó los conteos y el
+    control de calidad lo dio por bueno.
+    """
+
+    def anuncios(self, n=3):
+        return [{"referencia": f"[A{i}]", "clasificacion": "nuevo",
+                 "competidor": "Monge", "sin_texto": False} for i in range(1, n + 1)]
+
+    def completo(self):
+        return (
+            "## Resumen ejecutivo\n\n"
+            "Monge sostuvo tres mensajes nuevos en la semana, todos con descuento "
+            "por temporada y compra en linea como via principal [A1, A2, A3].\n\n"
+            "## Panorama de la competencia\n\nMonge con tres anuncios nuevos [A1].\n\n"
+            "## Que esta haciendo cada competidor\n\nMonge repitio el mismo "
+            "descuento en tres piezas distintas [A2].\n\n"
+            "## Movimientos que vale la pena mirar de cerca\n\n"
+            "El descuento de temporada aparece en las tres piezas [A3].\n\n"
+            "## Que haria yo esta semana\n\n"
+            "Revisaria el precio de las lineas que Monge esta empujando con "
+            "descuento, porque el mensaje se repite en las tres piezas [A1, A2].\n"
+        )
+
+    def test_el_respaldo_sin_ia_no_se_aprueba(self):
+        res = validar.validar(self.completo(), self.anuncios(), proveedor="stub")
+        self.assertFalse(res["aprobado"])
+        self.assertIn("sin_interpretacion", [p["tipo"] for p in res["problemas"]])
+
+    def test_con_modelo_real_el_mismo_texto_pasa(self):
+        res = validar.validar(self.completo(), self.anuncios(), proveedor="gemini")
+        self.assertTrue(res["aprobado"], res["problemas"])
+
+    def test_cero_referencias_es_problema_no_aviso(self):
+        sin_refs = self.completo().replace("[A1, A2, A3]", "").replace("[A1, A2]", "")
+        for r in ("[A1]", "[A2]", "[A3]"):
+            sin_refs = sin_refs.replace(r, "")
+        res = validar.validar(sin_refs, self.anuncios(), proveedor="gemini")
+        self.assertFalse(res["aprobado"])
+        self.assertIn("sin_referencias", [p["tipo"] for p in res["problemas"]])
+
+    def test_seccion_obligatoria_con_relleno_no_pasa(self):
+        texto = self.completo().replace(
+            "Revisaria el precio de las lineas que Monge esta empujando con "
+            "descuento, porque el mensaje se repite en las tres piezas [A1, A2].",
+            "_(pendiente de revision)_")
+        res = validar.validar(texto, self.anuncios(), proveedor="gemini")
+        self.assertFalse(res["aprobado"])
+        problemas = [p for p in res["problemas"] if p["tipo"] == "seccion_sin_escribir"]
+        self.assertTrue(problemas)
+        self.assertIn("que haria yo", problemas[0]["detalle"])
+
+    def test_seccion_obligatoria_flaca_solo_avisa(self):
+        # El umbral de palabras es a ojo: avisa, no bloquea.
+        texto = self.completo().replace(
+            "Revisaria el precio de las lineas que Monge esta empujando con "
+            "descuento, porque el mensaje se repite en las tres piezas [A1, A2].",
+            "Bajar precios [A1].")
+        res = validar.validar(texto, self.anuncios(), proveedor="gemini")
+        self.assertTrue(res["aprobado"], res["problemas"])
+        self.assertIn("seccion_flaca", [a["tipo"] for a in res["avisos"]])
+
+
+class TestPalabrasProhibidasCompletas(unittest.TestCase):
+    """Las métricas prohibidas se buscan como palabra, no como subcadena.
+
+    Esto bloqueó un reporte real: "ctr" vive dentro de "electrodomésticos",
+    y los competidores del cliente son justamente de línea blanca. Todos sus
+    reportes iban a salir rechazados por una métrica que nadie escribió.
+    """
+
+    ANUNCIOS = [{"referencia": "[A1]", "clasificacion": "nuevo"}]
+
+    def test_no_marca_palabras_que_contienen_la_metrica(self):
+        for palabra in ("electrodomésticos", "eléctrica", "espectro", "clicspro"):
+            with self.subTest(palabra):
+                r = validar.validar(
+                    f"## Lo más importante\nMonge empuja {palabra} en oferta [A1].",
+                    self.ANUNCIOS)
+                self.assertEqual(
+                    [p for p in r["problemas"] if p["tipo"] == "dato_inventado"], [],
+                    f"'{palabra}' no menciona ninguna métrica")
+
+    def test_sigue_marcando_la_metrica_de_verdad(self):
+        for palabra in ("CTR", "clics", "impresiones", "conversiones", "ROAS"):
+            with self.subTest(palabra):
+                r = validar.validar(
+                    f"## Lo más importante\nTuvo buen {palabra} esta semana [A1].",
+                    self.ANUNCIOS)
+                self.assertTrue(
+                    any(p["tipo"] == "dato_inventado" for p in r["problemas"]),
+                    f"'{palabra}' sí es una métrica que la fuente no entrega")

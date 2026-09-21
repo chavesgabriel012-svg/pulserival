@@ -24,8 +24,14 @@ class TestPipeline(CasoBase):
         self.assertEqual(len(res["reportes"]), 1)
         rep = res["reportes"][0]
         self.assertIn("reporte_id", rep)
-        self.assertTrue(rep["validacion"]["aprobado"], rep["validacion"]["problemas"])
         self.assertTrue(os.path.exists(rep["archivo"]))
+        # Las pruebas corren sin claves de API, así que el borrador lo escribe
+        # el respaldo del código. Eso NO se aprueba: un reporte con los
+        # conteos correctos y sin análisis no es el producto. Que esto quede
+        # en rojo si alguien vuelve a hacerlo aprobable es el punto.
+        self.assertFalse(rep["validacion"]["aprobado"])
+        self.assertIn("sin_interpretacion",
+                      [p["tipo"] for p in rep["validacion"]["problemas"]])
 
     def test_segunda_corrida_detecta_cambios(self):
         os.environ["PULSERIVAL_DEMO_SEMANA"] = "1"
@@ -68,7 +74,11 @@ class TestPipeline(CasoBase):
         inicio, fin = util.periodo("semanal")
         rep = generar_mod.generar(self.con, cliente, inicio, fin)
         self.assertIn("no detectamos actividad", rep["borrador_md"])
-        self.assertTrue(rep["validacion"]["aprobado"])
+        # Se genera y dice la verdad, pero la sección de recomendaciones queda
+        # en blanco para que la escriba el editor, así que sale como REVISAR.
+        self.assertFalse(rep["validacion"]["aprobado"])
+        self.assertIn("seccion_sin_escribir",
+                      [p["tipo"] for p in rep["validacion"]["problemas"]])
 
 
 class TestSegurosDeEnvio(CasoBase):

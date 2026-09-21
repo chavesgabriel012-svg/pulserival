@@ -176,7 +176,8 @@ def generar(
         version = prompts.version("redactar_reporte")
 
     validacion = validar_mod.validar(borrador, anuncios, competidores,
-                                     anuncios_vistos=anuncios_prompt)
+                                     anuncios_vistos=anuncios_prompt,
+                                     proveedor=resp_proveedor)
     asunto = _asunto(cliente, inicio, fin, conteo)
     fila_datos = {
         "cliente_id": int(cliente["id"]),

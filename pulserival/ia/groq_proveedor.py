@@ -67,7 +67,7 @@ class ProveedorGroq:
         except (KeyError, IndexError) as e:
             raise ProveedorError(f"Respuesta inesperada de Groq: {str(datos)[:300]}") from e
         # Una respuesta cortada no se acepta: mejor pasar al siguiente modelo.
-        if eleccion.get("finish_reason") == "length":
+        if eleccion.get("finish_reason") == "length" and not peticion.permitir_cortado:
             raise ProveedorError(
                 f"Groq cortó la respuesta por límite de tokens tras "
                 f"{uso.get('completion_tokens') or 0}. Subí max_tokens en config/modelos.yaml.")
