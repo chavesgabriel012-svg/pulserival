@@ -1,6 +1,7 @@
 """El pipeline completo y las reglas de seguridad del envío."""
 from __future__ import annotations
 
+import json
 import os
 
 from pulserival import db, pipeline, util
@@ -199,3 +200,61 @@ class TestTamanoDelPrompt(CasoBase):
                      "fecha_inicio": None,
                      "analisis": {"angulo": "x", "generado_por": "reglas"}}]
         self.assertEqual(generar_mod.enriquecer_anuncios(self.con, anuncios, maximo=5), 1)
+
+
+class TestRefrescoDelBorradorDelPeriodo(CasoBase):
+    """Una recolección nueva tiene que actualizar el borrador sin revisar.
+
+    Pasó de verdad: una corrida trajo 39 anuncios nuevos, 13 cambiados y 6
+    apagados, y el borrador entregado siguió siendo el de la corrida
+    anterior. La cadencia cortaba antes de llegar al refresco, así que ese
+    código nunca se ejecutaba.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.cli = self.cliente()
+        self.inicio, self.fin = util.periodo("semanal")
+
+    def _reporte(self, estado, generado_en="2026-01-01 00:00:00"):
+        db.insertar(self.con, "reportes_generados", {
+            "cliente_id": self.cli, "periodo_inicio": self.inicio,
+            "periodo_fin": self.fin, "asunto": "x", "borrador_md": "y",
+            "estado": estado, "generado_en": generado_en})
+        self.con.commit()
+
+    def _corrida(self, terminada_en, **totales):
+        base = {"nuevos": 0, "cambiados": 0, "continuan": 0, "pausados": 0}
+        base.update(totales)
+        db.insertar(self.con, "corridas_recoleccion", {
+            "estado": "ok", "fuente": "demo", "terminada_en": terminada_en,
+            "resumen_json": json.dumps({"totales": base})})
+        self.con.commit()
+
+    def test_un_borrador_sin_revisar_se_rehace_si_entro_algo(self):
+        self._reporte("borrador")
+        self._corrida("2026-06-01 00:00:00", nuevos=39, cambiados=13, pausados=6)
+        self.assertTrue(pipeline._toca_reportar(self.con, self.cli, "semanal", self.inicio))
+
+    def test_sin_movimiento_no_se_paga_ia_para_reescribir_lo_mismo(self):
+        self._reporte("borrador")
+        self._corrida("2026-06-01 00:00:00", continuan=50)
+        self.assertFalse(pipeline._toca_reportar(self.con, self.cli, "semanal", self.inicio))
+
+    def test_una_corrida_anterior_al_borrador_no_cuenta(self):
+        self._reporte("borrador", generado_en="2026-06-02 00:00:00")
+        self._corrida("2026-06-01 00:00:00", nuevos=10)
+        self.assertFalse(pipeline._toca_reportar(self.con, self.cli, "semanal", self.inicio))
+
+    def test_uno_ya_enviado_no_se_toca(self):
+        self._reporte("enviado")
+        self._corrida("2026-06-01 00:00:00", nuevos=39)
+        self.assertFalse(pipeline._toca_reportar(self.con, self.cli, "semanal", self.inicio))
+
+    def test_uno_ya_revisado_no_se_toca(self):
+        self._reporte("revisado")
+        self._corrida("2026-06-01 00:00:00", nuevos=39)
+        self.assertFalse(pipeline._toca_reportar(self.con, self.cli, "semanal", self.inicio))
+
+    def test_sin_reportes_previos_toca(self):
+        self.assertTrue(pipeline._toca_reportar(self.con, self.cli, "semanal", self.inicio))

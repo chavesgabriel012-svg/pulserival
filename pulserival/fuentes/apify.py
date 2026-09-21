@@ -13,6 +13,7 @@ nombre de campo, se arregla en el YAML.
 from __future__ import annotations
 
 import json
+import re
 import time
 from typing import Any
 
@@ -245,40 +246,75 @@ def _solo_del_anunciante(
 ) -> tuple[list[AnuncioCrudo], dict[str, int]]:
     """Deja fuera los anuncios de OTRAS empresas que pautan el mismo dominio.
 
-    El Centro de Transparencia se busca por dominio, y devuelve a cualquiera
+    El Centro de Transparencia se busca por dominio y devuelve a cualquiera
     que anuncie ese dominio. Buscando siman.com aparecieron, junto a los de
-    Almacenes Siman, los de "Publicentro de Guatemala Sociedad Anonima". Sin
-    este filtro esos anuncios se le contaban al competidor y el reporte
-    afirmaba actividad que no era suya.
+    Almacenes Siman, los de "Publicentro de Guatemala Sociedad Anonima".
 
-    Si el competidor tiene `google_anunciante_id` configurado, manda ese. Si
-    no, se queda con el anunciante que más anuncios aportó, que es el que la
-    búsqueda por dominio estaba buscando.
+    Se conserva:
+      1. el anunciante fijado en `google_anunciante_id`, si está configurado;
+      2. el que más anuncios aportó (la empresa suele pautar por medio de una
+         agencia o de una sociedad con otro nombre: tiendamonge.com lo pauta
+         "HAVAS COSTA RICA, S.A.");
+      3. cualquiera cuyo nombre comparta una palabra distintiva con la del
+         competidor ("Financiera Monge S.A" para Tienda Monge).
+
+    La regla 3 no es un detalle: quedarse solo con el dominante descartaba
+    "Financiera Monge S.A" y conservaba a la agencia, y esos anuncios, que sí
+    son del competidor, aparecían como apagados en el reporte siguiente.
     """
     if not anuncios:
         return anuncios, {}
 
-    def clave(a: AnuncioCrudo) -> str:
+    def id_de(a: AnuncioCrudo) -> str:
         return _texto((a.metadata or {}).get("anunciante_id")) or ""
 
-    esperado = _texto(competidor.get("google_anunciante_id"))
-    if not esperado:
-        conteo: dict[str, int] = {}
+    conteo: dict[str, int] = {}
+    for a in anuncios:
+        conteo[id_de(a)] = conteo.get(id_de(a), 0) + 1
+    if len(conteo) <= 1:
+        return anuncios, {}
+
+    aceptados: set[str] = set()
+    fijado = _texto(competidor.get("google_anunciante_id"))
+    if fijado and fijado in conteo:
+        aceptados.add(fijado)
+    else:
+        if fijado:
+            # El id configurado no aparece: puede haber quedado viejo. Se sigue
+            # con las otras reglas en vez de devolver vacío.
+            pass
+        aceptados.add(max(conteo, key=lambda k: (conteo[k], k != "")))
+        palabras = _palabras_distintivas(competidor.get("nombre"))
         for a in anuncios:
-            conteo[clave(a)] = conteo.get(clave(a), 0) + 1
-        if len(conteo) <= 1:
-            return anuncios, {}
-        esperado = max(conteo, key=lambda k: (conteo[k], k != ""))
+            if palabras & _palabras_distintivas(a.anunciante):
+                aceptados.add(id_de(a))
 
     guardados, descartados = [], {}
     for a in anuncios:
-        if clave(a) == esperado:
+        if id_de(a) in aceptados:
             guardados.append(a)
         else:
-            nombre = _texto(a.anunciante) or clave(a) or "(anunciante desconocido)"
+            nombre = _texto(a.anunciante) or id_de(a) or "(anunciante desconocido)"
             descartados[nombre] = descartados.get(nombre, 0) + 1
-    # Si el id esperado no aparece en la respuesta, no se descarta nada: es
-    # preferible revisar de más que devolver vacío por una config vieja.
     if not guardados:
         return anuncios, {}
     return guardados, descartados
+
+
+# Palabras que aparecen en cualquier razón social y no distinguen a nadie.
+_GENERICAS = {
+    "sociedad", "anonima", "anónima", "sa", "s", "a", "srl", "ltda", "limitada",
+    "inc", "corp", "corporacion", "corporación", "company", "cia", "compañia",
+    "compañía", "de", "del", "la", "el", "los", "las", "y", "grupo", "tienda",
+    "tiendas", "almacenes", "almacen", "almacén", "comercial", "internacional",
+    "international", "services", "costa", "rica", "cr", "financiera",
+}
+
+
+def _palabras_distintivas(nombre) -> set[str]:
+    """Las palabras de una razón social que de verdad identifican a alguien."""
+    if not nombre:
+        return set()
+    limpio = util.normalizar_texto(str(nombre))
+    return {p for p in re.findall(r"[a-z0-9]+", limpio)
+            if len(p) > 2 and p not in _GENERICAS}

@@ -306,13 +306,38 @@ class TestFiltroDeAnunciante(unittest.TestCase):
             metadata={"anunciante_id": anunciante_id},
         )
 
-    def test_se_queda_con_el_anunciante_dominante(self):
+    def test_descarta_a_la_empresa_ajena_que_pauta_el_mismo_dominio(self):
+        # Caso real: buscando siman.com aparecieron los de Almacenes Siman y
+        # los de "Publicentro de Guatemala Sociedad Anonima".
         from pulserival.fuentes.apify import _solo_del_anunciante
         anuncios = [self.anuncio("Almacenes Siman", "AR074", f"c{i}") for i in range(5)]
-        anuncios += [self.anuncio("Publicentro de Guatemala", "AR146", "c9")]
+        anuncios += [self.anuncio("Publicentro de Guatemala Sociedad Anonima", "AR146", "c9")]
         guardados, descartados = _solo_del_anunciante(anuncios, {"nombre": "Almacenes SIMAN"})
         self.assertEqual(len(guardados), 5)
-        self.assertEqual(descartados, {"Publicentro de Guatemala": 1})
+        self.assertEqual(descartados, {"Publicentro de Guatemala Sociedad Anonima": 1})
+
+    def test_conserva_a_la_agencia_y_tambien_a_la_empresa_misma(self):
+        # Caso real: tiendamonge.com lo pauta "HAVAS COSTA RICA, S.A." (la
+        # agencia, que es la dominante) y también "Financiera Monge S.A".
+        # Quedarse solo con la dominante descartaba los 5 de la financiera, y
+        # en la corrida siguiente aparecían como apagados.
+        from pulserival.fuentes.apify import _solo_del_anunciante
+        anuncios = [self.anuncio("HAVAS COSTA RICA, S.A.", "ARh", f"h{i}") for i in range(32)]
+        anuncios += [self.anuncio("Financiera Monge S.A", "ARf", f"f{i}") for i in range(5)]
+        guardados, descartados = _solo_del_anunciante(anuncios, {"nombre": "Tienda Monge"})
+        self.assertEqual(len(guardados), 37)
+        self.assertEqual(descartados, {})
+
+    def test_las_palabras_genericas_no_emparejan(self):
+        # "Sociedad Anonima" o "Costa Rica" no identifican a nadie: si
+        # emparejaran, no se descartaría nunca nada.
+        from pulserival.fuentes.apify import _solo_del_anunciante
+        anuncios = [self.anuncio("Almacenes Siman", "AR074", f"c{i}") for i in range(5)]
+        anuncios += [self.anuncio("Otra Cosa Costa Rica Sociedad Anonima", "AR146", "c9")]
+        guardados, descartados = _solo_del_anunciante(
+            anuncios, {"nombre": "Almacenes SIMAN Costa Rica Sociedad Anonima"})
+        self.assertEqual(len(guardados), 5)
+        self.assertIn("Otra Cosa Costa Rica Sociedad Anonima", descartados)
 
     def test_el_id_configurado_manda_sobre_el_conteo(self):
         from pulserival.fuentes.apify import _solo_del_anunciante
@@ -330,14 +355,15 @@ class TestFiltroDeAnunciante(unittest.TestCase):
         self.assertEqual(len(guardados), 3)
         self.assertEqual(descartados, {})
 
-    def test_si_el_id_configurado_no_aparece_no_se_descarta_nada(self):
+    def test_si_el_id_configurado_no_aparece_se_cae_a_las_otras_reglas(self):
         # Preferible revisar de más que devolver vacío por una config vieja.
         from pulserival.fuentes.apify import _solo_del_anunciante
         anuncios = [self.anuncio("Almacenes Siman", "AR074", f"c{i}") for i in range(3)]
+        anuncios += [self.anuncio("Publicentro de Guatemala", "AR146", "c9")]
         guardados, descartados = _solo_del_anunciante(
-            anuncios, {"nombre": "SIMAN", "google_anunciante_id": "AR-viejo"})
+            anuncios, {"nombre": "Almacenes SIMAN", "google_anunciante_id": "AR-viejo"})
         self.assertEqual(len(guardados), 3)
-        self.assertEqual(descartados, {})
+        self.assertEqual(descartados, {"Publicentro de Guatemala": 1})
 
 
 class TestPaginaPorId(unittest.TestCase):
