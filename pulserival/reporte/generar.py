@@ -47,7 +47,9 @@ def enriquecer_anuncios(
     maximo = _config.max_anuncios_analizados() if maximo is None else maximo
     pendientes = [
         a for a in anuncios
-        if a["clasificacion"] in ("nuevo", "cambiado") and (forzar or not a.get("analisis"))
+        if a["clasificacion"] in ("nuevo", "cambiado")
+        and (forzar or not a.get("analisis")
+             or (a["analisis"] or {}).get("generado_por") == "reglas")
     ]
     pendientes.sort(key=lambda a: (a.get("prioridad") or 9,
                                    -(a.get("variantes") or 1),
@@ -126,6 +128,9 @@ def generar(
 
     enriquecer_anuncios(con, anuncios, presupuesto)
 
+    # El modelo ve una selección; el reporte los lista todos. Con 99 anuncios
+    # el prompt se pasaba del límite de tamaño de algunos modelos (413).
+    anuncios_prompt = _seleccionar_para_prompt(anuncios)
     contexto = {
         "cliente": cliente.get("nombre_empresa"),
         "industria": cliente.get("industria"),
@@ -134,7 +139,9 @@ def generar(
         "periodo_fin": fin,
         "competidores": competidores,
         "conteo": conteo,
-        "anuncios": anuncios,
+        "anuncios": anuncios_prompt,
+        "anuncios_omitidos": len(anuncios) - len(anuncios_prompt),
+        "anuncios_totales": len(anuncios),
         "senales": metricas_mod.resumir_para_prompt(senales),
         "periodo_anterior": datos_mod.resumen_periodo_anterior(con, int(cliente["id"]), inicio),
     }
@@ -219,6 +226,29 @@ def generar(
         "modelo": resp_modelo,
         "costo_usd": costo,
     }
+
+
+def _seleccionar_para_prompt(anuncios: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Los anuncios más relevantes para escribir el análisis.
+
+    Criterio: primero lo que es noticia (nuevo, cambiado, apagado), después
+    el competidor prioritario, después los mensajes con más variantes —que
+    es donde el competidor está poniendo más esfuerzo— y por último los que
+    tienen texto, porque de los que no lo tienen no hay nada que interpretar.
+    """
+    from .. import config as _config
+
+    orden = {"nuevo": 0, "cambiado": 1, "pausado": 2, "continua": 3}
+    ordenados = sorted(
+        anuncios,
+        key=lambda a: (
+            orden.get(a["clasificacion"], 9),
+            a.get("prioridad") or 9,
+            1 if a.get("sin_texto") else 0,
+            -(a.get("variantes") or 1),
+        ),
+    )
+    return ordenados[: _config.max_anuncios_en_prompt()]
 
 
 def _asunto(cliente: dict, inicio: str, fin: str, conteo: dict[str, int]) -> str:

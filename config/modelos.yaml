@@ -14,6 +14,10 @@ tareas:
       temperatura: 0.1
       max_tokens: 900
     - proveedor: gemini
+      modelo: gemini-3.5-flash-lite
+      temperatura: 0.1
+      max_tokens: 900
+    - proveedor: gemini
       modelo: gemini-2.5-flash-lite
       temperatura: 0.1
       max_tokens: 900
@@ -21,13 +25,26 @@ tareas:
 
   # Tarea de CALIDAD: redactar el reporte que lee el cliente.
   # Acá sí se paga por buena escritura. Es 1 llamada por reporte.
+  #
+  # Ojo con los modelos retirados: gemini-2.5-pro devuelve 404 "no longer
+  # available to new users" en cuentas nuevas, aunque siga en la
+  # documentación. Por eso la lista arranca en la generación vigente y tiene
+  # varios respaldos: si Google retira uno, el siguiente contesta.
   redactar_reporte:
     - proveedor: gemini
-      modelo: gemini-2.5-pro
+      modelo: gemini-3.8-flash
+      temperatura: 0.4
+      max_tokens: 4000
+    - proveedor: gemini
+      modelo: gemini-3.5-flash
+      temperatura: 0.4
+      max_tokens: 4000
+    - proveedor: gemini
+      modelo: gemini-2.5-flash
       temperatura: 0.4
       max_tokens: 4000
     - proveedor: groq
-      modelo: openai/gpt-oss-120b
+      modelo: llama-3.3-70b-versatile
       temperatura: 0.4
       max_tokens: 4000
     - proveedor: stub
@@ -45,10 +62,12 @@ tareas:
 # que sepas cuánto de tu crédito consumiste. Actualizalo cuando cambien.
 # Última verificación: 2026-09-20 (ai.google.dev/gemini-api/docs/pricing, console.groq.com/docs/models)
 precios_usd_por_millon:
+  gemini/gemini-3.8-flash:          {entrada: 0.75,  salida: 3.75}
+  gemini/gemini-3.5-flash:          {entrada: 1.50,  salida: 9.00}
+  gemini/gemini-3.5-flash-lite:     {entrada: 0.30,  salida: 2.50}
   gemini/gemini-2.5-pro:            {entrada: 1.25,  salida: 10.00}
   gemini/gemini-2.5-flash:          {entrada: 0.30,  salida: 2.50}
   gemini/gemini-2.5-flash-lite:     {entrada: 0.10,  salida: 0.40}
-  gemini/gemini-3.5-flash-lite:     {entrada: 0.30,  salida: 2.50}
   groq/llama-3.3-70b-versatile:     {entrada: 0.59,  salida: 0.79}
   groq/llama-3.1-8b-instant:        {entrada: 0.05,  salida: 0.08}
   groq/openai-gpt-oss-120b:         {entrada: 0.15,  salida: 0.75}
@@ -66,6 +85,15 @@ precios_usd_por_millon:
 # Se priorizan los competidores marcados como prioridad 1 y los anuncios más
 # recientes.
 max_anuncios_analizados: 25
+
+# Cuántos anuncios entran en el prompt de redacción.
+#
+# Con 99 anuncios el prompt se pasó del límite de tamaño de uno de los
+# modelos, que respondió 413 "Request too large". El reporte igual los lista
+# TODOS en el detalle; lo que se acota es cuántos ve el modelo para escribir
+# el análisis. Se le informa cuántos quedaron fuera para que el texto hable
+# del total sin inventar.
+max_anuncios_en_prompt: 45
 
 # Segundos de espera entre llamadas a la IA. Sin esto se agota el límite por
 # minuto del tier gratuito y todo cae al respaldo.

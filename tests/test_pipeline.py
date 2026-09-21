@@ -146,3 +146,46 @@ class TestTopeDeLlamadasDeIA(CasoBase):
         anuncios[0]["analisis"] = {"angulo": "ya estaba"}
         procesados = generar_mod.enriquecer_anuncios(self.con, anuncios, maximo=10)
         self.assertEqual(procesados, 2)
+
+
+class TestTamanoDelPrompt(CasoBase):
+    """El prompt no puede crecer sin límite con la cantidad de anuncios.
+
+    Real: con 99 anuncios, un modelo respondió 413 "Request too large" y el
+    reporte cayó al modo sin IA. El detalle del correo sigue listando todos;
+    lo que se acota es cuántos ve el modelo para escribir el análisis.
+    """
+
+    def anuncios(self, n):
+        clases = ("continua", "nuevo", "cambiado", "pausado")
+        return [{"anuncio_id": i, "clasificacion": clases[i % 4], "competidor": "X",
+                 "plataforma": "meta", "prioridad": 1 + (i % 2), "variantes": 1 + (i % 3),
+                 "sin_texto": i % 5 == 0, "referencia": f"[A{i}]"} for i in range(1, n + 1)]
+
+    def test_se_acota_la_cantidad_que_ve_el_modelo(self):
+        from pulserival import config
+
+        seleccion = generar_mod._seleccionar_para_prompt(self.anuncios(200))
+        self.assertEqual(len(seleccion), config.max_anuncios_en_prompt())
+
+    def test_se_prioriza_lo_que_es_noticia(self):
+        seleccion = generar_mod._seleccionar_para_prompt(self.anuncios(200))
+        clases = [a["clasificacion"] for a in seleccion]
+        self.assertNotIn("continua", clases[:10],
+                         "lo nuevo y lo que cambió va antes que lo que sigue igual")
+
+    def test_con_pocos_anuncios_entran_todos(self):
+        seleccion = generar_mod._seleccionar_para_prompt(self.anuncios(5))
+        self.assertEqual(len(seleccion), 5)
+
+    def test_el_analisis_hecho_por_reglas_se_rehace_cuando_hay_ia(self):
+        """El respaldo sin IA marca su salida como generada por reglas. Si en
+        la siguiente corrida la IA sí responde, ese análisis pobre tiene que
+        reemplazarse, no darse por bueno."""
+        anuncios = [{"anuncio_id": 1, "clasificacion": "nuevo", "competidor": "X",
+                     "plataforma": "meta", "titulo": "Promo", "texto": "2x1",
+                     "prioridad": 1, "variantes": 1, "tipo_creativo": "imagen",
+                     "cta": None, "link_destino": None, "descripcion": None,
+                     "fecha_inicio": None,
+                     "analisis": {"angulo": "x", "generado_por": "reglas"}}]
+        self.assertEqual(generar_mod.enriquecer_anuncios(self.con, anuncios, maximo=5), 1)

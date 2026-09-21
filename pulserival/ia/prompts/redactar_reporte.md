@@ -139,7 +139,9 @@ SEÑALES POR COMPETIDOR Y PLATAFORMA (calculadas por el sistema, son exactas;
 no las recalcules, interpretalas):
 {{ senales }}
 
-ANUNCIOS DETECTADOS (todos los datos que existen):
+ANUNCIOS DETECTADOS{% if anuncios_omitidos %} (se listan {{ anuncios | length }} de {{ anuncios_totales }};
+los {{ anuncios_omitidos }} restantes son de menor relevancia y ya están contados en las
+señales de arriba, así que hable del total sin describirlos uno por uno){% endif %}:
 {% for a in anuncios %}
 {{ a.referencia }} | {{ a.clasificacion | upper }} | {{ a.competidor }} | {{ a.plataforma }}{% if a.sin_texto %} | SIN TEXTO{% endif %}{% if a.variantes and a.variantes > 1 %} | {{ a.variantes }} variantes{% endif %}
 {% if a.sin_texto %}  (la fuente no publica el texto de este anuncio: no inventes qué dice)
