@@ -76,6 +76,30 @@ cambiar en `pulserival/ia/prompts/redactar_reporte.md`.
    pautando. Muchas veces la respuesta es que de verdad no hay nada — y eso
    es información válida para el cliente.
 
+### "Dice REVISAR · no devolvió ningún anuncio pero antes había activos"
+
+Es el aviso más importante que da el sistema. Significa que el scraper
+respondió bien pero con las manos vacías, y la corrida anterior sí había
+encontrado anuncios activos de ese competidor.
+
+Puede ser real (el competidor apagó toda su pauta), pero lo más probable es
+que el scraper esté fallando en silencio: cambió el HTML, lo bloquearon, o el
+término de búsqueda dejó de coincidir. Por eso **el sistema no marca nada como
+pausado** en ese caso: hacerlo generaría un reporte que le anuncia al cliente
+que su competencia apagó todo, lo cual sería falso y alarmista.
+
+Qué hacer: abrí la biblioteca pública a mano y verificá. Si de verdad no hay
+nada, corré `recolectar` de nuevo la semana siguiente y el sistema lo
+registrará normalmente. Si sí hay anuncios, el problema es el scraper o el
+término de búsqueda: revisá `datos/crudo/` y el `mapeo` de `config/fuentes.yaml`.
+
+### "Dice: todavía no cierra el periodo de este cliente"
+
+No es un error. El cron corre todas las semanas, pero un cliente con cadencia
+mensual recibe un reporte por mes: en las corridas intermedias se recolectan
+sus datos igual (para no perder detección) y se omite la generación del
+borrador. Cuando cierra su periodo, el borrador aparece solo.
+
 ### "Apify devolvió error"
 
 | Error | Qué hacer |

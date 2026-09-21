@@ -19,11 +19,21 @@ DIR_BORRADORES = RAIZ / "borradores"
 DIR_SALIDA = RAIZ / "salida"
 
 
+_ENV_CARGADOS: set[Path] = set()
+
+
 def cargar_env(ruta: Path | None = None) -> None:
-    """Carga variables de .env al entorno, sin sobreescribir las que ya existen."""
+    """Carga variables de .env al entorno, sin sobreescribir las que ya existen.
+
+    Se hace una sola vez por archivo: `env()` se llama muchas veces por corrida
+    y releer el archivo cada vez no aporta nada (os.environ ya tiene el valor).
+    """
     ruta = ruta or (RAIZ / ".env")
+    if ruta in _ENV_CARGADOS:
+        return
     if not ruta.exists():
         return
+    _ENV_CARGADOS.add(ruta)
     for linea in ruta.read_text(encoding="utf-8").splitlines():
         linea = linea.strip()
         if not linea or linea.startswith("#") or "=" not in linea:

@@ -156,8 +156,12 @@ def generar(
 
     if existente:
         reporte_id = int(existente["id"])
-        db.actualizar(con, "reportes_generados", reporte_id,
-                      {k: v for k, v in fila_datos.items() if k != "cliente_id"})
+        # Al regenerar, la versión final anterior queda obsoleta: se borra para
+        # que `exportar` y `enviar` trabajen sobre el borrador nuevo y no sobre
+        # el texto viejo. La edición registrada se conserva en su tabla.
+        cambios = {k: v for k, v in fila_datos.items() if k != "cliente_id"}
+        cambios["final_md"] = None
+        db.actualizar(con, "reportes_generados", reporte_id, cambios)
         con.execute("DELETE FROM anuncios_en_reporte WHERE reporte_id = ?", (reporte_id,))
     else:
         reporte_id = db.insertar(con, "reportes_generados", fila_datos)

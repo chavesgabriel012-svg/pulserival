@@ -73,27 +73,36 @@ def cmd_init(args) -> int:
 def cmd_clientes(args) -> int:
     with db.sesion() as con:
         if args.accion == "agregar":
+            if not args.empresa or not args.email:
+                return error("Para agregar un cliente hacen falta --empresa y --email")
+            periodicidad = args.periodicidad or "semanal"
             cid = db.insertar(con, "clientes", {
                 "nombre_empresa": args.empresa,
                 "contacto_nombre": args.contacto,
                 "contacto_email": args.email,
                 "contacto_whatsapp": args.whatsapp,
-                "periodicidad": args.periodicidad,
-                "dia_envio": args.dia,
+                "periodicidad": periodicidad,
+                "dia_envio": args.dia or "martes",
                 "industria": args.industria,
                 "notas": args.notas,
             })
-            ok(f"Cliente #{cid}: {args.empresa} ({args.periodicidad})")
+            ok(f"Cliente #{cid}: {args.empresa} ({periodicidad})")
             return 0
         if args.accion == "editar":
+            if args.id is None:
+                return error("Falta --id: decime qué cliente editar (los ves con: clientes lista)")
+            # Solo se escriben los campos que pasaste: sin --periodicidad no se
+            # toca la cadencia del cliente.
             cambios = {k: v for k, v in {
                 "contacto_email": args.email, "contacto_nombre": args.contacto,
                 "contacto_whatsapp": args.whatsapp, "periodicidad": args.periodicidad,
-                "industria": args.industria, "notas": args.notas,
+                "dia_envio": args.dia, "industria": args.industria, "notas": args.notas,
                 "activo": None if args.activo is None else int(args.activo),
             }.items() if v is not None}
+            if not cambios:
+                return error("No pasaste ningún campo para cambiar")
             db.actualizar(con, "clientes", args.id, cambios)
-            ok(f"Cliente #{args.id} actualizado: {', '.join(cambios) or 'nada'}")
+            ok(f"Cliente #{args.id} actualizado: {', '.join(cambios)}")
             return 0
         tabla(db.filas(con, "SELECT * FROM clientes ORDER BY id"),
               ["id", "nombre_empresa", "contacto_email", "periodicidad", "industria", "activo"])
@@ -103,6 +112,8 @@ def cmd_clientes(args) -> int:
 def cmd_competidores(args) -> int:
     with db.sesion() as con:
         if args.accion == "agregar":
+            if not args.cliente or not args.nombre:
+                return error("Para agregar un competidor hacen falta --cliente y --nombre")
             if not (args.meta_pagina or args.meta_consulta or args.google_dominio or args.google_anunciante):
                 return error("Hace falta al menos uno: --meta-pagina, --meta-consulta, "
                              "--google-dominio o --google-anunciante")
@@ -113,20 +124,25 @@ def cmd_competidores(args) -> int:
                 "meta_consulta": args.meta_consulta,
                 "google_dominio": args.google_dominio,
                 "google_anunciante": args.google_anunciante,
-                "prioridad": args.prioridad,
+                "prioridad": 2 if args.prioridad is None else args.prioridad,
                 "notas": args.notas,
             })
             ok(f"Competidor #{cid}: {args.nombre} (cliente {args.cliente})")
             return 0
         if args.accion == "editar":
+            if args.id is None:
+                return error("Falta --id: decime qué competidor editar (los ves con: competidores lista)")
+            # Sin --prioridad no se toca la prioridad que ya tenía.
             cambios = {k: v for k, v in {
                 "meta_pagina_url": args.meta_pagina, "meta_consulta": args.meta_consulta,
                 "google_dominio": args.google_dominio, "google_anunciante": args.google_anunciante,
                 "prioridad": args.prioridad, "notas": args.notas,
                 "activo": None if args.activo is None else int(args.activo),
             }.items() if v is not None}
+            if not cambios:
+                return error("No pasaste ningún campo para cambiar")
             db.actualizar(con, "competidores_seguidos", args.id, cambios)
-            ok(f"Competidor #{args.id} actualizado: {', '.join(cambios) or 'nada'}")
+            ok(f"Competidor #{args.id} actualizado: {', '.join(cambios)}")
             return 0
         sql = "SELECT * FROM competidores_seguidos"
         params: tuple = ()
@@ -150,6 +166,8 @@ def cmd_recolectar(args) -> int:
        f"{t['pausados']} se cayeron · {t['continuan']} siguen igual")
     for r in corrida.resultados:
         print(f"    {r.competidor} [{r.plataforma}]: {r.resumen()}")
+    for s in corrida.sospechosas:
+        aviso(f"REVISAR · {s['competidor']} [{s['plataforma']}]: {s['motivo']}")
     for s in corrida.saltados:
         aviso(f"{s['competidor']} [{s['plataforma']}]: {s['motivo']}")
     for e in corrida.errores:
@@ -241,6 +259,9 @@ def cmd_ciclo(args) -> int:
         if "error" in r:
             error(f"{r['cliente']}: {r['error']}")
             continue
+        if "omitido" in r:
+            print(f"    {r['cliente']}: {r['omitido']}")
+            continue
         val = r.get("validacion") or {}
         estado = "APROBADO" if val.get("aprobado") else "REVISAR"
         marca = " (ya existía)" if r.get("ya_existia") else ""
@@ -248,6 +269,8 @@ def cmd_ciclo(args) -> int:
               f"· {r.get('archivo','')}")
     for e in res["errores"]:
         error(f"{e['competidor']} [{e['plataforma']}]: {e['error']}")
+    for s in res.get("sospechosas", []):
+        aviso(f"REVISAR · {s['competidor']} [{s['plataforma']}]: {s['motivo']}")
     for s in res["saltados"]:
         aviso(f"{s['competidor']} [{s['plataforma']}]: {s['motivo']}")
     return 0
@@ -256,6 +279,8 @@ def cmd_ciclo(args) -> int:
 def cmd_feedback(args) -> int:
     with db.sesion() as con:
         if args.accion == "agregar":
+            if not args.cliente or not args.texto:
+                return error("Para anotar feedback hacen falta --cliente y --texto")
             fid = db.insertar(con, "feedback_cliente", {
                 "cliente_id": args.cliente, "reporte_id": args.reporte, "tipo": args.tipo,
                 "canal": args.canal, "texto": args.texto, "seccion": args.seccion,
@@ -417,8 +442,9 @@ def construir_parser() -> argparse.ArgumentParser:
     c.add_argument("--contacto")
     c.add_argument("--email")
     c.add_argument("--whatsapp")
-    c.add_argument("--periodicidad", choices=["semanal", "mensual"], default="semanal")
-    c.add_argument("--dia", default="martes")
+    c.add_argument("--periodicidad", choices=["semanal", "mensual"],
+                   help="semanal (por defecto al agregar); al editar, solo cambia si la pasás")
+    c.add_argument("--dia", help="día preferido de entrega (martes por defecto al agregar)")
     c.add_argument("--industria")
     c.add_argument("--notas", help="contexto del cliente: mejora mucho el reporte")
     c.add_argument("--activo", type=int, choices=[0, 1])
@@ -434,7 +460,8 @@ def construir_parser() -> argparse.ArgumentParser:
     k.add_argument("--meta-consulta", dest="meta_consulta", help="término de búsqueda en la Ad Library")
     k.add_argument("--google-dominio", dest="google_dominio", help="dominio del anunciante")
     k.add_argument("--google-anunciante", dest="google_anunciante")
-    k.add_argument("--prioridad", type=int, default=2)
+    k.add_argument("--prioridad", type=int,
+                   help="1 = el que más importa (2 por defecto al agregar)")
     k.add_argument("--notas")
     k.add_argument("--activo", type=int, choices=[0, 1])
     k.set_defaults(func=cmd_competidores)

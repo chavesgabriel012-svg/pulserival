@@ -39,20 +39,26 @@ class AnuncioCrudo:
         """Identidad del contenido: si esto cambia, el anuncio cambió."""
         return util.huella(
             self.titulo, self.texto, self.descripcion, self.cta,
-            _dominio(self.link_destino), self.creativo_url,
+            _destino(self.link_destino), self.creativo_url,
         )
 
     def vacio(self) -> bool:
         return not any([self.titulo, self.texto, self.descripcion, self.creativo_url])
 
 
-def _dominio(url: str | None) -> str:
-    """Solo el dominio del link: los parámetros de campaña (utm_*) cambian
-    todo el tiempo y no significan un anuncio nuevo."""
+def _destino(url: str | None) -> str:
+    """Dominio + ruta del link, sin los parámetros.
+
+    Los parámetros de campaña (utm_*, fbclid) cambian todo el tiempo y no
+    significan un anuncio nuevo, así que se descartan. La ruta sí se conserva:
+    mandar el mismo texto a /promo-setiembre o a /black-friday es un cambio de
+    oferta, y el cliente quiere saberlo.
+    """
     if not url:
         return ""
     sin_esquema = url.split("://", 1)[-1]
-    return sin_esquema.split("/", 1)[0].lower()
+    sin_params = sin_esquema.split("?", 1)[0].split("#", 1)[0]
+    return sin_params.rstrip("/").lower()
 
 
 class Fuente(Protocol):

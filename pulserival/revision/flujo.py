@@ -97,6 +97,14 @@ def registrar_final(
     rep = db.fila(con, "SELECT * FROM reportes_generados WHERE id = ?", (reporte_id,))
     if not rep:
         raise ValueError(f"No existe el reporte {reporte_id}")
+    if rep["estado"] == "enviado":
+        # Volver a 'revisado' desarmaría el único seguro contra enviar dos
+        # veces el mismo reporte al cliente.
+        raise RuntimeError(
+            f"El reporte {reporte_id} ya se envió el {rep['enviado_en']}. No se puede "
+            "registrar otra versión final: lo que salió ya salió. Si querés corregir "
+            "algo, va en el reporte del periodo siguiente."
+        )
     if final_md is None:
         if ruta is None:
             ruta = _buscar_borrador(reporte_id)
@@ -149,7 +157,9 @@ def _buscar_borrador(reporte_id: int) -> Path:
 
 def _etiquetar_con_ia(con: sqlite3.Connection, diff: str, nota: str | None) -> tuple[str | None, str | None]:
     try:
-        sistema, usuario = prompts.armar("etiquetar_edicion", diff=util.recortar(diff, 6000), nota_editor=nota)
+        # Ojo: NO usar util.recortar acá; aplasta los saltos de línea y el
+        # modelo necesita ver qué línea empieza con "-" y cuál con "+".
+        sistema, usuario = prompts.armar("etiquetar_edicion", diff=_recortar_diff(diff), nota_editor=nota)
         resp = ejecutar(
             Peticion(tarea="etiquetar_edicion", sistema=sistema, usuario=usuario,
                      datos={"diff": diff}, json_estricto=True),
@@ -163,6 +173,13 @@ def _etiquetar_con_ia(con: sqlite3.Connection, diff: str, nota: str | None) -> t
         return etiqueta, razon
     except (ProveedorError, FileNotFoundError):
         return None, None
+
+
+def _recortar_diff(diff: str, largo: int = 6000) -> str:
+    """Acorta el diff sin perder la estructura por líneas."""
+    if len(diff) <= largo:
+        return diff
+    return diff[:largo].rsplit("\n", 1)[0] + "\n… (diff recortado)"
 
 
 def _diff_por_seccion(antes: str, despues: str) -> list[dict[str, Any]]:

@@ -50,3 +50,26 @@ class TestRender(unittest.TestCase):
         wa = render.whatsapp(REPORTE)
         self.assertIn("Gimnasio Fuerza Tica", wa)
         self.assertLess(len(wa), 1200, "el mensaje de WhatsApp tiene que ser corto")
+
+
+class TestEscapadoDelEmail(unittest.TestCase):
+    """El email lleva texto que escribió otra persona (el anuncio del
+    competidor, raspado de una web). Si no se escapa, ese texto puede meter
+    HTML en el correo que le llega a tu cliente."""
+
+    def test_el_texto_del_anuncio_no_puede_meter_html(self):
+        reporte = dict(REPORTE)
+        reporte["anuncios"] = [{
+            "referencia": "[A1]", "competidor": 'Vital "Gym" & Co', "plataforma": "meta",
+            "clasificacion": "nuevo", "titulo": "Promo <b>ya</b>",
+            "url_anuncio": 'https://f.test/?id=1" onmouseover="alert(1)',
+        }]
+        html = render.email_html(reporte)
+        self.assertIn("&lt;b&gt;ya&lt;/b&gt;", html, "el HTML del anuncio debe quedar escapado")
+        self.assertNotIn('onmouseover="alert(1)"', html, "no se puede escapar del atributo href")
+        self.assertIn("&amp;", html, "el nombre del competidor debe quedar escapado")
+
+    def test_el_cuerpo_del_reporte_no_queda_doble_escapado(self):
+        html = render.email_html(REPORTE)
+        self.assertIn("<strong>precio</strong>", html)
+        self.assertNotIn("&lt;strong&gt;", html)

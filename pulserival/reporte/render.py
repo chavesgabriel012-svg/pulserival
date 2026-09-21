@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from jinja2 import Template
+from jinja2 import Environment
 
 PLANTILLAS = Path(__file__).parent / "plantillas"
 
@@ -23,12 +23,31 @@ REF = re.compile(r"\[(A\d+)\]")
 
 
 def _inline(texto: str) -> str:
+    """Formato dentro de una línea: negritas, itálicas, links y referencias.
+
+    Los links se apartan antes de aplicar itálicas y se vuelven a poner
+    después. Sin eso, un guion bajo dentro de una URL (frecuentísimo:
+    `?utm_source=fb`, `?id=123_456`) se interpretaba como itálica y partía el
+    href en dos, rompiendo justo los links de trazabilidad a la fuente.
+    """
     t = html.escape(texto)
-    t = ENLACE.sub(r'<a href="\2" style="color:#1a56db;text-decoration:none">\1</a>', t)
+
+    apartados: list[str] = []
+
+    def guardar(m: re.Match) -> str:
+        etiqueta, url = m.group(1), m.group(2)
+        apartados.append(
+            f'<a href="{url}" style="color:#1a56db;text-decoration:none">{etiqueta}</a>'
+        )
+        return f"\x00{len(apartados) - 1}\x00"
+
+    t = ENLACE.sub(guardar, t)
     t = NEGRITA.sub(r"<strong>\1</strong>", t)
     t = CURSIVA_.sub(r"<em>\1</em>", t)
     t = ITALICA.sub(r"<em>\1</em>", t)
     t = REF.sub(r'<span style="color:#6b7280;font-size:12px">[\1]</span>', t)
+    for i, enlace in enumerate(apartados):
+        t = t.replace(f"\x00{i}\x00", enlace)
     return t
 
 
@@ -82,8 +101,15 @@ def markdown_a_html(md: str) -> str:
     return "\n".join(salida)
 
 
+# autoescape=True: los textos de los anuncios vienen de scrapers, no de acá.
+# Un titular con "<" o una URL con comillas no debe poder romper el HTML del
+# correo. Lo único que se inyecta tal cual es `cuerpo_html`, que ya salió
+# escapado de markdown_a_html() y va marcado con |safe en la plantilla.
+_ENTORNO = Environment(autoescape=True)
+
+
 def email_html(reporte: dict[str, Any]) -> str:
-    plantilla = Template((PLANTILLAS / "reporte.html.j2").read_text(encoding="utf-8"))
+    plantilla = _ENTORNO.from_string((PLANTILLAS / "reporte.html.j2").read_text(encoding="utf-8"))
     return plantilla.render(cuerpo_html=markdown_a_html(reporte["cuerpo_md"]), **reporte)
 
 

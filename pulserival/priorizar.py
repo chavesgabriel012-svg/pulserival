@@ -27,6 +27,7 @@ class ResultadoCompetidor:
     competidor_id: int
     competidor: str
     plataforma: str
+    sospechosa: bool = False   # la fuente no devolvió nada y antes sí había
     nuevos: list[int] = field(default_factory=list)
     cambiados: list[int] = field(default_factory=list)
     continuan: list[int] = field(default_factory=list)
@@ -59,14 +60,25 @@ def conciliar(
         "SELECT * FROM anuncios_detectados WHERE competidor_id = ? AND plataforma = ?",
         (cid, plataforma),
     )
+    activos_previos = [f for f in previos if f["estado"] == "activo"]
+
+    if not vistos and activos_previos:
+        # La fuente respondió bien pero sin un solo anuncio, y la semana pasada
+        # había varios activos. Puede ser real (el competidor apagó todo), pero
+        # es mucho más probable que sea el scraper fallando en silencio: un
+        # cambio de HTML, un bloqueo, una búsqueda que dejó de coincidir.
+        # Marcar todo como "pausado" produciría un reporte falso y alarmista,
+        # así que no se toca nada y la corrida queda señalada para que la mires.
+        res.sospechosa = True
+        return res
+
+    reemplazados: set[int] = set()   # versiones viejas de anuncios que cambiaron
+    huellas_vistas: set[str] = set()
     por_huella = {f["huella"]: f for f in previos}
     por_externo: dict[str, list[sqlite3.Row]] = {}
     for f in previos:
         if f["id_externo"]:
             por_externo.setdefault(f["id_externo"], []).append(f)
-
-    huellas_vistas: set[str] = set()
-    reemplazados: set[int] = set()   # versiones viejas de anuncios que cambiaron
 
     for crudo in vistos:
         h = crudo.huella()
@@ -81,13 +93,26 @@ def conciliar(
             # Ya lo teníamos idéntico: solo actualizamos "visto por última vez".
             db.actualizar(con, "anuncios_detectados", existente["id"],
                           {"visto_ultimo_en": ahora, "estado": "activo"})
-            res.continuan.append(int(existente["id"]))
+            hermanos_activos = [
+                f for f in por_externo.get(crudo.id_externo or "", [])
+                if f["estado"] == "activo" and int(f["id"]) != int(existente["id"])
+            ]
+            if existente["estado"] == "pausado" and hermanos_activos:
+                # El competidor volvió a una versión anterior del anuncio
+                # (A -> B -> A). Es un cambio de contenido, no un anuncio que
+                # se cayó: se apaga la versión B y se cuenta como cambiado.
+                for hermano in hermanos_activos:
+                    db.actualizar(con, "anuncios_detectados", hermano["id"],
+                                  {"estado": "pausado", "visto_ultimo_en": ahora})
+                    reemplazados.add(int(hermano["id"]))
+                res.cambiados.append(int(existente["id"]))
+            else:
+                res.continuan.append(int(existente["id"]))
             continue
 
         # Huella nueva. ¿Es un anuncio conocido que cambió, o uno nuevo?
         hermanos = por_externo.get(crudo.id_externo or "", [])
         fila = _guardar(con, cid, crudo, corrida_id, ahora)
-        por_huella[h] = None  # ya quedó guardado en esta corrida
         if hermanos:
             # El mismo anuncio de la plataforma con contenido distinto.
             for viejo in hermanos:
@@ -140,18 +165,3 @@ def _guardar(
         "corrida_id": corrida_id,
     }
     return db.insertar(con, "anuncios_detectados", datos)
-
-
-def clasificacion_por_anuncio(resultados: list[ResultadoCompetidor]) -> dict[int, str]:
-    """Aplana los resultados a {anuncio_id: 'nuevo'|'cambiado'|...}."""
-    mapa: dict[int, str] = {}
-    for r in resultados:
-        for ids, etiqueta in (
-            (r.nuevos, "nuevo"),
-            (r.cambiados, "cambiado"),
-            (r.continuan, "continua"),
-            (r.pausados, "pausado"),
-        ):
-            for i in ids:
-                mapa[i] = etiqueta
-    return mapa

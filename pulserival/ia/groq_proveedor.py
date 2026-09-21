@@ -50,7 +50,15 @@ class ProveedorGroq:
             raise ProveedorError("Groq: se agotó el límite por minuto del tier gratuito (429)")
         if r.status_code >= 400:
             raise ProveedorError(f"Groq respondió {r.status_code}: {r.text[:300]}")
-        datos = r.json()
+        try:
+            datos = r.json()
+        except ValueError as e:
+            # Un 200 que no es JSON (una página de error de un proxy, por
+            # ejemplo) tiene que entrar en la cadena de respaldo como
+            # cualquier otro fallo, no tumbar la corrida entera.
+            raise ProveedorError(
+                f"Groq devolvió algo que no es JSON: {r.text[:200]}"
+            ) from e
         uso = datos.get("usage") or {}
         try:
             texto = datos["choices"][0]["message"]["content"] or ""

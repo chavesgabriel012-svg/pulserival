@@ -102,10 +102,13 @@ cambiar de modelo o arreglar un campo de un scraper no requiere tocar código.
 ## Pruebas
 
 ```bash
-make prueba     # 72 tests, sin red, en menos de un segundo
+make prueba     # 92 tests, sin red, en menos de un segundo
 ```
 
 Cubren lo que más duele si se rompe: la detección de cambios, la clasificación
 del periodo, el control de calidad del borrador, el registro del diff, el
 mapeo de los scrapers y los seguros de envío (nunca se manda un borrador sin
 revisar, nunca se manda dos veces).
+
+`tests/test_regresiones.py` tiene un test por cada bug que encontró la revisión
+de código, con el comentario de qué pasaba antes. Si alguno vuelve, falla.

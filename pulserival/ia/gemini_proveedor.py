@@ -48,7 +48,15 @@ class ProveedorGemini:
             raise ProveedorError("Gemini: límite de cuota alcanzado (429)")
         if r.status_code >= 400:
             raise ProveedorError(f"Gemini respondió {r.status_code}: {r.text[:300]}")
-        datos = r.json()
+        try:
+            datos = r.json()
+        except ValueError as e:
+            # Un 200 que no es JSON (una página de error de un proxy, por
+            # ejemplo) tiene que entrar en la cadena de respaldo como
+            # cualquier otro fallo, no tumbar la corrida entera.
+            raise ProveedorError(
+                f"Gemini devolvió algo que no es JSON: {r.text[:200]}"
+            ) from e
         uso = datos.get("usageMetadata") or {}
         texto = ""
         for cand in datos.get("candidates") or []:
