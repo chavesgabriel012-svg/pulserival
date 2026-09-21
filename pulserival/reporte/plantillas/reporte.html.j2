@@ -144,6 +144,13 @@
                 </td>
               </tr>
               {% endfor %}
+              {% if g[plataforma ~ '_no_listados'] %}
+              <tr><td {% if miniaturas %}colspan="2"{% endif %}
+                      style="padding:10px 0;border-bottom:1px solid #ededed;color:#8a8a8a;">
+                y {{ g[plataforma ~ '_no_listados'] }} anuncio{{ '' if g[plataforma ~ '_no_listados'] == 1 else 's' }}
+                más de este competidor en la plataforma, incluidos en los conteos del comparativo.
+              </td></tr>
+              {% endif %}
             </table>
             {% endif %}
             {% endfor %}

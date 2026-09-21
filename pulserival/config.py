@@ -82,5 +82,9 @@ def max_anuncios_en_prompt() -> int:
     return int(config_modelos().get("max_anuncios_en_prompt", 45))
 
 
+def max_anuncios_en_detalle() -> int:
+    return int(config_modelos().get("max_anuncios_en_detalle", 12))
+
+
 def pausa_entre_llamadas() -> float:
     return float(config_modelos().get("pausa_entre_llamadas_seg", 0))

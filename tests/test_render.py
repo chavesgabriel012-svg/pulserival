@@ -192,3 +192,51 @@ class TestEstructuraDelReporte(unittest.TestCase):
         self.assertIn("Monge — 2 anuncios", texto)
         self.assertIn("no publican inversión", texto)
         self.assertNotIn("**", texto)
+
+
+class TestPesoDelCorreo(unittest.TestCase):
+    """Gmail recorta los mensajes que pasan de 102 KB.
+
+    Con 99 anuncios el correo pesaba 126 KB y habría llegado con "[Mensaje
+    recortado]" justo en el anexo. Con 50 anuncios por competidor serían el
+    doble. El detalle se acota y el resto se resume en una línea.
+    """
+
+    def anuncios(self, n, competidor="Monge", plataforma="meta"):
+        return [{"anuncio_id": i, "referencia": f"[A{i}]", "competidor": competidor,
+                 "plataforma": plataforma, "clasificacion": "nuevo", "variantes": 1,
+                 "titulo": "Promoción de temporada con texto de largo realista " * 2,
+                 "texto": None, "sin_texto": False, "fecha_inicio": "2026-09-01",
+                 "tipo_creativo": "imagen", "prioridad": 1,
+                 "creativo_url": "https://cdn.test/x.jpg",
+                 "url_anuncio": f"https://www.facebook.com/ads/library/?id={i}"}
+                for i in range(1, n + 1)]
+
+    def test_el_detalle_se_acota_y_se_avisa_cuantos_faltan(self):
+        from pulserival import config
+        from pulserival.reporte import datos
+
+        grupos = datos.agrupar_por_competidor(self.anuncios(60))
+        self.assertEqual(len(grupos[0]["meta"]), config.max_anuncios_en_detalle())
+        self.assertEqual(grupos[0]["meta_no_listados"], 60 - config.max_anuncios_en_detalle())
+        self.assertEqual(grupos[0]["total"], 60, "el conteo total no cambia")
+
+    def test_el_correo_con_muchos_anuncios_entra_en_el_limite_de_gmail(self):
+        from pulserival.reporte import datos
+
+        anuncios = (self.anuncios(60, "Monge") + self.anuncios(60, "SIMAN")
+                    + self.anuncios(60, "MExpress", "google"))
+        reporte = dict(REPORTE, anuncios=anuncios,
+                       por_competidor=datos.agrupar_por_competidor(anuncios))
+        html = render.email_html(reporte)
+        self.assertLess(len(html.encode("utf-8")), 102 * 1024,
+                        "por encima de 102 KB Gmail muestra '[Mensaje recortado]'")
+
+    def test_la_linea_de_resumen_aparece_en_el_correo(self):
+        from pulserival.reporte import datos
+
+        anuncios = self.anuncios(40)
+        html = render.email_html(dict(REPORTE, anuncios=anuncios,
+                                      por_competidor=datos.agrupar_por_competidor(anuncios)))
+        self.assertIn("más de este competidor en la plataforma", html)
+        self.assertIn("y 28 anuncio", html)

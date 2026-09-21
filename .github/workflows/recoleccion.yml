@@ -80,7 +80,7 @@ jobs:
             python -m pulserival.cli ciclo --modo auto --solo-reporte
           else
             python -m pulserival.cli ciclo --modo "$MODO" \
-              --limite "${{ vars.LIMITE_ANUNCIOS || 30 }}"
+              --limite "${{ vars.LIMITE_ANUNCIOS || 50 }}"
           fi
 
       - name: Guardar borradores y base como artefacto descargable

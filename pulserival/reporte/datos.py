@@ -191,9 +191,20 @@ def agrupar_por_competidor(anuncios: list[dict[str, Any]]) -> list[dict[str, Any
         g["total"] += 1
         g["piezas"] += a.get("variantes", 1)
         g[a["plataforma"]].append(a)
+    from .. import config
+
+    tope = config.max_anuncios_en_detalle()
     orden = {"nuevo": 0, "cambiado": 1, "continua": 2, "pausado": 3}
     for g in grupos.values():
         for plataforma in ("meta", "google"):
             g[plataforma].sort(key=lambda x: (orden.get(x["clasificacion"], 9),
+                                              -(x.get("variantes") or 1),
                                               x.get("fecha_inicio") or ""))
+            # Gmail recorta los correos de más de 102 KB. Con todos los
+            # anuncios listados, el reporte llegaba cortado en el anexo. Se
+            # muestran los más relevantes y el resto se resume en una línea.
+            sobrantes = max(len(g[plataforma]) - tope, 0)
+            g[f"{plataforma}_no_listados"] = sobrantes
+            if sobrantes:
+                g[plataforma] = g[plataforma][:tope]
     return sorted(grupos.values(), key=lambda g: (g["prioridad"], -g["total"]))
