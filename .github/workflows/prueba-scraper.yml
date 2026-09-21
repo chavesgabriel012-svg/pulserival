@@ -49,15 +49,39 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements.txt
 
-      - name: Avisar si falta el secreto
+      - name: Verificar los secretos del repositorio
         env:
           APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          # Solo se imprimen los NOMBRES. Los valores nunca se tocan.
+          SECRETOS_VISIBLES: ${{ toJSON(secrets) }}
         run: |
-          if [ -z "$APIFY_TOKEN" ]; then
-            echo "::error::Falta el secreto APIFY_TOKEN. Agregalo en Settings -> Secrets and variables -> Actions."
-            exit 1
-          fi
-          echo "APIFY_TOKEN presente (${#APIFY_TOKEN} caracteres)."
+          python3 - <<'FIN'
+          import json, os, sys
+
+          nombres = sorted(json.loads(os.environ["SECRETOS_VISIBLES"]))
+          print("Secretos que este workflow puede ver (solo los nombres):")
+          for n in nombres:
+              print(f"  - {n}")
+          if not nombres:
+              print("  (ninguno)")
+
+          esperados = ("APIFY_TOKEN", "GEMINI_API_KEY", "GROQ_API_KEY")
+          print()
+          for clave in esperados:
+              valor = os.environ.get(clave) or ""
+              estado = f"presente ({len(valor)} caracteres)" if valor else "VACÍO"
+              print(f"  {clave}: {estado}")
+
+          if not os.environ.get("APIFY_TOKEN"):
+              print()
+              print("::error::APIFY_TOKEN llega vacío. Arriba está la lista de los secretos "
+                    "que este workflow sí ve. Causas típicas: se guardó como 'Environment "
+                    "secret' o 'Dependabot secret' en vez de 'Actions -> Repository secret', "
+                    "o se guardó con otro nombre, o en otro repositorio.")
+              sys.exit(1)
+          FIN
 
       - name: Llamar al scraper
         env:
