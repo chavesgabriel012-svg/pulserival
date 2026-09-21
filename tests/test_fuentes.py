@@ -97,3 +97,64 @@ class TestFuenteDemo(unittest.TestCase):
 
         with self.assertRaises(FuenteError):
             obtener_fuente("meta", "auto")
+
+
+class TestEntradaValidaSegunElActor(unittest.TestCase):
+    """La entrada que mandamos tiene que respetar el esquema del actor.
+
+    Este test existe por un error real: config/fuentes.yaml mandaba
+    `sorting: recent`, que no es un valor permitido. El actor lo rechazó con
+    un 400 y la corrida se perdió. El error no se podía ver sin llamar a
+    Apify de verdad; ahora sí.
+
+    Los valores permitidos son una copia del esquema del actor, tomada de
+    api.apify.com el 2026-09-21. Si el actor cambia, la corrida va a fallar
+    igual, pero al menos un typo nuestro se detecta acá y gratis.
+    """
+
+    # apify/facebook-ads-scraper
+    ENUMS_META = {
+        "activeStatus": ["", "active", "inactive"],
+        "sorting": ["", "total_impressions", "relevancy_monthly_grouped"],
+    }
+    CAMPOS_META = {
+        "startUrls", "resultsLimit", "onlyTotal", "includeAboutPage", "isDetailsPerAd",
+        "activeStatus", "sorting", "onlyAdsNewerThan", "onlyAdsOlderThan",
+        "enrichWithEcommerceData",
+    }
+    # pulsedata/google-ads-transparency-scraper
+    ENUMS_GOOGLE = {
+        "format": ["ALL", "TEXT", "IMAGE", "VIDEO"],
+        "platform": ["ALL", "SEARCH", "YOUTUBE", "MAPS", "PLAY", "SHOPPING"],
+        "advertiserMatch": ["best", "all"],
+    }
+    CAMPOS_GOOGLE = {
+        "queries", "region", "format", "platform", "startDate", "endDate",
+        "maxAdsPerQuery", "advertiserMatch", "includeDetails", "enrichPreviews",
+        "proxyConfiguration",
+    }
+
+    def entrada(self, plataforma: str, competidor: dict) -> dict:
+        return FuenteApify(plataforma, token="token-de-prueba").construir_entrada(competidor, 10)
+
+    def test_meta_solo_usa_campos_y_valores_que_el_actor_acepta(self):
+        entrada = self.entrada("meta", {"nombre": "Gollo", "meta_consulta": "Gollo"})
+        for campo in entrada:
+            self.assertIn(campo, self.CAMPOS_META, f"el actor de Meta no acepta '{campo}'")
+        for campo, permitidos in self.ENUMS_META.items():
+            if campo in entrada:
+                self.assertIn(entrada[campo], permitidos,
+                              f"{campo}={entrada[campo]!r} no está entre {permitidos}")
+
+    def test_google_solo_usa_campos_y_valores_que_el_actor_acepta(self):
+        entrada = self.entrada("google", {"nombre": "Gollo", "google_dominio": "gollo.com"})
+        for campo in entrada:
+            self.assertIn(campo, self.CAMPOS_GOOGLE, f"el actor de Google no acepta '{campo}'")
+        for campo, permitidos in self.ENUMS_GOOGLE.items():
+            if campo in entrada:
+                self.assertIn(entrada[campo], permitidos,
+                              f"{campo}={entrada[campo]!r} no está entre {permitidos}")
+
+    def test_los_campos_obligatorios_van_siempre(self):
+        self.assertIn("startUrls", self.entrada("meta", {"nombre": "X", "meta_consulta": "X"}))
+        self.assertIn("queries", self.entrada("google", {"nombre": "X", "google_dominio": "x.com"}))
