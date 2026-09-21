@@ -10,6 +10,7 @@ PRAGMA foreign_keys = ON;
 -- ── 1. CLIENTES ─────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS clientes (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    clave             TEXT    UNIQUE,      -- id estable para config/clientes.yaml
     nombre_empresa    TEXT    NOT NULL,
     contacto_nombre   TEXT,
     contacto_email    TEXT    NOT NULL,
@@ -28,6 +29,7 @@ CREATE TABLE IF NOT EXISTS competidores_seguidos (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     cliente_id             INTEGER NOT NULL REFERENCES clientes(id) ON DELETE CASCADE,
     nombre                 TEXT    NOT NULL,      -- cómo lo llamamos en el reporte
+    clave                  TEXT,                  -- id estable dentro del cliente
     -- Meta: cualquiera de los dos sirve. La página es más precisa.
     meta_pagina_url        TEXT,                  -- https://www.facebook.com/nombre
     meta_pagina_id         TEXT,
@@ -42,6 +44,8 @@ CREATE TABLE IF NOT EXISTS competidores_seguidos (
     creado_en              TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_competidores_cliente ON competidores_seguidos(cliente_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_competidores_clave
+    ON competidores_seguidos(cliente_id, clave) WHERE clave IS NOT NULL;
 
 -- ── 3. CORRIDAS DE RECOLECCIÓN (trazabilidad de cada ejecución) ──────
 CREATE TABLE IF NOT EXISTS corridas_recoleccion (

@@ -1,0 +1,80 @@
+# ─────────────────────────────────────────────────────────────────────
+#  Prueba real de los scrapers, a demanda.
+#
+#  Corre en GitHub con el secreto APIFY_TOKEN del repositorio: el token
+#  nunca sale de acá, no hace falta compartirlo con nadie.
+#
+#  Para qué sirve: confirmar, ANTES de vender o cargar un cliente, que
+#    1. el token funciona;
+#    2. ese anunciante tiene anuncios en la biblioteca pública de Costa Rica;
+#    3. los campos que devuelve el actor siguen coincidiendo con el mapeo
+#       de config/fuentes.yaml.
+#
+#  Cómo se corre: pestaña Actions -> "Prueba de scraper" -> Run workflow.
+#  Cuesta centavos: el límite por defecto es de 10 anuncios.
+# ─────────────────────────────────────────────────────────────────────
+name: Prueba de scraper
+
+on:
+  workflow_dispatch:
+    inputs:
+      plataforma:
+        description: "Dónde buscar"
+        default: meta
+        type: choice
+        options: [meta, google]
+      consulta:
+        description: "Nombre del anunciante (como aparece en la biblioteca)"
+        required: true
+        type: string
+      dominio:
+        description: "Dominio del anunciante (solo para Google, ej: gollo.com)"
+        required: false
+        type: string
+      limite:
+        description: "Máximo de anuncios a traer (se paga por anuncio)"
+        default: "10"
+        type: string
+
+jobs:
+  probar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Avisar si falta el secreto
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          if [ -z "$APIFY_TOKEN" ]; then
+            echo "::error::Falta el secreto APIFY_TOKEN. Agregalo en Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+          echo "APIFY_TOKEN presente (${#APIFY_TOKEN} caracteres)."
+
+      - name: Llamar al scraper
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: |
+          python -m pulserival.cli prueba-scraper \
+            --plataforma "${{ inputs.plataforma }}" \
+            --consulta "${{ inputs.consulta }}" \
+            ${{ inputs.dominio && format('--dominio "{0}"', inputs.dominio) || '' }} \
+            --limite "${{ inputs.limite }}" \
+            --mostrar 5
+
+      - name: Guardar la respuesta cruda para revisar el mapeo
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: respuesta-cruda-${{ github.run_number }}
+          path: datos/crudo/
+          retention-days: 30
+          if-no-files-found: ignore

@@ -40,7 +40,11 @@ make instalar                         # instala las 3 librerías necesarias
 cp .env.example .env                  # y llená las claves que vayas usando
 make init                             # crea datos/pulserival.db
 
-# 1. tu cliente piloto
+# 1. tu cliente piloto: lo más simple es escribirlo en config/clientes.yaml
+#    y aplicarlo (así queda versionado y el cron lo encuentra solo)
+python3 -m pulserival.cli aplicar-config
+
+#    o cargarlo a mano:
 python3 -m pulserival.cli clientes agregar \
   --empresa "Nombre S.A." --contacto "Nombre del contacto" \
   --email contacto@cliente.cr --periodicidad semanal \
@@ -54,14 +58,17 @@ python3 -m pulserival.cli competidores agregar --cliente 1 \
   --meta-pagina "https://www.facebook.com/competidor1" \
   --google-dominio "competidor1.co.cr" --prioridad 1
 
-# 3. la corrida (esto es lo que el cron hace solo)
+# 3. antes de gastar: probá que ese competidor sí tiene anuncios
+python3 -m pulserival.cli prueba-scraper --consulta "Competidor 1" --limite 10
+
+# 4. la corrida (esto es lo que el cron hace solo)
 python3 -m pulserival.cli ciclo
 
-# 4. editás el borrador que quedó en borradores/*.md y registrás tu versión
+# 5. editás el borrador que quedó en borradores/*.md y registrás tu versión
 python3 -m pulserival.cli reporte registrar --id 1 \
   --etiqueta tono --razon "Suavicé la conclusión del segundo bloque"
 
-# 5. mirás cómo se ve, y lo mandás
+# 6. mirás cómo se ve, y lo mandás
 python3 -m pulserival.cli reporte enviar --id 1 --simular   # deja el HTML en salida/
 python3 -m pulserival.cli reporte enviar --id 1
 ```
@@ -79,6 +86,7 @@ python3 -m pulserival.cli reporte enviar --id 1
 | `pulserival/reporte/` | arma el insumo, genera, valida y renderiza el reporte |
 | `pulserival/revision/` | tu edición y el diff que alimenta la Fase 2 |
 | `pulserival/entrega/` | envío por email (Resend o SMTP) y versión WhatsApp |
+| `config/clientes.yaml` | **tus clientes y sus competidores** (se versiona; la base no) |
 | `config/modelos.yaml` | **qué modelo de IA usa cada tarea y cuánto cuesta** |
 | `config/fuentes.yaml` | **qué scraper se usa y cómo se mapean sus campos** |
 | `.github/workflows/` | la recolección programada, sin servidor propio |
@@ -102,7 +110,7 @@ cambiar de modelo o arreglar un campo de un scraper no requiere tocar código.
 ## Pruebas
 
 ```bash
-make prueba     # 95 tests, sin red, en menos de un segundo
+make prueba     # 104 tests, sin red, en un segundo
 ```
 
 Cubren lo que más duele si se rompe: la detección de cambios, la clasificación

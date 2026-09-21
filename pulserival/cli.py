@@ -11,6 +11,8 @@ Todo se opera desde acá. Los comandos están en español y hacen una sola cosa:
   reporte registrar            guardar tu versión final + el diff (Fase 2)
   reporte enviar               mandar el reporte al cliente (paso 4)
   reporte lista                ver el estado de los reportes
+  aplicar-config               cargar clientes y competidores desde config/clientes.yaml
+  prueba-scraper               llamar al scraper real una vez y ver qué devuelve
   ciclo                        recolectar + generar + exportar (lo que corre el cron)
   feedback agregar             anotar qué preguntó o destacó el cliente
   dataset                      exportar el dataset de ediciones y ver métricas
@@ -25,7 +27,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import config, db, pipeline, presupuesto as presupuesto_mod, util
+from . import config, db, pipeline, presupuesto as presupuesto_mod, sincronizar, util
 from .ia import Presupuesto, PresupuestoExcedido, ProveedorError
 from .reporte import generar as generar_mod
 from .reporte import validar as validar_mod
@@ -318,6 +320,78 @@ def cmd_costos(args) -> int:
     return 0
 
 
+def cmd_aplicar_config(args) -> int:
+    """Crea o actualiza clientes y competidores desde config/clientes.yaml."""
+    ruta = Path(args.archivo) if args.archivo else None
+    try:
+        with db.sesion() as con:
+            resumen = sincronizar.aplicar(con, ruta)
+    except sincronizar.ConfigInvalida as e:
+        return error(str(e))
+    ok("Configuración aplicada")
+    print("  " + sincronizar.formatear(resumen).replace("\n", "\n  "))
+    return 0
+
+
+def cmd_prueba_scraper(args) -> int:
+    """Llama al scraper real una vez y muestra qué devuelve.
+
+    Es la prueba que conviene hacer ANTES de cargar un cliente: confirma que
+    hay anuncios para ese competidor, que el token funciona y que los campos
+    del actor siguen coincidiendo con el mapeo de config/fuentes.yaml.
+    Cuesta centavos porque el límite es chico a propósito.
+    """
+    from .fuentes import FuenteError, obtener_fuente
+
+    competidor = {
+        "id": 0,
+        "nombre": args.consulta,
+        "meta_consulta": args.consulta,
+        "meta_pagina_url": args.pagina,
+        "google_dominio": args.dominio or args.consulta,
+    }
+    print(f"  Consultando {args.plataforma} · '{args.consulta}' · máximo {args.limite} anuncios")
+    try:
+        fuente = obtener_fuente(args.plataforma, args.modo)
+        anuncios = fuente.traer(competidor, limite=args.limite)
+    except FuenteError as e:
+        return error(str(e))
+
+    print(f"  Fuente: {fuente.nombre}")
+    print(f"  Anuncios devueltos: {len(anuncios)}")
+    if not anuncios:
+        aviso("No devolvió anuncios. Puede ser que ese anunciante no esté pautando ahora, "
+              "o que la consulta no coincida. Verificá a mano en la biblioteca pública.")
+        return 0
+
+    vacios = [a for a in anuncios if not a.texto and not a.titulo]
+    sin_fecha = [a for a in anuncios if not a.fecha_inicio]
+    sin_link = [a for a in anuncios if not a.url_anuncio]
+    print("\n  Calidad del mapeo (config/fuentes.yaml):")
+    for etiqueta, faltantes in (("sin texto ni título", vacios),
+                                ("sin fecha de inicio", sin_fecha),
+                                ("sin link a la ficha pública", sin_link)):
+        marca = "✓" if not faltantes else "!"
+        print(f"    {marca} {etiqueta}: {len(faltantes)}/{len(anuncios)}")
+    if vacios:
+        aviso("Hay anuncios sin contenido: probablemente cambiaron los nombres de los campos "
+              "del actor. Revisá datos/crudo/ con: fuentes inspeccionar --archivo ...")
+
+    print("\n  Primeros anuncios tal como los guardaría el sistema:")
+    for a in anuncios[: args.mostrar]:
+        print(f"    ─ {a.anunciante or '(sin anunciante)'} · {a.tipo_creativo or '?'} "
+              f"· inicio {a.fecha_inicio or 'no informado'}")
+        print(f"      título: {util.recortar(a.titulo, 90) or '(sin título)'}")
+        print(f"      texto:  {util.recortar(a.texto, 140) or '(sin texto)'}")
+        print(f"      link:   {util.recortar(a.link_destino, 80) or '(sin link)'}")
+        print(f"      ficha:  {util.recortar(a.url_anuncio, 80) or '(sin ficha)'}")
+        print(f"      huella: {a.huella()}")
+    crudos = sorted((config.DIR_DATOS / "crudo").glob("*.json"))
+    if crudos:
+        print(f"\n  Respuesta cruda guardada en: {crudos[-1]}")
+    return 0
+
+
 def cmd_presupuesto(args) -> int:
     """Proyecta el gasto mensual de scrapers con los clientes ya cargados."""
     with db.sesion() as con:
@@ -518,6 +592,22 @@ def construir_parser() -> argparse.ArgumentParser:
     b.add_argument("--limite", type=int, default=40,
                    help="anuncios por competidor por corrida (el mismo de recolectar)")
     b.set_defaults(func=cmd_presupuesto)
+
+    a = sub.add_parser("aplicar-config",
+                       help="crear/actualizar clientes y competidores desde config/clientes.yaml")
+    a.add_argument("--archivo", help="otro archivo YAML (por defecto config/clientes.yaml)")
+    a.set_defaults(func=cmd_aplicar_config)
+
+    t_ = sub.add_parser("prueba-scraper",
+                        help="llamar al scraper real una vez y ver qué devuelve")
+    t_.add_argument("--plataforma", default="meta", choices=["meta", "google"])
+    t_.add_argument("--consulta", required=True, help="nombre del anunciante a buscar")
+    t_.add_argument("--pagina", help="URL de la página de Facebook (más preciso que la consulta)")
+    t_.add_argument("--dominio", help="dominio del anunciante, para Google")
+    t_.add_argument("--limite", type=int, default=10, help="máximo de anuncios (cuesta por anuncio)")
+    t_.add_argument("--mostrar", type=int, default=3, help="cuántos imprimir en pantalla")
+    t_.add_argument("--modo", default="auto", choices=["auto", "demo", "apify"])
+    t_.set_defaults(func=cmd_prueba_scraper)
 
     d = sub.add_parser("demo", help="probar el flujo completo sin claves ni costo")
     d.add_argument("--conservar", action="store_true", help="no borrar la base de la demo anterior")
