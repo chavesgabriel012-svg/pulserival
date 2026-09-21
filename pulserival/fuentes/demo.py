@@ -144,10 +144,11 @@ _DATOS = {
 
 
 class FuenteDemo:
-    def __init__(self, plataforma: str, aviso: bool = False):
+    def __init__(self, plataforma: str):
         self.plataforma = plataforma
+        # El nombre queda guardado en cada anuncio (columna `fuente`), así que
+        # un dato de demo siempre es identificable en la base.
         self.nombre = f"demo:{plataforma}"
-        self.aviso = aviso
 
     def traer(self, competidor: dict, limite: int = 40) -> list[AnuncioCrudo]:
         semana = int(os.environ.get("PULSERIVAL_DEMO_SEMANA", "1"))

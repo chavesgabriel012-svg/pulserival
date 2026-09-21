@@ -90,7 +90,10 @@ class TestFuenteDemo(unittest.TestCase):
         self.assertTrue(all(a.plataforma == "meta" for a in anuncios))
         self.assertTrue(all(a.huella() for a in anuncios))
 
-    def test_sin_token_apify_cae_a_demo(self):
-        fuente = obtener_fuente("meta", "auto")
-        self.assertTrue(fuente.nombre.startswith("demo:"),
-                        "sin APIFY_TOKEN no debe intentar cobrar ni fallar")
+    def test_sin_token_el_modo_auto_no_inventa_datos(self):
+        # Caer a los datos de ejemplo en silencio pondría un gimnasio inventado
+        # en el reporte de un cliente real. Mejor fallar y avisar.
+        from pulserival.fuentes import FuenteError
+
+        with self.assertRaises(FuenteError):
+            obtener_fuente("meta", "auto")

@@ -238,3 +238,28 @@ class TestSegurosDelReporte(CasoBase):
         self.assertNotIn("TEXTO HUMANO VIEJO", cuerpo)
         # La edición registrada se conserva: es dato para la Fase 2.
         self.assertEqual(db.fila(self.con, "SELECT COUNT(*) AS n FROM ediciones_registradas")["n"], 1)
+
+
+class TestModoAuto(unittest.TestCase):
+    """Antes: en modo 'auto' sin APIFY_TOKEN el sistema caía a los datos de
+    ejemplo (un gimnasio inventado) sin decir nada. Si el token se vencía en el
+    servidor, el lunes se generaba un reporte con anuncios ficticios para un
+    cliente que paga."""
+
+    def test_sin_token_el_modo_auto_falla_en_vez_de_inventar_datos(self):
+        from pulserival.fuentes import FuenteError, obtener_fuente
+
+        with self.assertRaises(FuenteError) as ctx:
+            obtener_fuente("meta", "auto")
+        self.assertIn("APIFY_TOKEN", str(ctx.exception))
+
+    def test_el_modo_demo_sigue_disponible_explicitamente(self):
+        from pulserival.fuentes import obtener_fuente
+
+        self.assertTrue(obtener_fuente("meta", "demo").nombre.startswith("demo:"))
+
+    def test_un_anuncio_de_demo_queda_marcado_en_la_base(self):
+        from pulserival.fuentes import obtener_fuente
+
+        anuncios = obtener_fuente("google", "demo").traer({"id": 1, "nombre": "X"})
+        self.assertTrue(all(a.fuente.startswith("demo:") for a in anuncios))

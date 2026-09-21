@@ -73,8 +73,14 @@ def obtener_fuente(plataforma: str, modo: str = "auto"):
     """Fábrica de fuentes.
 
     modo='demo'  -> datos de ejemplo, sin internet ni costo (para probar).
-    modo='auto'  -> scraper real si hay APIFY_TOKEN; si no, demo con aviso.
-    modo='apify' -> exige el scraper real (falla si no hay token).
+    modo='auto'  -> el scraper real; falla con un mensaje claro si falta el token.
+    modo='apify' -> igual que auto, explícito.
+
+    Por qué 'auto' NO cae a los datos de ejemplo: los datos de demo son un
+    gimnasio inventado. Si el token se vence o alguien lo borra del servidor,
+    caer a demo en silencio pondría anuncios ficticios en el reporte de un
+    cliente que paga. Es mejor que la corrida falle y te avise: un reporte
+    tarde se explica, un reporte inventado te cuesta el cliente.
     """
     from . import apify, demo, meta_api
 
@@ -84,8 +90,5 @@ def obtener_fuente(plataforma: str, modo: str = "auto"):
         return demo.FuenteDemo(plataforma)
     if modo == "apify":
         return apify.FuenteApify(plataforma)
-    # auto
-    from .. import config
-    if config.env("APIFY_TOKEN"):
-        return apify.FuenteApify(plataforma)
-    return demo.FuenteDemo(plataforma, aviso=True)
+    # auto: igual que apify. FuenteApify ya explica dónde sacar el token si falta.
+    return apify.FuenteApify(plataforma)
