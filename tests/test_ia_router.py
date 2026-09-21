@@ -130,3 +130,26 @@ class TestRegistroDeFallos(unittest.TestCase):
         self.con.commit()
         fallos = self.con.execute("SELECT SUM(1-exito) FROM uso_ia").fetchone()[0]
         self.assertGreater(fallos, 0)
+
+
+class TestPausaEntreLlamadas(unittest.TestCase):
+    def test_el_proveedor_local_no_espera(self):
+        """La pausa existe por los límites de tasa de Groq y Gemini. Aplicarla
+        también al proveedor local volvía la suite de tests 40 veces más lenta
+        sin ganar nada."""
+        import time
+
+        from pulserival.ia import ejecutar
+
+        inicio = time.monotonic()
+        for _ in range(5):
+            ejecutar(Peticion(tarea="analizar_anuncio", sistema="s", usuario="u",
+                              datos={"titulo": "x"}))
+        self.assertLess(time.monotonic() - inicio, 1.0)
+
+    def test_la_pausa_esta_configurada_para_los_proveedores_reales(self):
+        from pulserival import config
+
+        self.assertGreater(config.pausa_entre_llamadas(), 0,
+                           "sin pausa, 99 llamadas seguidas agotan el tier gratuito")
+        self.assertGreater(config.max_anuncios_analizados(), 0)

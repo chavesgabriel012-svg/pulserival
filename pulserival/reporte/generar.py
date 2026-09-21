@@ -31,14 +31,35 @@ def enriquecer_anuncios(
     anuncios: list[dict[str, Any]],
     presupuesto: Presupuesto | None = None,
     forzar: bool = False,
+    maximo: int | None = None,
 ) -> int:
-    """Llama al modelo barato por cada anuncio que aún no tiene análisis."""
+    """Llama al modelo barato por cada anuncio que aún no tiene análisis.
+
+    Con un tope: son los tiers gratuitos los que pagan esto, y cien llamadas
+    seguidas terminan en 429 para todo lo que venga después, incluida la
+    redacción del reporte, que es lo que de verdad importa. Se priorizan los
+    competidores de prioridad 1 y los anuncios más recientes; los que quedan
+    fuera igual salen en el reporte con su texto y su enlace, solo que sin la
+    lectura previa.
+    """
+    from .. import config as _config
+
+    maximo = _config.max_anuncios_analizados() if maximo is None else maximo
+    pendientes = [
+        a for a in anuncios
+        if a["clasificacion"] in ("nuevo", "cambiado") and (forzar or not a.get("analisis"))
+    ]
+    pendientes.sort(key=lambda a: (a.get("prioridad") or 9,
+                                   -(a.get("variantes") or 1),
+                                   a.get("fecha_inicio") or ""), reverse=False)
     procesados = 0
-    for a in anuncios:
-        if a.get("analisis") and not forzar:
-            continue
-        if a["clasificacion"] not in ("nuevo", "cambiado"):
-            continue  # no gastamos IA en anuncios que ya reportamos antes
+    fallos_seguidos = 0
+    for a in pendientes[:maximo]:
+        if fallos_seguidos >= 3:
+            # La fuente de IA está caída o sin cuota. Seguir insistiendo solo
+            # consume lo que le queda a la redacción del reporte, que es la
+            # llamada que de verdad importa.
+            break
         sistema, usuario = prompts.armar("analizar_anuncio", **a)
         try:
             resp = ejecutar(
@@ -53,10 +74,13 @@ def enriquecer_anuncios(
                 presupuesto=presupuesto,
             )
         except ProveedorError:
+            fallos_seguidos += 1
             continue
         analisis = resp.json()
         if not isinstance(analisis, dict):
+            fallos_seguidos += 1
             continue
+        fallos_seguidos = 0
         a["analisis"] = analisis
         db.actualizar(con, "anuncios_detectados", a["anuncio_id"],
                       {"analisis_json": db.json_o_nada(analisis)})

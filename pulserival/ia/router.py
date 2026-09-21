@@ -37,6 +37,31 @@ class Presupuesto:
         self.llamadas += 1
 
 
+_ultima_llamada = 0.0
+
+
+def _respirar(proveedor: str) -> None:
+    """Espacia las llamadas para no agotar el límite por minuto.
+
+    Los tiers gratuitos de Groq y Gemini cortan con 429 a las pocas decenas
+    de llamadas seguidas. Sin esta pausa, un reporte con muchos anuncios
+    termina entero en el modo sin IA.
+
+    El proveedor local no espera: no tiene límite de tasa y hacerlo esperar
+    solo vuelve lentos los tests.
+    """
+    global _ultima_llamada
+    if proveedor == "stub":
+        return
+    pausa = config.pausa_entre_llamadas()
+    if pausa <= 0:
+        return
+    transcurrido = time.monotonic() - _ultima_llamada
+    if transcurrido < pausa:
+        time.sleep(pausa - transcurrido)
+    _ultima_llamada = time.monotonic()
+
+
 def _proveedor(nombre: str):
     from .gemini_proveedor import ProveedorGemini
     from .groq_proveedor import ProveedorGroq
@@ -120,12 +145,16 @@ def ejecutar(
         )
 
         for intento in range(1, reintentos + 1):
+            _respirar(nombre)
             try:
                 resp = prov.generar(pet, modelo)
             except ProveedorError as e:
                 anotar_fallo(nombre, modelo, f"intento {intento}: {e}")
                 if intento < reintentos:
-                    time.sleep(2 * intento)
+                    # Un 429 es el límite por minuto del tier gratuito: hay que
+                    # esperar de verdad, no dos segundos.
+                    espera = 20 * intento if "429" in str(e) else 2 * intento
+                    time.sleep(espera)
                 continue
             resp.costo_usd = costo(resp.proveedor, resp.modelo, resp.tokens_entrada, resp.tokens_salida)
             if presupuesto:

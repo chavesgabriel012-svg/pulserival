@@ -162,7 +162,7 @@ def ciclo_completo(
     for cliente in db.clientes_activos(con, cliente_id):
         periodicidad = cliente["periodicidad"] or "semanal"
         inicio, fin = util.periodo(periodicidad)
-        if not _toca_reportar(con, int(cliente["id"]), periodicidad, inicio):
+        if not solo_reporte and not _toca_reportar(con, int(cliente["id"]), periodicidad, inicio):
             reportes.append({"cliente": cliente["nombre_empresa"],
                              "omitido": "todavía no cierra el periodo de este cliente"})
             continue

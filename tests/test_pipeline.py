@@ -100,3 +100,49 @@ class TestSegurosDeEnvio(CasoBase):
         with self.assertRaises(EnvioError) as ctx:
             enviar_reporte(self.con, self.rep)
         self.assertIn("No hay forma de enviar configurada", str(ctx.exception))
+
+
+class TestTopeDeLlamadasDeIA(CasoBase):
+    """El enriquecimiento por anuncio no puede quemar la cuota del reporte.
+
+    Con cuatro competidores grandes salieron 99 anuncios nuevos. Una llamada
+    por anuncio agota el límite por minuto de los tiers gratuitos, y entonces
+    falla también la redacción final, que es la que el cliente lee. El
+    enriquecimiento es una ayuda; el reporte es el producto.
+    """
+
+    def anuncios(self, n, prioridad=1):
+        return [{"anuncio_id": i, "clasificacion": "nuevo", "competidor": "X",
+                 "plataforma": "meta", "titulo": f"Anuncio {i}", "texto": "promo",
+                 "prioridad": prioridad, "variantes": 1, "fecha_inicio": "2026-09-01",
+                 "tipo_creativo": "imagen", "cta": None, "link_destino": None,
+                 "descripcion": None, "analisis": None} for i in range(1, n + 1)]
+
+    def test_se_respeta_el_tope_configurado(self):
+        procesados = generar_mod.enriquecer_anuncios(self.con, self.anuncios(50), maximo=10)
+        self.assertEqual(procesados, 10)
+
+    def test_los_de_prioridad_1_van_primero(self):
+        anuncios = self.anuncios(3, prioridad=2) + self.anuncios(3, prioridad=1)
+        for i, a in enumerate(anuncios):
+            a["anuncio_id"] = i + 100
+        generar_mod.enriquecer_anuncios(self.con, anuncios, maximo=3)
+        analizados = [a for a in anuncios if a.get("analisis")]
+        self.assertTrue(all(a["prioridad"] == 1 for a in analizados))
+
+    def test_si_la_ia_falla_seguido_se_corta(self):
+        from unittest import mock
+
+        from pulserival.ia.base import ProveedorError
+
+        with mock.patch("pulserival.reporte.generar.ejecutar",
+                        side_effect=ProveedorError("429")) as llamada:
+            generar_mod.enriquecer_anuncios(self.con, self.anuncios(25), maximo=25)
+        self.assertLessEqual(llamada.call_count, 4,
+                             "tras varios fallos seguidos hay que dejar de insistir")
+
+    def test_un_anuncio_ya_analizado_no_se_vuelve_a_pagar(self):
+        anuncios = self.anuncios(3)
+        anuncios[0]["analisis"] = {"angulo": "ya estaba"}
+        procesados = generar_mod.enriquecer_anuncios(self.con, anuncios, maximo=10)
+        self.assertEqual(procesados, 2)
