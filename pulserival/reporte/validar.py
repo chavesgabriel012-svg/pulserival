@@ -26,7 +26,8 @@ PROHIBIDAS = [
     "engagement de", "tasa de conversión", "retorno de inversión",
 ]
 SECCIONES_ESPERADAS = [
-    "lo mas importante",
+    "resumen ejecutivo",
+    "panorama de la competencia",
     "que esta haciendo cada competidor",
     "movimientos",
     "que haria yo",
@@ -95,12 +96,18 @@ def validar(borrador: str, anuncios: list[dict[str, Any]]) -> dict[str, Any]:
         if seccion not in plano:
             avisos.append({"tipo": "seccion_faltante", "detalle": f"Falta la sección '{seccion}'."})
     palabras = util.contar_palabras(borrador)
-    if palabras < 120:
+    if palabras < 350:
         avisos.append({"tipo": "muy_corto", "detalle": f"Solo {palabras} palabras."})
-    if palabras > 900:
-        avisos.append({"tipo": "muy_largo", "detalle": f"{palabras} palabras; el cliente lo lee en el celular."})
-    if "!" in borrador:
-        avisos.append({"tipo": "tono", "detalle": "Hay signos de exclamación; el reporte va en tono sobrio."})
+    if palabras > 1500:
+        avisos.append({"tipo": "muy_largo",
+                       "detalle": f"{palabras} palabras; se vuelve pesado de leer."})
+    # Los signos de exclamación del texto citado de un anuncio son del
+    # competidor, no nuestros: solo se revisa la prosa del analista.
+    sin_citas = re.sub(r'[“"«][^”"»]{0,400}[”"»]', " ", borrador)
+    if "!" in sin_citas or "¡" in sin_citas:
+        avisos.append({"tipo": "tono",
+                       "detalle": "Hay signos de exclamación fuera de texto citado; "
+                                  "el reporte va en tono sobrio."})
 
     return {
         "aprobado": not problemas,

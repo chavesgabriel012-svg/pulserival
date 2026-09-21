@@ -20,6 +20,7 @@ from .. import db, util
 from ..ia import Peticion, Presupuesto, ProveedorError, ejecutar
 from ..ia import prompts
 from . import datos as datos_mod
+from . import metricas as metricas_mod
 from . import validar as validar_mod
 
 TITULO = "Reporte de anuncios de la competencia"
@@ -94,6 +95,10 @@ def generar(
     anuncios = datos_mod.clasificar(con, int(cliente["id"]), inicio, fin)
     competidores = [dict(c)["nombre"] for c in db.competidores_de(con, int(cliente["id"]))]
     conteo = datos_mod.conteo(anuncios)
+    # Las señales se calculan en código, no las estima el modelo: contar es
+    # justo lo que los modelos hacen mal, y acá los números tienen que ser
+    # exactos porque el cliente los puede verificar uno por uno.
+    senales = metricas_mod.por_competidor(anuncios, inicio, fin)
 
     enriquecer_anuncios(con, anuncios, presupuesto)
 
@@ -106,15 +111,18 @@ def generar(
         "competidores": competidores,
         "conteo": conteo,
         "anuncios": anuncios,
+        "senales": metricas_mod.resumir_para_prompt(senales),
         "periodo_anterior": datos_mod.resumen_periodo_anterior(con, int(cliente["id"]), inicio),
     }
 
     if not anuncios:
         borrador = (
-            "## Lo más importante de esta semana\n\n"
+            "## Resumen ejecutivo\n\n"
             f"En el periodo del {inicio} al {fin} no detectamos actividad publicitaria "
             f"nueva de {', '.join(competidores) or 'los competidores seguidos'} en las "
             "bibliotecas públicas de anuncios de Meta y Google.\n\n"
+            "## Panorama de la competencia\n\n"
+            "Ningún competidor seguido tuvo anuncios detectables en el periodo.\n\n"
             "## Qué está haciendo cada competidor\n\n"
             "Sin movimientos detectados en el periodo.\n\n"
             "## Movimientos que vale la pena mirar de cerca\n\n"
@@ -144,7 +152,8 @@ def generar(
         "asunto": asunto,
         "borrador_md": borrador,
         "datos_json": db.json_o_nada({"anuncios": anuncios, "conteo": conteo,
-                                      "competidores": competidores}),
+                                      "competidores": competidores, "senales": senales,
+                                      "totales": metricas_mod.totales(senales)}),
         "estado": "borrador",
         "proveedor_ia": resp_proveedor,
         "modelo_ia": resp_modelo,
@@ -177,6 +186,7 @@ def generar(
         "reporte_id": reporte_id,
         "ya_existia": False,
         "asunto": asunto,
+        "senales": senales,
         "borrador_md": borrador,
         "conteo": conteo,
         "anuncios": anuncios,

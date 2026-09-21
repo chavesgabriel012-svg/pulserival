@@ -81,7 +81,7 @@ class ProveedorStub:
         siguen = [a for a in grupos if a.get("clasificacion") == "continua"]
 
         L: list[str] = []
-        L.append("## Lo más importante de esta semana")
+        L.append("## Resumen ejecutivo")
         L.append("")
         L.append(
             f"Entre el {periodo} detectamos {len(nuevos)} anuncio(s) nuevo(s), "
@@ -104,6 +104,10 @@ class ProveedorStub:
                 )
             L.append("")
 
+        L.append("## Panorama de la competencia")
+        L.append("")
+        L.append("_(borrador sin IA: no hay interpretación, solo el detalle)_")
+        L.append("")
         L.append("## Qué está haciendo cada competidor")
         L.append("")
         L.append("_(borrador sin IA: abajo están los anuncios agrupados, sin interpretación)_")

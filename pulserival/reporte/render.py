@@ -122,6 +122,16 @@ def email_texto(reporte: dict[str, Any]) -> str:
         "-" * 60,
         "",
     ]
+    for f in reporte.get("senales") or []:
+        donde = "Meta" if f["plataforma"] == "meta" else "Google"
+        dias = f.get("dias_mensaje_mas_viejo")
+        lineas.append(
+            f"  {f['competidor']} [{donde}]: {f['mensajes']} mensajes en {f['piezas']} piezas"
+            f" · {f['nuevos']} nuevos"
+            + (f" · el más viejo lleva {dias} días" if dias is not None else "")
+        )
+    if reporte.get("senales"):
+        lineas += ["", "-" * 60, ""]
     for linea in reporte["cuerpo_md"].splitlines():
         l = linea.rstrip()
         if l.startswith("## "):
@@ -133,9 +143,14 @@ def email_texto(reporte: dict[str, Any]) -> str:
     lineas += [
         "",
         "-" * 60,
-        "Fuentes: Biblioteca de Anuncios de Meta y Centro de Transparencia de "
-        "Anuncios de Google, ambas públicas.",
-        "PulseRival · Costa Rica",
+        "QUÉ NO INCLUYE ESTE REPORTE",
+        "No verá inversión, alcance, impresiones ni clics de la competencia. Meta y",
+        "Google publican esos datos solo para anuncios políticos y para los entregados",
+        "en la Unión Europea; para anuncios comerciales en Costa Rica no existen.",
+        "",
+        "Fuentes: Biblioteca de Anuncios de Meta y Centro de Transparencia de Anuncios",
+        "de Google, ambas públicas y oficiales.",
+        f"{reporte.get('marca') or 'PulseRival'} · Costa Rica",
     ]
     return "\n".join(lineas)
 

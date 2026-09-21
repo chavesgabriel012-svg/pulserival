@@ -54,7 +54,14 @@ def _armar(con: sqlite3.Connection, reporte_id: int) -> dict[str, Any]:
         "periodo_inicio": rep["periodo_inicio"],
         "periodo_fin": rep["periodo_fin"],
         "conteo": datos.get("conteo"),
+        "senales": datos.get("senales") or [],
+        "competidores": datos.get("competidores") or [],
         "anuncios": datos.get("anuncios") or [],
+        "marca": config.env("MARCA_REPORTE") or "PulseRival",
+        "contacto_remitente": config.env("EMAIL_RESPONDER_A"),
+        # Las miniaturas se sirven desde los CDN de Meta y Google. Se pueden
+        # apagar si algún cliente de correo las bloquea.
+        "miniaturas": (config.env("REPORTE_MINIATURAS") or "1") != "0",
         "cuerpo_md": cuerpo,
         "es_borrador": rep["estado"] == "borrador",
     }

@@ -5,68 +5,156 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ asunto }}</title>
 </head>
-<body style="margin:0;padding:0;background:#f3f4f6;">
+<body style="margin:0;padding:0;background:#eef1f5;">
   <div style="display:none;max-height:0;overflow:hidden;">{{ preheader }}</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:24px 12px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f5;padding:24px 12px;">
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-             style="max-width:620px;background:#ffffff;border-radius:10px;overflow:hidden;
-                    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+             style="max-width:680px;background:#ffffff;border-radius:12px;overflow:hidden;
+                    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+                    box-shadow:0 1px 3px rgba(15,23,42,.08);">
 
-        <!-- encabezado -->
-        <tr><td style="background:#0f172a;padding:20px 26px;">
-          <div style="color:#ffffff;font-size:17px;font-weight:600;letter-spacing:.3px;">PulseRival</div>
-          <div style="color:#94a3b8;font-size:12px;margin-top:2px;">
-            Inteligencia publicitaria · Costa Rica
+        <!-- ─── encabezado ─── -->
+        <tr><td style="background:#0f172a;padding:22px 28px;">
+          <table role="presentation" width="100%"><tr>
+            <td style="color:#ffffff;font-size:18px;font-weight:600;letter-spacing:.3px;">
+              {{ marca | default('PulseRival') }}
+            </td>
+            <td align="right" style="color:#94a3b8;font-size:12px;">{{ periodo_fin }}</td>
+          </tr></table>
+          <div style="color:#94a3b8;font-size:12px;margin-top:3px;">
+            Inteligencia publicitaria de competencia · Costa Rica
           </div>
         </td></tr>
 
-        <!-- datos del reporte -->
-        <tr><td style="padding:22px 26px 0;">
-          <div style="font-size:19px;font-weight:600;color:#111827;line-height:1.35;">
-            Anuncios de la competencia
+        <!-- ─── título y periodo ─── -->
+        <tr><td style="padding:26px 28px 0;">
+          <div style="font-size:21px;font-weight:600;color:#0f172a;line-height:1.3;">
+            Qué está haciendo la competencia de {{ cliente }}
           </div>
-          <div style="font-size:13px;color:#6b7280;margin-top:6px;">
-            {{ cliente }} · del {{ periodo_inicio }} al {{ periodo_fin }}
+          <div style="font-size:13px;color:#64748b;margin-top:6px;">
+            Periodo del {{ periodo_inicio }} al {{ periodo_fin }}
+            {%- if competidores %} · {{ competidores | length }} competidores medidos{% endif %}
           </div>
-          {% if conteo %}
-          <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 4px;">
+        </td></tr>
+
+        <!-- ─── cifras del periodo ─── -->
+        {% if conteo %}
+        <tr><td style="padding:20px 28px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                 style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;">
             <tr>
-              {% for etiqueta, valor in [('Nuevos', conteo.nuevo), ('Cambiaron', conteo.cambiado),
-                                          ('Se cayeron', conteo.pausado), ('Siguen', conteo.continua)] %}
-              <td style="padding-right:18px;">
-                <div style="font-size:21px;font-weight:600;color:#0f172a;">{{ valor }}</div>
-                <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;">{{ etiqueta }}</div>
+              {% for etiqueta, valor, ayuda in [
+                   ('Nuevos', conteo.nuevo, 'mensajes que no habíamos visto antes'),
+                   ('Cambiaron', conteo.cambiado, 'mismo anuncio, contenido distinto'),
+                   ('Se apagaron', conteo.pausado, 'dejaron de aparecer en la biblioteca'),
+                   ('Siguen', conteo.continua, 'al aire sin cambios')] %}
+              <td style="padding:16px 10px;text-align:center;border-right:1px solid #e2e8f0;">
+                <div style="font-size:26px;font-weight:600;color:#0f172a;line-height:1;">{{ valor }}</div>
+                <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-top:6px;">{{ etiqueta }}</div>
+                <div style="font-size:10px;color:#94a3b8;margin-top:3px;line-height:1.3;">{{ ayuda }}</div>
               </td>
               {% endfor %}
             </tr>
           </table>
-          {% endif %}
         </td></tr>
+        {% endif %}
 
-        <!-- cuerpo -->
-        <tr><td style="padding:6px 26px 10px;font-size:15px;color:#374151;">
+        <!-- ─── tabla comparativa ─── -->
+        {% if senales %}
+        <tr><td style="padding:24px 28px 0;">
+          <div style="font-size:15px;font-weight:600;color:#0f172a;margin-bottom:4px;">
+            Comparativo de actividad
+          </div>
+          <div style="font-size:12px;color:#64748b;margin-bottom:10px;line-height:1.5;">
+            Un mensaje es un aviso distinto; las piezas son las veces que lo repite
+            (una por sede, público o producto). Los días indican hace cuánto sostiene
+            el mensaje más antiguo que tiene al aire.
+          </div>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                 style="border-collapse:collapse;font-size:12px;">
+            <tr style="background:#f1f5f9;">
+              <th align="left"  style="padding:8px 8px;color:#475569;font-weight:600;border-bottom:1px solid #e2e8f0;">Competidor</th>
+              <th align="left"  style="padding:8px 6px;color:#475569;font-weight:600;border-bottom:1px solid #e2e8f0;">Dónde</th>
+              <th align="right" style="padding:8px 6px;color:#475569;font-weight:600;border-bottom:1px solid #e2e8f0;">Mensajes</th>
+              <th align="right" style="padding:8px 6px;color:#475569;font-weight:600;border-bottom:1px solid #e2e8f0;">Piezas</th>
+              <th align="right" style="padding:8px 6px;color:#475569;font-weight:600;border-bottom:1px solid #e2e8f0;">Nuevos</th>
+              <th align="right" style="padding:8px 8px;color:#475569;font-weight:600;border-bottom:1px solid #e2e8f0;">Días</th>
+            </tr>
+            {% for f in senales %}
+            <tr>
+              <td style="padding:9px 8px;border-bottom:1px solid #f1f5f9;color:#0f172a;font-weight:600;">{{ f.competidor }}</td>
+              <td style="padding:9px 6px;border-bottom:1px solid #f1f5f9;color:#64748b;">
+                {{ 'Meta' if f.plataforma == 'meta' else 'Google' }}
+              </td>
+              <td align="right" style="padding:9px 6px;border-bottom:1px solid #f1f5f9;color:#0f172a;">{{ f.mensajes }}</td>
+              <td align="right" style="padding:9px 6px;border-bottom:1px solid #f1f5f9;color:#475569;">{{ f.piezas }}</td>
+              <td align="right" style="padding:9px 6px;border-bottom:1px solid #f1f5f9;color:{{ '#15803d' if f.nuevos else '#94a3b8' }};font-weight:{{ '600' if f.nuevos else '400' }};">{{ f.nuevos }}</td>
+              <td align="right" style="padding:9px 8px;border-bottom:1px solid #f1f5f9;color:#475569;">{{ f.dias_mensaje_mas_viejo if f.dias_mensaje_mas_viejo is not none else '—' }}</td>
+            </tr>
+            {% endfor %}
+          </table>
+        </td></tr>
+        {% endif %}
+
+        <!-- ─── análisis ─── -->
+        <tr><td style="padding:10px 28px 6px;font-size:15px;color:#334155;">
           {{ cuerpo_html | safe }}
         </td></tr>
 
-        <!-- anexo con las fuentes: trazabilidad anuncio por anuncio -->
+        <!-- ─── qué no incluye y por qué ─── -->
+        <tr><td style="padding:14px 28px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                 style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;">
+            <tr><td style="padding:14px 16px;font-size:12px;color:#78350f;line-height:1.6;">
+              <strong style="display:block;margin-bottom:4px;color:#92400e;">Qué no incluye este reporte, y por qué</strong>
+              No verá cuánto invierte su competencia, ni alcance, impresiones, clics o
+              conversiones. Meta y Google publican esos datos únicamente para anuncios
+              políticos y para los entregados en la Unión Europea; para anuncios
+              comerciales en Costa Rica el dato no existe y nadie fuera del anunciante
+              lo tiene. Cualquier proveedor que se lo ofrezca se lo está estimando.
+              Lo que sí medimos —mensajes al aire, piezas por mensaje, días sostenidos,
+              formatos y plataformas— usted lo puede verificar anuncio por anuncio con
+              los enlaces del anexo.
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <!-- ─── anexo ─── -->
         {% if anuncios %}
-        <tr><td style="padding:6px 26px 18px;">
-          <div style="font-size:13px;font-weight:600;color:#111827;margin:18px 0 8px;">
-            Anexo: anuncios detectados
+        <tr><td style="padding:22px 28px 10px;">
+          <div style="font-size:15px;font-weight:600;color:#0f172a;">Anexo: anuncios detectados</div>
+          <div style="font-size:12px;color:#64748b;margin:4px 0 12px;">
+            Cada anuncio enlaza a su ficha en la biblioteca pública de la plataforma,
+            para que pueda comprobar cualquier afirmación de este reporte.
           </div>
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:12px;color:#4b5563;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:12px;color:#475569;">
             {% for a in anuncios %}
             <tr>
-              <td style="padding:7px 0;border-top:1px solid #f1f5f9;vertical-align:top;width:42px;color:#9ca3af;">
-                {{ a.referencia }}
+              <td style="padding:10px 0;border-top:1px solid #f1f5f9;vertical-align:top;width:76px;">
+                {% if a.creativo_url and miniaturas %}
+                <img src="{{ a.creativo_url }}" width="64" alt="creativo {{ a.referencia }}"
+                     style="width:64px;border-radius:6px;display:block;background:#f1f5f9;">
+                {% else %}
+                <div style="width:64px;height:48px;border-radius:6px;background:#f1f5f9;"></div>
+                {% endif %}
               </td>
-              <td style="padding:7px 0;border-top:1px solid #f1f5f9;">
-                <strong style="color:#111827;">{{ a.competidor }}</strong>
-                <span style="color:#9ca3af;">· {{ a.plataforma }} · {{ a.clasificacion }}</span><br>
-                {{ (a.titulo or a.texto or '')[:110] }}
+              <td style="padding:10px 0;border-top:1px solid #f1f5f9;vertical-align:top;">
+                <span style="color:#94a3b8;">{{ a.referencia }}</span>
+                <strong style="color:#0f172a;">{{ a.competidor }}</strong>
+                <span style="color:#94a3b8;">
+                  · {{ 'Meta' if a.plataforma == 'meta' else 'Google' }}
+                  · {{ a.clasificacion }}
+                  {%- if a.variantes and a.variantes > 1 %} · {{ a.variantes }} variantes{% endif %}
+                  {%- if a.fecha_inicio %} · desde {{ a.fecha_inicio }}{% endif %}
+                </span><br>
+                {% if a.sin_texto %}
+                <em style="color:#94a3b8;">La fuente no publica el texto de este anuncio.</em>
+                {% else %}
+                {{ (a.titulo or a.texto or '')[:150] }}{% if (a.titulo or a.texto or '')|length > 150 %}…{% endif %}
+                {% endif %}
                 {% if a.url_anuncio %}
-                <br><a href="{{ a.url_anuncio }}" style="color:#1a56db;text-decoration:none;">ver el anuncio en la fuente</a>
+                <br><a href="{{ a.url_anuncio }}" style="color:#1d4ed8;text-decoration:none;">Ver el anuncio en la fuente →</a>
                 {% endif %}
               </td>
             </tr>
@@ -75,12 +163,30 @@
         </td></tr>
         {% endif %}
 
-        <!-- pie -->
-        <tr><td style="background:#f9fafb;padding:16px 26px;font-size:11px;color:#6b7280;line-height:1.6;">
-          Datos tomados de la Biblioteca de Anuncios de Meta y del Centro de Transparencia
-          de Anuncios de Google, ambas fuentes públicas. El reporte no incluye datos de
-          inversión, alcance ni resultados: esa información no es pública.
-          {% if enlace_baja %}<br><a href="{{ enlace_baja }}" style="color:#6b7280;">Darse de baja</a>{% endif %}
+        <!-- ─── metodología ─── -->
+        <tr><td style="padding:10px 28px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                 style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;">
+            <tr><td style="padding:14px 16px;font-size:11px;color:#64748b;line-height:1.7;">
+              <strong style="display:block;margin-bottom:4px;color:#334155;font-size:12px;">Cómo se hizo este reporte</strong>
+              Revisamos de forma automática la Biblioteca de Anuncios de Meta y el Centro
+              de Transparencia de Anuncios de Google —ambas fuentes públicas y oficiales—
+              para cada competidor, y comparamos contra lo detectado en periodos
+              anteriores. <strong>Nuevo</strong> es un mensaje que no habíamos visto;
+              <strong>cambió</strong> es el mismo anuncio con contenido distinto;
+              <strong>se apagó</strong> es un anuncio que dejó de aparecer, lo que no
+              significa que haya fracasado. Del Centro de Transparencia de Google
+              obtenemos la existencia, el formato y las fechas de cada anuncio, pero no
+              su texto: Google no lo publica.
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <!-- ─── pie ─── -->
+        <tr><td style="background:#0f172a;padding:16px 28px;font-size:11px;color:#94a3b8;line-height:1.6;">
+          {{ marca | default('PulseRival') }} · Reporte preparado para {{ cliente }}
+          {% if contacto_remitente %}<br>Consultas: {{ contacto_remitente }}{% endif %}
+          {% if enlace_baja %}<br><a href="{{ enlace_baja }}" style="color:#64748b;">Darse de baja</a>{% endif %}
         </td></tr>
       </table>
     </td></tr>

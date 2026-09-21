@@ -99,3 +99,17 @@ class TestAnunciosSinTexto(unittest.TestCase):
     def test_el_anuncio_con_texto_si_puede_describirse(self):
         r = validar.validar("## Lo más importante\nEl anuncio ofrece 2x1 [A2].", self.ANUNCIOS)
         self.assertFalse(any(p["tipo"] == "mensaje_inventado" for p in r["problemas"]))
+
+
+class TestTonoConCitas(unittest.TestCase):
+    def test_no_se_marca_la_exclamacion_del_anuncio_citado(self):
+        r = validar.validar(
+            '## Resumen ejecutivo\nEl anuncio dice "¡Matrícula gratis!" y apunta a captación [A1].',
+            [{"referencia": "[A1]", "clasificacion": "nuevo"}])
+        self.assertFalse(any(a["tipo"] == "tono" for a in r["avisos"]),
+                         "el signo es del competidor, no del analista")
+
+    def test_si_se_marca_la_exclamacion_del_analista(self):
+        r = validar.validar("## Resumen ejecutivo\nExcelente semana para el cliente!",
+                            [{"referencia": "[A1]", "clasificacion": "nuevo"}])
+        self.assertTrue(any(a["tipo"] == "tono" for a in r["avisos"]))
