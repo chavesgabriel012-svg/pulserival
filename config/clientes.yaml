@@ -14,50 +14,47 @@
 # ─────────────────────────────────────────────────────────────────────
 
 clientes:
-  # ── Entrada de PRUEBA ──────────────────────────────────────────────
-  # No es un cliente real: sirve para verificar que los scrapers traen
-  # anuncios comerciales de Costa Rica antes de vender nada. Los
-  # "competidores" son anunciantes grandes que casi siempre están pautando.
-  # Borrá este bloque cuando cargues tu cliente piloto de verdad.
-  - clave: prueba-scraper
-    empresa: "PRUEBA — verificación de scrapers (no es un cliente)"
-    contacto_nombre: "interno"
-    contacto_email: "no-enviar@pulserival.invalid"
+  - clave: gollo
+    empresa: "Gollo"
+    contacto_nombre: "(cliente potencial)"
+    # Dominio .invalid a propósito mientras sea una demostración: si se
+    # dispara un envío por error, rebota en vez de llegarle a alguien.
+    contacto_email: "demostracion@pulserival.invalid"
     periodicidad: semanal
-    industria: "prueba interna"
+    dia_envio: martes
+    industria: "retail de electrodomésticos, muebles y tecnología"
     notas: >-
-      Entrada de prueba. Nunca se le envía correo: el dominio .invalid no
-      existe a propósito, así que un envío accidental rebota en vez de
-      llegarle a alguien.
+      Cadena de retail con financiamiento propio y cobertura nacional.
+      Compite en electrodomésticos, muebles, tecnología y motos. Sus
+      diferenciadores habituales son el crédito propio, los plazos de pago y
+      la red de tiendas. Le interesa sobre todo detectar guerras de precio,
+      promociones de temporada y quién está empujando financiamiento.
     activo: true
     competidores:
-      - nombre: "Gollo"
-        meta_consulta: "Gollo"
-        google_dominio: "gollo.com"
+      - clave: monge
+        nombre: "Tienda Monge"
+        meta_pagina_url: "https://www.facebook.com/TiendaMonge/"
+        google_dominio: "tiendamonge.com"
         prioridad: 1
-        notas: "Retail de electrodomésticos, pauta casi continua en CR"
-      - nombre: "Cemaco"
-        meta_consulta: "Cemaco"
-        google_dominio: "cemaco.com"
-        prioridad: 2
-        notas: "Retail del hogar"
+        notas: "Competidor directo en electrodomésticos y muebles con crédito propio"
 
-  # ── Tu cliente piloto ──────────────────────────────────────────────
-  # Descomentá y llená cuando tengas los datos (ver docs/05).
-  # - clave: piloto
-  #   empresa: "Nombre S.A."
-  #   contacto_nombre: "Nombre del contacto"
-  #   contacto_email: "contacto@cliente.cr"
-  #   contacto_whatsapp: "+506 8888 8888"
-  #   periodicidad: semanal
-  #   dia_envio: martes
-  #   industria: "ferreterías"
-  #   notas: >-
-  #     Contexto que solo vos sabés: ticket promedio, qué le preocupa,
-  #     cuántas sedes, si compite por precio o por servicio.
-  #   activo: true
-  #   competidores:
-  #     - nombre: "Competidor 1"
-  #       meta_pagina_url: "https://www.facebook.com/competidor1"
-  #       google_dominio: "competidor1.co.cr"
-  #       prioridad: 1
+      - clave: siman
+        nombre: "Almacenes SIMAN"
+        meta_pagina_url: "https://www.facebook.com/simancostarica/"
+        google_dominio: "cr.siman.com"
+        prioridad: 1
+        notas: "Tienda por departamentos; compite en electrodomésticos y tecnología"
+
+      - clave: artelec
+        nombre: "Artelec"
+        meta_pagina_url: "https://www.facebook.com/ArtelecCR/"
+        google_dominio: "artelec.cr"
+        prioridad: 2
+        notas: "Retail de electrodomésticos"
+
+      - clave: mexpress
+        nombre: "MExpress"
+        meta_pagina_url: "https://www.facebook.com/mexpresscostarica/"
+        google_dominio: "tiendamexpress.com"
+        prioridad: 2
+        notas: "Retail de electrodomésticos y tecnología"

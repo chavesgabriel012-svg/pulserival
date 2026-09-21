@@ -66,7 +66,10 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PULSERIVAL_DB: datos/pulserival.db
-        run: python -m pulserival.cli ciclo --modo "${{ inputs.modo || 'auto' }}"
+        run: |
+          python -m pulserival.cli ciclo \
+            --modo "${{ inputs.modo || 'auto' }}" \
+            --limite "${{ vars.LIMITE_ANUNCIOS || 30 }}"
 
       - name: Guardar borradores y base como artefacto descargable
         uses: actions/upload-artifact@v7
@@ -74,6 +77,7 @@ jobs:
           name: pulserival-${{ github.run_number }}
           path: |
             borradores/
+            salida/
             datos/pulserival.db
           retention-days: 90
 

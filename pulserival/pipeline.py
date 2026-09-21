@@ -137,6 +137,7 @@ def ciclo_completo(
     cliente_id: int | None = None,
     modo: str = "auto",
     exportar: bool = True,
+    limite: int = 40,
 ) -> dict[str, Any]:
     """Recolecta y genera los borradores de todos los clientes que toca hoy.
 
@@ -148,7 +149,7 @@ def ciclo_completo(
     from .reporte import generar as generar_mod
     from .revision import flujo
 
-    corrida = recolectar(con, cliente_id, modo=modo, disparada_por="cron")
+    corrida = recolectar(con, cliente_id, modo=modo, limite=limite, disparada_por="cron")
     presupuesto = Presupuesto()
     reportes: list[dict[str, Any]] = []
 
@@ -174,6 +175,16 @@ def ciclo_completo(
         }
         if exportar and not rep.get("ya_existia"):
             item["archivo"] = str(flujo.exportar(con, rep["reporte_id"]))
+            # Además del .md para editar, se deja el correo armado: es la
+            # única forma de ver el reporte como lo recibe el cliente sin
+            # tener que mandar nada.
+            try:
+                from .entrega import enviar_reporte
+
+                item["previsualizacion"] = enviar_reporte(
+                    con, rep["reporte_id"], simular=True)["archivo"]
+            except Exception as e:  # una previa fallida no tumba la corrida
+                item["previsualizacion_error"] = str(e)
         reportes.append(item)
 
     return {

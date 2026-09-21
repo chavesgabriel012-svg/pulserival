@@ -253,7 +253,8 @@ def cmd_reporte(args) -> int:
 
 def cmd_ciclo(args) -> int:
     with db.sesion() as con:
-        res = pipeline.ciclo_completo(con, cliente_id=args.cliente, modo=args.modo)
+        res = pipeline.ciclo_completo(con, cliente_id=args.cliente, modo=args.modo,
+                                      limite=args.limite)
     t = res["totales"]
     ok(f"Corrida #{res['corrida_id']}: {t['nuevos']} nuevos · {t['cambiados']} cambiados · "
        f"{t['pausados']} se cayeron · costo IA ${res['costo_ia_usd']}")
@@ -267,8 +268,13 @@ def cmd_ciclo(args) -> int:
         val = r.get("validacion") or {}
         estado = "APROBADO" if val.get("aprobado") else "REVISAR"
         marca = " (ya existía)" if r.get("ya_existia") else ""
-        print(f"    {r['cliente']}: reporte #{r['reporte_id']}{marca} · {estado} "
-              f"· {r.get('archivo','')}")
+        print(f"    {r['cliente']}: reporte #{r['reporte_id']}{marca} · {estado}")
+        if r.get("archivo"):
+            print(f"       borrador para editar: {r['archivo']}")
+        if r.get("previsualizacion"):
+            print(f"       correo armado:        {r['previsualizacion']}")
+        if r.get("previsualizacion_error"):
+            aviso(f"no se pudo armar la previa del correo: {r['previsualizacion_error']}")
     for e in res["errores"]:
         error(f"{e['competidor']} [{e['plataforma']}]: {e['error']}")
     for s in res.get("sospechosas", []):
@@ -588,6 +594,8 @@ def construir_parser() -> argparse.ArgumentParser:
     y = sub.add_parser("ciclo", help="recolectar + generar + exportar (lo que corre el cron)")
     y.add_argument("--cliente", type=int)
     y.add_argument("--modo", default="auto", choices=["auto", "demo", "apify"])
+    y.add_argument("--limite", type=int, default=40,
+                   help="máximo de anuncios por competidor y plataforma (se paga por anuncio)")
     y.set_defaults(func=cmd_ciclo)
 
     # feedback
