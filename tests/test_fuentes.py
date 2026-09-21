@@ -7,6 +7,10 @@ from pulserival.fuentes import obtener_fuente
 from pulserival.fuentes.apify import FuenteApify
 
 # Muestra con la forma que devuelve el actor de la Biblioteca de Anuncios.
+# Los nombres son camelCase porque así los devuelve el actor de verdad; ver
+# tests/fixtures/meta_anuncio_real.json. Escribirlos en snake_case, como
+# estaban al principio, hacía pasar los tests con un mapeo que en producción
+# no encontraba ni un solo campo.
 ITEM_META = {
     "adArchiveID": "123456789",
     "pageName": "Vital Gym CR",
@@ -14,13 +18,13 @@ ITEM_META = {
     "snapshot": {
         "body": {"text": "Plan mensual ¢19.900 sin matrícula"},
         "title": "Matrícula gratis en setiembre",
-        "link_url": "https://vitalgym.test/promo",
-        "cta_text": "Registrarte",
-        "images": [{"original_image_url": "https://cdn.test/a.jpg"}],
+        "linkUrl": "https://vitalgym.test/promo",
+        "ctaText": "Registrarte",
+        "displayFormat": "IMAGE",
+        "images": [{"originalImageUrl": "https://cdn.test/a.jpg"}],
     },
     "startDateFormatted": "2026-09-01",
     "publisherPlatform": ["FACEBOOK", "INSTAGRAM"],
-    "url": "https://www.facebook.com/ads/library/?id=123456789",
 }
 
 ITEM_GOOGLE = {
@@ -50,6 +54,9 @@ class TestMapeoApify(unittest.TestCase):
         self.assertEqual(a.cta, "Registrarte")
         self.assertEqual(a.creativo_url, "https://cdn.test/a.jpg")
         self.assertEqual(a.plataforma, "meta")
+        self.assertEqual(a.link_destino, "https://vitalgym.test/promo")
+        self.assertEqual(a.url_anuncio, "https://www.facebook.com/ads/library/?id=123456789",
+                         "el link a la ficha se arma con el id de archivo")
         self.assertFalse(a.vacio())
 
     def test_mapea_google(self):
@@ -158,3 +165,63 @@ class TestEntradaValidaSegunElActor(unittest.TestCase):
     def test_los_campos_obligatorios_van_siempre(self):
         self.assertIn("startUrls", self.entrada("meta", {"nombre": "X", "meta_consulta": "X"}))
         self.assertIn("queries", self.entrada("google", {"nombre": "X", "google_dominio": "x.com"}))
+
+
+class TestMapeoConAnuncioReal(unittest.TestCase):
+    """Mapeo contra una respuesta REAL del actor, guardada el 2026-09-21.
+
+    Este test existe porque el mapeo original estaba escrito de memoria y
+    casi todo estaba mal: el actor usa camelCase (`ctaText`, `linkUrl`,
+    `originalImageUrl`) y yo había puesto snake_case. Con datos inventados
+    los tests pasaban igual; recién con la primera llamada real se vio.
+
+    La respuesta congelada es un anuncio de una óptica de Costa Rica, activo
+    al momento de la corrida.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        from pathlib import Path
+
+        ruta = Path(__file__).parent / "fixtures" / "meta_anuncio_real.json"
+        cls.item = json.loads(ruta.read_text(encoding="utf-8"))[0]
+        cls.anuncio = FuenteApify("meta", token="prueba").mapear(cls.item)
+
+    def test_trae_el_texto_del_anuncio(self):
+        self.assertIn("examen visual", self.anuncio.texto)
+        self.assertIn("Gollo Ópticas", self.anuncio.texto)
+
+    def test_identifica_al_anunciante(self):
+        self.assertEqual(self.anuncio.anunciante, "Gollo Ópticas")
+        self.assertEqual(self.anuncio.metadata["anunciante_id"], "107953311029638")
+
+    def test_las_fechas_son_fechas_y_no_marcas_de_tiempo(self):
+        # startDate viene como 1782716400. Sin normalizar, el reporte le
+        # mostraría ese número al cliente.
+        self.assertEqual(self.anuncio.fecha_inicio, "2026-06-29")
+        self.assertEqual(self.anuncio.fecha_fin, "2026-09-21")
+
+    def test_reconoce_el_formato_declarado_por_la_fuente(self):
+        self.assertEqual(self.anuncio.tipo_creativo, "imagen")
+
+    def test_arma_el_link_a_la_ficha_publica(self):
+        # El actor no devuelve este link, pero el reporte lo necesita para
+        # que el cliente pueda abrir el anuncio y verificar lo que decimos.
+        self.assertEqual(
+            self.anuncio.url_anuncio,
+            "https://www.facebook.com/ads/library/?id=27306236999005351",
+        )
+
+    def test_trae_el_boton_y_el_creativo(self):
+        self.assertEqual(self.anuncio.cta, "Send message")
+        self.assertTrue((self.anuncio.creativo_url or "").startswith("https://"))
+        self.assertIn("fbcdn.net", self.anuncio.creativo_url)
+
+    def test_guarda_el_contexto_util_de_la_plataforma(self):
+        self.assertIn("FACEBOOK", self.anuncio.metadata["plataformas_publicacion"])
+        self.assertEqual(self.anuncio.metadata["categoria_anunciante"], ["Eyewear"])
+
+    def test_el_anuncio_no_queda_vacio(self):
+        self.assertFalse(self.anuncio.vacio())
+        self.assertTrue(self.anuncio.huella())

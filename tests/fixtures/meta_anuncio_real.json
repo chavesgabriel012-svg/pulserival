@@ -1,0 +1,131 @@
+[
+  {
+    "inputUrl": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q=Gollo&search_type=keyword_unordered",
+    "pageInfo": {
+      "adLibrarySystemStatus": {
+        "systemStatus": {
+          "status": "NO_KNOWN_ISSUES",
+          "activeIssues": [
+            {
+              "product": "Ad Library",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library Report",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Ad Library API",
+              "status": "NO_KNOWN_ISSUES"
+            },
+            {
+              "product": "Branded Content",
+              "status": "NO_KNOWN_ISSUES"
+            }
+          ]
+        }
+      },
+      "xfbAdLibraryIsCaptchaRequired": false,
+      "page": null,
+      "adLibraryUser": null
+    },
+    "pageID": "107953311029638",
+    "adArchiveID": "27306236999005351",
+    "startDateFormatted": "2026-06-29T07:00:00.000Z",
+    "endDateFormatted": "2026-09-21T07:00:00.000Z",
+    "adArchiveId": "27306236999005351",
+    "collationCount": 1,
+    "collationId": "1019755427305368",
+    "pageId": "107953311029638",
+    "snapshot": {
+      "brandedContent": null,
+      "pageId": "107953311029638",
+      "pageIsDeleted": false,
+      "pageProfileUri": "https://www.facebook.com/Golloopticas/",
+      "rootResharedPost": null,
+      "byline": null,
+      "disclaimerLabel": null,
+      "pageName": "Gollo Ópticas",
+      "pageProfilePictureUrl": "https://scontent-phl2-1.xx.fbcdn.net/v/t39.35426-6/731094514_27272860859043030_7577431379087492025_n.jpg?stp=dst-jpg_s60x60_tt6&_nc_cat=111&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=pvFvUtjCaqgQ7kNvwGJ_ByA&_nc_oc=Adp3YXzin23Pz2A1V-dO20u5zAQAPLYL8mTT7FvnGi9hietUz7D-gmFJvxRuPmKJoNw&_nc_zt=14&_nc_ht=scontent-phl2-1.xx&_nc_gid=Li2goOZ0nk_wQArf2iUSnQ&_nc_ss=73289&oh=00_AQLV3YIAIs7pYAZIZF34JKlcQXAas_4ILfdjkeIYfr5PDQ&oe=6AB737CF",
+      "event": null,
+      "caption": null,
+      "ctaText": "Send message",
+      "cards": [],
+      "body": {
+        "text": "👀 Tu vista te está mandando señales... y es hora de escucharla. ✨\n\n¿Hace cuánto no te realizás un examen visual? 🤔\n\nEn Gollo Ópticas Santa Ana Trade Center te esperamos con atención especializada para ayudarte a ver cada detalle con claridad 👓💙\n\n📅 Agendá tu cita hoy mismo: https://bit.ly/4filx4n\n📍 Visitános en Gollo Santa Ana Trade Center | 📞 6480-7802\n\n#golloópticas  #santaanatradecenter  #saludvisual  #CuidáTuVista  #SantaAna  #ÓpticaCercaDeVos"
+      },
+      "ctaType": "MESSAGE_PAGE",
+      "displayFormat": "IMAGE",
+      "linkDescription": null,
+      "linkUrl": null,
+      "images": [
+        {
+          "imageCrops": [],
+          "originalImageUrl": "https://scontent-phl2-1.xx.fbcdn.net/v/t39.35426-6/730771537_1247049074036683_5063716631641321965_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=xMY7Bwt3T5QQ7kNvwGSFxhH&_nc_oc=AdpUAzZlImovHK0ivB7GOPMHZQHjNboFZLKFWH5dlqdRaYq6Zc2pxMSadA_ny1CGaTw&_nc_zt=14&_nc_ht=scontent-phl2-1.xx&_nc_gid=Li2goOZ0nk_wQArf2iUSnQ&_nc_ss=73289&oh=00_AQLDHqBAPs83MoitLcrl4ff7lqnvLrPuWHu5smOeQURRgg&oe=6AB72827",
+          "resizedImageUrl": "https://scontent-phl2-1.xx.fbcdn.net/v/t39.35426-6/730688976_992739080064853_4298111803003345443_n.jpg?stp=dst-jpg_s600x600_tt6&_nc_cat=110&ccb=1-7&_nc_sid=c53f8f&_nc_ohc=QM7SDhW_AWYQ7kNvwEOdv9n&_nc_oc=AdqZ2yYKbWhOTYmnbxnoLxRSSQWPQK9TbOM_nCqoBgZMVuZYvWHnktD5rIV_irNV7SM&_nc_zt=14&_nc_ht=scontent-phl2-1.xx&_nc_gid=Li2goOZ0nk_wQArf2iUSnQ&_nc_ss=73289&oh=00_AQIhdTbFjgC6TQYiNzoh2AmoClbBbgSR1dCJHptJWjfyNQ&oe=6AB723C4",
+          "watermarkedResizedImageUrl": ""
+        }
+      ],
+      "pageCategories": [
+        "Eyewear"
+      ],
+      "pageLikeCount": 25081,
+      "title": null,
+      "videos": [],
+      "isReshared": false,
+      "extraLinks": [],
+      "extraTexts": [],
+      "extraImages": [],
+      "extraVideos": [],
+      "countryIsoCode": null,
+      "brazilTaxId": null,
+      "additionalInfo": null,
+      "ecCertificates": []
+    },
+    "isActive": true,
+    "hasUserReported": false,
+    "reportCount": null,
+    "menuItems": [],
+    "stateMediaRunLabel": null,
+    "pageIsDeleted": false,
+    "pageName": "Gollo Ópticas",
+    "impressionsWithIndex": {
+      "impressionsText": null,
+      "impressionsIndex": -1
+    },
+    "gatedType": "ELIGIBLE",
+    "categories": [
+      "UNKNOWN"
+    ],
+    "isAaaEligible": false,
+    "containsDigitalCreatedMedia": false,
+    "reachEstimate": null,
+    "currency": "",
+    "spend": null,
+    "endDate": 1789974000,
+    "publisherPlatform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "AUDIENCE_NETWORK",
+      "MESSENGER",
+      "WHATSAPP",
+      "THREADS"
+    ],
+    "startDate": 1782716400,
+    "containsSensitiveContent": false,
+    "totalActiveTime": null,
+    "regionalRegulationData": {
+      "finserv": {
+        "isDeemedFinserv": false,
+        "isLimitedDelivery": false
+      },
+      "twAntiScam": {
+        "isLimitedDelivery": false
+      }
+    },
+    "hideDataStatus": "NONE",
+    "fevInfo": null,
+    "adId": null,
+    "targetedOrReachedCountries": []
+  }
+]

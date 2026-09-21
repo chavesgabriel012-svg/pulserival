@@ -110,10 +110,11 @@ class FuenteApify:
             return util.primer_valor(item, m.get(nombre, []))
 
         plataformas = campo("plataformas")
+        id_externo = _texto(campo("id_externo"))
         return AnuncioCrudo(
             plataforma=self.plataforma,
             fuente=self.nombre,
-            id_externo=_texto(campo("id_externo")),
+            id_externo=id_externo,
             anunciante=_texto(campo("anunciante")),
             titulo=_texto(campo("titulo")),
             texto=_texto(campo("texto")),
@@ -121,16 +122,30 @@ class FuenteApify:
             cta=_texto(campo("cta")),
             link_destino=_texto(campo("link_destino")),
             creativo_url=_texto(campo("creativo_url")),
-            tipo_creativo=_tipo_creativo(item, campo("creativo_url")),
-            url_anuncio=_texto(campo("url_anuncio")),
-            fecha_inicio=_texto(campo("fecha_inicio")),
-            fecha_fin=_texto(campo("fecha_fin")),
+            tipo_creativo=_tipo_creativo(item, campo("formato"), campo("creativo_url")),
+            url_anuncio=_texto(campo("url_anuncio")) or self._url_ficha(id_externo),
+            fecha_inicio=_fecha(campo("fecha_inicio")),
+            fecha_fin=_fecha(campo("fecha_fin")),
             metadata={
                 "plataformas_publicacion": plataformas,
                 "anunciante_id": _texto(campo("anunciante_id")),
+                "categoria_anunciante": campo("categoria"),
+                "activo_en_la_fuente": campo("activo"),
                 "crudo_claves": sorted(item)[:40],
             },
         )
+
+    def _url_ficha(self, id_externo: str | None) -> str | None:
+        """Link a la ficha pública del anuncio.
+
+        El actor de Meta no lo devuelve, pero el reporte lo necesita: es lo
+        que le permite al cliente abrir el anuncio y comprobar lo que le
+        estamos contando. Se arma con el id de archivo.
+        """
+        plantilla = self.cfg.get("plantilla_url_anuncio")
+        if not plantilla or not id_externo:
+            return None
+        return plantilla.format(id=id_externo)
 
     def _guardar_crudo(self, competidor: dict, crudos: list[dict]) -> None:
         """Guarda la respuesta cruda en datos/crudo/ para poder auditar después."""
@@ -151,10 +166,39 @@ def _texto(valor: Any) -> str | None:
     return str(valor).strip() or None
 
 
-def _tipo_creativo(item: dict, creativo_url: str | None) -> str:
+FORMATOS = {
+    "IMAGE": "imagen", "VIDEO": "video", "DCO": "dinamico", "DPA": "catalogo",
+    "CAROUSEL": "carrusel", "TEXT": "texto", "MULTI_IMAGES": "carrusel",
+}
+
+
+def _tipo_creativo(item: dict, formato, creativo_url: str | None) -> str:
+    """El formato declarado por la fuente manda; si no viene, se deduce."""
+    if isinstance(formato, str) and formato.upper() in FORMATOS:
+        return FORMATOS[formato.upper()]
     crudo = json.dumps(item, ensure_ascii=False).lower()
-    if "youtubevideoid" in crudo or '"video' in crudo or "videourl" in crudo:
+    if "youtubevideoid" in crudo or '"videohdurl"' in crudo or "videourl" in crudo:
         return "video"
     if creativo_url:
         return "imagen"
     return "texto"
+
+
+def _fecha(valor: Any) -> str | None:
+    """Normaliza la fecha a AAAA-MM-DD.
+
+    Los actores mezclan formatos: unos mandan ISO ("2026-06-29T07:00:00.000Z")
+    y otros una marca de tiempo Unix (1782716400), que en el reporte se leería
+    como un número suelto sin sentido para el cliente.
+    """
+    if valor in (None, "", []):
+        return None
+    if isinstance(valor, (int, float)) or (isinstance(valor, str) and valor.isdigit()):
+        from datetime import datetime, timezone
+
+        try:
+            return datetime.fromtimestamp(int(valor), tz=timezone.utc).date().isoformat()
+        except (ValueError, OSError, OverflowError):
+            return None
+    texto = _texto(valor)
+    return texto.split("T")[0] if texto else None

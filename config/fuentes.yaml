@@ -28,22 +28,35 @@ meta:
     # apagaron, que son justo la mitad de lo que el reporte cuenta.
   # URL de búsqueda que se arma por competidor (país fijo Costa Rica = CR).
   plantilla_url_busqueda: "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q={consulta}&search_type=keyword_unordered"
-  # Nombres posibles de cada campo en la salida del actor (se prueba en orden).
-  # Verificalo con `python -m pulserival.cli fuentes inspeccionar --archivo <json>`.
+  # El actor NO devuelve un link a la ficha pública del anuncio: se arma con
+  # el id de archivo. Sin esto el reporte pierde la trazabilidad a la fuente.
+  plantilla_url_anuncio: "https://www.facebook.com/ads/library/?id={id}"
+  # Nombres de cada campo en la salida del actor, probados en orden.
+  # Verificados contra una respuesta real el 2026-09-21 (el actor usa
+  # camelCase; tests/fixtures/meta_anuncio_real.json congela esa respuesta).
+  # Para revisar una respuesta nueva:
+  #   python -m pulserival.cli fuentes inspeccionar --archivo datos/crudo/<archivo>
   mapeo:
-    id_externo:     [adArchiveID, ad_archive_id, adId, id]
-    texto:          [adText, body, ad_creative_body, snapshot.body.text, text]
-    titulo:         [title, adTitle, snapshot.title, link_title]
-    descripcion:    [linkDescription, snapshot.link_description, caption]
-    cta:            [ctaText, snapshot.cta_text, cta_type]
-    link_destino:   [linkUrl, snapshot.link_url, destinationUrl]
-    creativo_url:   [imageUrl, snapshot.images.0.original_image_url, videoPreviewImageUrl, previewImageUrl]
-    anunciante:     [pageName, page_name, snapshot.page_name]
-    anunciante_id:  [pageID, page_id]
-    fecha_inicio:   [startDate, startDateFormatted, ad_delivery_start_time]
-    fecha_fin:      [endDate, endDateFormatted, ad_delivery_stop_time]
+    id_externo:     [adArchiveID, adArchiveId, adId, id]
+    texto:          [snapshot.body.text, adText, body, text]
+    titulo:         [snapshot.title, title, adTitle]
+    descripcion:    [snapshot.linkDescription, snapshot.caption, linkDescription, caption]
+    cta:            [snapshot.ctaText, ctaText, snapshot.ctaType]
+    link_destino:   [snapshot.linkUrl, linkUrl, destinationUrl]
+    creativo_url:   [snapshot.images.0.originalImageUrl, snapshot.images.0.resizedImageUrl,
+                     snapshot.videos.0.videoPreviewImageUrl, snapshot.cards.0.originalImageUrl,
+                     imageUrl, previewImageUrl]
+    anunciante:     [pageName, snapshot.pageName, page_name]
+    anunciante_id:  [pageID, pageId, page_id]
+    # Las versiones "Formatted" son fechas ISO; startDate/endDate vienen como
+    # marca de tiempo Unix, que en el reporte se leería como un número suelto.
+    fecha_inicio:   [startDateFormatted, startDate, ad_delivery_start_time]
+    fecha_fin:      [endDateFormatted, endDate, ad_delivery_stop_time]
     plataformas:    [publisherPlatform, publisher_platforms]
-    url_anuncio:    [url, adLibraryUrl, snapshot.link_url]
+    formato:        [snapshot.displayFormat, displayFormat]
+    categoria:      [snapshot.pageCategories, categories]
+    activo:         [isActive]
+    url_anuncio:    [url, adLibraryUrl]
 
 google:
   # Fuente PRIMARIA para Google Ads. Raspa el Centro de Transparencia.
