@@ -87,3 +87,35 @@ meta_api_oficial:
     - page_name
     - publisher_platforms
     - languages
+
+# ─────────────────────────────────────────────────────────────────────
+#  Costos de los scrapers, para poder estimar antes de gastar.
+#  Los usa `python3 -m pulserival.cli presupuesto`.
+#  Verificados el 2026-09-21 en apify.com/pricing y en la pestaña Pricing
+#  de cada actor. Actualizalos cuando cambien.
+# ─────────────────────────────────────────────────────────────────────
+costos:
+  # En qué plan de Apify estás: free | starter | scale | business
+  plan_apify: free
+  # Crédito mensual incluido en el plan, en USD.
+  credito_mensual_usd:
+    free: 5.00
+    starter: 19.00
+    scale: 49.00
+    business: 199.00
+  # Precio por 1.000 anuncios devueltos, según plan.
+  # Meta: los cuatro valores están publicados en la pestaña Pricing del actor.
+  # Google: el actor publica ~$1.00/1.000; los otros escalones son una
+  # estimación conservadora con el mismo patrón de descuento que Meta.
+  # Si el costo te importa al centavo, confirmalo en la página del actor.
+  usd_por_mil_resultados:
+    meta:
+      free: 5.80
+      starter: 5.00
+      scale: 4.20
+      business: 3.40
+    google:
+      free: 1.20
+      starter: 1.00
+      scale: 0.85
+      business: 0.70

@@ -37,9 +37,9 @@ jobs:
     permissions:
       contents: write        # para guardar la base actualizada en la rama `datos`
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
@@ -64,7 +64,7 @@ jobs:
         run: python -m pulserival.cli ciclo --modo "${{ inputs.modo || 'auto' }}"
 
       - name: Guardar borradores y base como artefacto descargable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pulserival-${{ github.run_number }}
           path: |

@@ -16,6 +16,7 @@ Todo se opera desde acá. Los comandos están en español y hacen una sola cosa:
   dataset                      exportar el dataset de ediciones y ver métricas
   demo                         probar todo el flujo sin claves ni costo
   costos                       cuánto se gastó en IA
+  presupuesto                  proyección del gasto mensual antes de gastarlo
 """
 from __future__ import annotations
 
@@ -24,7 +25,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import config, db, pipeline, util
+from . import config, db, pipeline, presupuesto as presupuesto_mod, util
 from .ia import Presupuesto, PresupuestoExcedido, ProveedorError
 from .reporte import generar as generar_mod
 from .reporte import validar as validar_mod
@@ -292,6 +293,14 @@ def cmd_costos(args) -> int:
     return 0
 
 
+def cmd_presupuesto(args) -> int:
+    """Proyecta el gasto mensual de scrapers con los clientes ya cargados."""
+    with db.sesion() as con:
+        p = presupuesto_mod.proyectar(con, limite_por_competidor=args.limite)
+    print("  " + presupuesto_mod.formatear(p).replace("\n", "\n  "))
+    return 0
+
+
 def cmd_demo(args) -> int:
     """Corre el flujo completo con datos de ejemplo, sin claves ni costo."""
     import os
@@ -477,6 +486,11 @@ def construir_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("dataset", help="exportar el dataset de ediciones (Fase 2)").set_defaults(func=cmd_dataset)
     sub.add_parser("costos", help="cuánto se gastó en IA").set_defaults(func=cmd_costos)
+
+    b = sub.add_parser("presupuesto", help="cuánto va a costar al mes, antes de gastarlo")
+    b.add_argument("--limite", type=int, default=40,
+                   help="anuncios por competidor por corrida (el mismo de recolectar)")
+    b.set_defaults(func=cmd_presupuesto)
 
     d = sub.add_parser("demo", help="probar el flujo completo sin claves ni costo")
     d.add_argument("--conservar", action="store_true", help="no borrar la base de la demo anterior")
