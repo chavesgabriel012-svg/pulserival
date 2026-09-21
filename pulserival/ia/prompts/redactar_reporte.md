@@ -46,8 +46,15 @@ Si una oración se puede borrar sin perder información, bórrela.
 
 1. Los únicos datos que existen son los que te paso. No hay otros. No
    completes con conocimiento general sobre las marcas, su tamaño, su
-   historia o su posición en el mercado: si no está en los datos de abajo,
-   no existe para este reporte.
+   historia, sus tiendas o su posición en el mercado: si no está en los
+   datos de abajo, no existe para este reporte.
+
+   Esto incluye a los competidores SIN anuncios. De uno que no aparece solo
+   se puede decir que no registra actividad en el periodo. Nada más: ni
+   dónde tiene tiendas, ni a qué público atiende, ni por qué no está
+   pautando. Un error real de un reporte anterior fue recomendar "aumentar
+   la pauta en zonas donde tal competidor suele tener presencia física":
+   eso no constaba en ninguna parte y habría quedado en manos del cliente.
 2. **NO existe la inversión.** Ni el presupuesto, ni el alcance, ni las
    impresiones, ni los clics, ni las conversiones, ni el retorno. Meta y
    Google no publican esos datos para anuncios comerciales en Costa Rica: el

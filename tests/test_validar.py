@@ -113,3 +113,63 @@ class TestTonoConCitas(unittest.TestCase):
         r = validar.validar("## Resumen ejecutivo\nExcelente semana para el cliente!",
                             [{"referencia": "[A1]", "clasificacion": "nuevo"}])
         self.assertTrue(any(a["tipo"] == "tono" for a in r["avisos"]))
+
+
+class TestReferenciasAgrupadas(unittest.TestCase):
+    """El modelo agrupa referencias: "[A16, A24, A27]".
+
+    La expresión original solo reconocía [A16]. En un reporte real eso dejó
+    32 referencias sin validar: una inventada dentro de un grupo no se habría
+    detectado.
+    """
+
+    ANUNCIOS = [{"referencia": f"[A{i}]", "clasificacion": "nuevo"} for i in (1, 2, 3)]
+
+    def test_valida_las_referencias_dentro_de_un_grupo(self):
+        r = validar.validar("## Resumen ejecutivo\nDatos [A1, A2, A3].", self.ANUNCIOS)
+        self.assertEqual(sorted(r["referencias_usadas"]), ["[A1]", "[A2]", "[A3]"])
+
+    def test_detecta_una_referencia_inventada_dentro_de_un_grupo(self):
+        r = validar.validar("## Resumen ejecutivo\nDatos [A1, A99].", self.ANUNCIOS)
+        self.assertFalse(r["aprobado"])
+        self.assertTrue(any("[A99]" in p["detalle"] for p in r["problemas"]))
+
+
+class TestCompetidorSinDatos(unittest.TestCase):
+    """De un competidor sin un solo anuncio no se puede afirmar nada.
+
+    Real: el reporte recomendó "aumentar la pauta en zonas fuera del GAM
+    donde Artelec suele tener presencia física". Los datos no decían nada de
+    las tiendas de Artelec; salió del conocimiento general del modelo.
+    """
+
+    ANUNCIOS = [{"referencia": "[A1]", "clasificacion": "nuevo", "competidor": "Monge"}]
+    COMPETIDORES = ["Monge", "Artelec"]
+
+    def test_rechaza_afirmaciones_sobre_un_competidor_sin_anuncios(self):
+        r = validar.validar(
+            "## Resumen ejecutivo\nArtelec tiene presencia física fuera del GAM.",
+            self.ANUNCIOS, self.COMPETIDORES)
+        self.assertFalse(r["aprobado"])
+        self.assertTrue(any(p["tipo"] == "conocimiento_externo" for p in r["problemas"]))
+
+    def test_acepta_decir_que_no_registra_actividad(self):
+        r = validar.validar(
+            "## Resumen ejecutivo\nArtelec no registra actividad publicitaria en el periodo.",
+            self.ANUNCIOS, self.COMPETIDORES)
+        self.assertFalse(any(p["tipo"] == "conocimiento_externo" for p in r["problemas"]))
+
+    def test_no_molesta_con_los_competidores_que_si_tienen_datos(self):
+        r = validar.validar("## Resumen ejecutivo\nMonge tiene 7 anuncios [A1].",
+                            self.ANUNCIOS, self.COMPETIDORES)
+        self.assertFalse(any(p["tipo"] == "conocimiento_externo" for p in r["problemas"]))
+
+
+class TestCoberturaSobreLoQueElModeloVio(unittest.TestCase):
+    def test_no_se_reclama_un_anuncio_que_el_modelo_nunca_recibio(self):
+        todos = [{"referencia": f"[A{i}]", "clasificacion": "nuevo"} for i in range(1, 100)]
+        vistos = todos[:3]
+        r = validar.validar("## Resumen ejecutivo\nTodo citado [A1, A2, A3].",
+                            todos, anuncios_vistos=vistos)
+        self.assertEqual(r["cobertura_importantes"], "3/3")
+        self.assertFalse(any(a["tipo"] == "cobertura_incompleta" for a in r["avisos"]))

@@ -32,10 +32,22 @@ SECCIONES_ESPERADAS = [
     "movimientos",
     "que haria yo",
 ]
-REF = re.compile(r"\[A(\d+)\]")
+# El modelo agrupa referencias: "[A16, A24, A27]". Con la expresión vieja,
+# que solo reconocía [A16], esas 32 referencias de un reporte real pasaban
+# sin validar: una inventada ahí dentro no se habría detectado.
+REF = re.compile(r"\[\s*A\d+(?:\s*,\s*A\d+)*\s*\]")
+REF_NUM = re.compile(r"A(\d+)")
 
 
-def validar(borrador: str, anuncios: list[dict[str, Any]]) -> dict[str, Any]:
+def validar(borrador: str, anuncios: list[dict[str, Any]],
+            competidores: list[str] | None = None,
+            anuncios_vistos: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    """Revisa el borrador contra los datos.
+
+    `anuncios` son todos los del periodo; `anuncios_vistos` los que entraron
+    al prompt. La cobertura se mide contra los segundos: reclamarle al modelo
+    que no citó un anuncio que nunca vio no es un hallazgo, es ruido.
+    """
     problemas: list[dict[str, str]] = []
     avisos: list[dict[str, str]] = []
     plano = util.normalizar_texto(borrador)
@@ -51,7 +63,7 @@ def validar(borrador: str, anuncios: list[dict[str, Any]]) -> dict[str, Any]:
 
     # 2. referencias
     validas = {a["referencia"] for a in anuncios}
-    usadas = {f"[A{n}]" for n in REF.findall(borrador)}
+    usadas = {f"[A{n}]" for grupo in REF.findall(borrador) for n in REF_NUM.findall(grupo)}
     for r in sorted(usadas - validas):
         problemas.append({"tipo": "referencia_inexistente",
                           "detalle": f"Usa la referencia {r}, que no corresponde a ningún anuncio."})
@@ -81,8 +93,35 @@ def validar(borrador: str, anuncios: list[dict[str, Any]]) -> dict[str, Any]:
                     break
             break
 
-    # 4. cobertura de lo importante
-    importantes = [a for a in anuncios if a["clasificacion"] in ("nuevo", "cambiado")]
+    # 4. competidores sin un solo anuncio: no se puede afirmar nada de ellos
+    con_datos = {a.get("competidor") for a in anuncios if a.get("competidor")}
+    for nombre in (competidores or []):
+        if nombre in con_datos or not nombre:
+            continue
+        for oracion in re.split(r"(?<=[.!?])\s+", borrador):
+            if nombre.lower() not in oracion.lower():
+                continue
+            plano_oracion = util.normalizar_texto(oracion)
+            # "no registra actividad" es lo único que se puede decir; cualquier
+            # otra afirmación sale de conocimiento externo, no de la fuente.
+            if any(util.normalizar_texto(p) in plano_oracion for p in
+                   ("no registra", "no tiene anuncios", "sin actividad", "no aparece",
+                    "no pauta", "no registro", "inactivo", "no hubo")):
+                continue
+            if any(util.normalizar_texto(p) in plano_oracion for p in
+                   ("tiene", "suele", "presencia", "tiendas", "sucursales", "sede",
+                    "clientes", "cobertura", "mercado", "posicion")):
+                problemas.append({
+                    "tipo": "conocimiento_externo",
+                    "detalle": f"No hay un solo anuncio de {nombre} en los datos, pero el "
+                               f"borrador afirma algo sobre esa empresa: \"{util.recortar(oracion, 120)}\". "
+                               "Eso no sale de la fuente.",
+                })
+                break
+
+    # 5. cobertura de lo importante
+    base = anuncios_vistos if anuncios_vistos is not None else anuncios
+    importantes = [a for a in base if a["clasificacion"] in ("nuevo", "cambiado")]
     sin_mencion = [a["referencia"] for a in importantes if a["referencia"] not in usadas]
     if sin_mencion:
         avisos.append({
@@ -91,7 +130,7 @@ def validar(borrador: str, anuncios: list[dict[str, Any]]) -> dict[str, Any]:
                        + ", ".join(sin_mencion),
         })
 
-    # 5. forma
+    # 6. forma
     for seccion in SECCIONES_ESPERADAS:
         if seccion not in plano:
             avisos.append({"tipo": "seccion_faltante", "detalle": f"Falta la sección '{seccion}'."})

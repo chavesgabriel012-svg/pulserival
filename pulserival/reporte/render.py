@@ -21,7 +21,7 @@ NEGRITA = re.compile(r"\*\*(.+?)\*\*")
 ITALICA = re.compile(r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)")
 CURSIVA_ = re.compile(r"_(.+?)_")
 ENLACE = re.compile(r"\[([^\]]+)\]\((https?://[^)]+)\)")
-REF = re.compile(r"\[(A\d+)\]")
+REF = re.compile(r"\[(A\d+(?:\s*,\s*A\d+)*)\]")
 
 
 def _inline(texto: str) -> str:

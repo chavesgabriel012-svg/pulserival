@@ -163,6 +163,7 @@ def generar(
             "_(revisar y completar)_\n"
         )
         resp_proveedor, resp_modelo, costo, version = "-", "-", 0.0, "-"
+        anuncios_prompt = anuncios
     else:
         sistema, usuario = prompts.armar("redactar_reporte", **contexto)
         resp = ejecutar(
@@ -174,7 +175,8 @@ def generar(
         resp_proveedor, resp_modelo, costo = resp.proveedor, resp.modelo, resp.costo_usd
         version = prompts.version("redactar_reporte")
 
-    validacion = validar_mod.validar(borrador, anuncios)
+    validacion = validar_mod.validar(borrador, anuncios, competidores,
+                                     anuncios_vistos=anuncios_prompt)
     asunto = _asunto(cliente, inicio, fin, conteo)
     fila_datos = {
         "cliente_id": int(cliente["id"]),
