@@ -37,6 +37,12 @@ Mínimo viable por competidor: **la página de Facebook o el término de
 búsqueda** (para Meta) y **el dominio** (para Google). Con uno solo de los dos
 funciona; se salta la otra plataforma y te lo avisa.
 
+> Atajo: en vez de mandarme los datos por mensaje, podés escribirlos
+> directamente en `config/clientes.yaml` (tiene el bloque de ejemplo listo
+> para descomentar) y correr `aplicar-config`. Ese archivo se versiona, así
+> que el servidor del cron encuentra a tus clientes sin que haya que copiar
+> nada a mano.
+
 **Verificación que te pido hacer vos, 5 minutos por competidor** (y que vale
 oro, porque evita una corrida vacía):
 
@@ -50,6 +56,18 @@ oro, porque evita una corrida vacía):
 
 Un piloto donde ninguno de los competidores pauta es el peor arranque
 posible, y se detecta en 15 minutos.
+
+Y con el token ya configurado, esa verificación la hace el sistema por vos,
+sin abrir el navegador:
+
+```bash
+python3 -m pulserival.cli prueba-scraper --consulta "Competidor 1" --limite 10
+```
+
+Te dice cuántos anuncios encontró, si los campos del actor siguen
+coincidiendo con el mapeo, y muestra los primeros tal como quedarían
+guardados. Si preferís no tener el token en tu máquina, la misma prueba corre
+en GitHub: pestaña **Actions → Prueba de scraper → Run workflow**.
 
 ---
 

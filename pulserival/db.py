@@ -25,14 +25,46 @@ def conectar(ruta: Path | None = None) -> sqlite3.Connection:
     return con
 
 
+# Columnas agregadas después de la primera versión del esquema.
+# CREATE TABLE IF NOT EXISTS no toca una tabla que ya existe, así que una base
+# creada antes necesita el ALTER. Se hace acá para que actualizar el código
+# nunca requiera borrar la base ni perder el historial de anuncios.
+MIGRACIONES = (
+    ("clientes", "clave", "TEXT"),
+    ("competidores_seguidos", "clave", "TEXT"),
+)
+
+
 def inicializar(ruta: Path | None = None) -> Path:
-    """Crea las tablas si no existen. Es seguro correrlo muchas veces."""
+    """Crea las tablas si no existen y aplica las migraciones pendientes.
+    Es seguro correrlo muchas veces."""
     destino = Path(ruta) if ruta else config.ruta_db()
     con = conectar(destino)
     with con:
+        # Las migraciones van ANTES del esquema: el esquema crea un índice
+        # sobre una columna nueva, y ese CREATE INDEX falla si la tabla ya
+        # existe sin esa columna.
+        _migrar(con)
         con.executescript(ESQUEMA.read_text(encoding="utf-8"))
     con.close()
     return destino
+
+
+def _migrar(con: sqlite3.Connection) -> list[str]:
+    """Agrega columnas nuevas a tablas que ya existen. No hace nada en una
+    base recién creada (el esquema ya las trae)."""
+    aplicadas: list[str] = []
+    for tabla, columna, tipo in MIGRACIONES:
+        existe = con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (tabla,)
+        ).fetchone()
+        if not existe:
+            continue
+        columnas = {f["name"] for f in con.execute(f"PRAGMA table_info({tabla})")}
+        if columna not in columnas:
+            con.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {tipo}")
+            aplicadas.append(f"{tabla}.{columna}")
+    return aplicadas
 
 
 @contextmanager

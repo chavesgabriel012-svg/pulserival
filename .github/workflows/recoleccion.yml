@@ -55,6 +55,11 @@ jobs:
           fi
           python -m pulserival.cli init
 
+      - name: Cargar clientes y competidores desde config/clientes.yaml
+        env:
+          PULSERIVAL_DB: datos/pulserival.db
+        run: python -m pulserival.cli aplicar-config
+
       - name: Recolectar y generar borradores
         env:
           APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}

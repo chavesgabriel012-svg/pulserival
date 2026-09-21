@@ -263,3 +263,36 @@ class TestModoAuto(unittest.TestCase):
 
         anuncios = obtener_fuente("google", "demo").traer({"id": 1, "nombre": "X"})
         self.assertTrue(all(a.fuente.startswith("demo:") for a in anuncios))
+
+
+class TestCodigoDeSalida(CasoBase):
+    """Antes: si TODAS las fuentes fallaban (por ejemplo, el token vencido),
+    el comando salía con código 0 y el workflow de GitHub quedaba en verde.
+    Un cron verde que no recolecta nada es peor que uno rojo: no te enterás
+    hasta que un cliente pregunta por su reporte."""
+
+    def cli(self, *args) -> int:
+        from pulserival.cli import main
+
+        return main(list(args))
+
+    def test_todas_las_fuentes_fallan_devuelve_error(self):
+        cli = self.cliente()
+        self.competidor(cli)
+        self.assertEqual(self.cli("recolectar", "--modo", "apify"), 1,
+                         "sin token, ninguna fuente funciona: tiene que salir en rojo")
+
+    def test_corrida_exitosa_devuelve_cero(self):
+        cli = self.cliente()
+        self.competidor(cli)
+        os.environ["PULSERIVAL_DEMO_SEMANA"] = "1"
+        self.assertEqual(self.cli("recolectar", "--modo", "demo"), 0)
+
+    def test_base_vacia_no_es_error(self):
+        # Sin clientes no hay nada que recolectar, pero tampoco nada que falle.
+        self.assertEqual(self.cli("recolectar", "--modo", "demo"), 0)
+
+    def test_ciclo_tambien_devuelve_error_si_no_recolecto_nada(self):
+        cli = self.cliente()
+        self.competidor(cli)
+        self.assertEqual(self.cli("ciclo", "--modo", "apify"), 1)

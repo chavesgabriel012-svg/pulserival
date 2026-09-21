@@ -1,0 +1,63 @@
+# ─────────────────────────────────────────────────────────────────────
+#  Clientes y competidores, en un archivo que se puede versionar.
+#
+#  Por qué existe: la base de datos (datos/pulserival.db) no se sube al
+#  repositorio. Sin este archivo, el servidor que corre el cron arranca con
+#  una base vacía y la corrida no tiene a quién reportarle.
+#
+#  Acá NO van secretos: solo nombres públicos de competidores y el correo de
+#  contacto del cliente. Las claves siguen en .env / secretos del repo.
+#
+#  Se aplica con:  python3 -m pulserival.cli aplicar-config
+#  Es idempotente: correrlo dos veces no duplica nada. Actualiza lo que
+#  cambió y desactiva (no borra) lo que sacaste del archivo.
+# ─────────────────────────────────────────────────────────────────────
+
+clientes:
+  # ── Entrada de PRUEBA ──────────────────────────────────────────────
+  # No es un cliente real: sirve para verificar que los scrapers traen
+  # anuncios comerciales de Costa Rica antes de vender nada. Los
+  # "competidores" son anunciantes grandes que casi siempre están pautando.
+  # Borrá este bloque cuando cargues tu cliente piloto de verdad.
+  - clave: prueba-scraper
+    empresa: "PRUEBA — verificación de scrapers (no es un cliente)"
+    contacto_nombre: "interno"
+    contacto_email: "no-enviar@pulserival.invalid"
+    periodicidad: semanal
+    industria: "prueba interna"
+    notas: >-
+      Entrada de prueba. Nunca se le envía correo: el dominio .invalid no
+      existe a propósito, así que un envío accidental rebota en vez de
+      llegarle a alguien.
+    activo: true
+    competidores:
+      - nombre: "Gollo"
+        meta_consulta: "Gollo"
+        google_dominio: "gollo.com"
+        prioridad: 1
+        notas: "Retail de electrodomésticos, pauta casi continua en CR"
+      - nombre: "Cemaco"
+        meta_consulta: "Cemaco"
+        google_dominio: "cemaco.com"
+        prioridad: 2
+        notas: "Retail del hogar"
+
+  # ── Tu cliente piloto ──────────────────────────────────────────────
+  # Descomentá y llená cuando tengas los datos (ver docs/05).
+  # - clave: piloto
+  #   empresa: "Nombre S.A."
+  #   contacto_nombre: "Nombre del contacto"
+  #   contacto_email: "contacto@cliente.cr"
+  #   contacto_whatsapp: "+506 8888 8888"
+  #   periodicidad: semanal
+  #   dia_envio: martes
+  #   industria: "ferreterías"
+  #   notas: >-
+  #     Contexto que solo vos sabés: ticket promedio, qué le preocupa,
+  #     cuántas sedes, si compite por precio o por servicio.
+  #   activo: true
+  #   competidores:
+  #     - nombre: "Competidor 1"
+  #       meta_pagina_url: "https://www.facebook.com/competidor1"
+  #       google_dominio: "competidor1.co.cr"
+  #       prioridad: 1
