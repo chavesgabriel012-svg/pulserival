@@ -11,7 +11,7 @@ ANUNCIOS = [
     {"referencia": "[A3]", "clasificacion": "continua"},
 ]
 
-BORRADOR_OK = """## Lo más importante de esta semana
+BORRADOR_OK = """## Resumen ejecutivo
 
 Vital Gym bajó el precio de su plan mensual [A1] y cambió el texto de su
 anuncio de matrícula [A2].
@@ -21,6 +21,10 @@ anuncio de matrícula [A2].
 ### Vital Gym CR
 Publicó un anuncio nuevo de entrenamiento personal [A1]. Parece un intento de
 subir el ticket promedio.
+
+## Panorama de la competencia
+
+Vital Gym es el único con movimiento [A1].
 
 ## Movimientos que vale la pena mirar de cerca
 
@@ -88,8 +92,9 @@ class TestAnunciosSinTexto(unittest.TestCase):
 
     def test_acepta_hablar_de_formato_y_fechas(self):
         r = validar.validar(
-            "## Lo más importante\n"
+            "## Resumen ejecutivo\n"
             "Mantiene un anuncio en video corriendo desde agosto [A1].\n"
+            "## Panorama de la competencia\nUn solo competidor con movimiento [A2].\n"
             "## Qué está haciendo cada competidor\n### X\nBajó el precio [A2].\n"
             "## Movimientos que vale la pena mirar de cerca\nNada.\n"
             "## Qué haría yo esta semana\nRevisar la oferta propia esta semana con calma.",
@@ -173,3 +178,56 @@ class TestCoberturaSobreLoQueElModeloVio(unittest.TestCase):
                             todos, anuncios_vistos=vistos)
         self.assertEqual(r["cobertura_importantes"], "3/3")
         self.assertFalse(any(a["tipo"] == "cobertura_incompleta" for a in r["avisos"]))
+
+
+class TestPalabrasCompletas(unittest.TestCase):
+    """El validador busca palabras, no subcadenas.
+
+    Real: marcó como conocimiento externo la frase "Artelec se mantiene
+    completamente ausente", que es exactamente lo que sí se puede decir de un
+    competidor sin anuncios. El culpable era "tiene" dentro de "mantiene".
+    """
+
+    ANUNCIOS = [{"referencia": "[A1]", "clasificacion": "nuevo", "competidor": "Monge"}]
+    COMPETIDORES = ["Monge", "Artelec"]
+
+    def test_mantiene_ausente_es_una_frase_valida(self):
+        r = validar.validar(
+            "## Resumen ejecutivo\nArtelec se mantiene completamente ausente de las "
+            "plataformas en este periodo.\n## Qué haría yo esta semana\nAproveche el espacio.",
+            self.ANUNCIOS, self.COMPETIDORES)
+        self.assertFalse(any(p["tipo"] == "conocimiento_externo" for p in r["problemas"]),
+                         "'mantiene' no es 'tiene'")
+
+    def test_sigue_detectando_la_afirmacion_de_verdad(self):
+        r = validar.validar(
+            "## Resumen ejecutivo\nArtelec tiene sucursales en todo el país.",
+            self.ANUNCIOS, self.COMPETIDORES)
+        self.assertTrue(any(p["tipo"] == "conocimiento_externo" for p in r["problemas"]))
+
+
+class TestSeccionesObligatorias(unittest.TestCase):
+    """Sin recomendaciones, el reporte no sirve.
+
+    Real: un borrador salió de 562 palabras y sin la sección "Qué haría yo",
+    y el control lo dejó pasar como simple aviso. Es la sección por la que el
+    cliente paga."""
+
+    ANUNCIOS = [{"referencia": "[A1]", "clasificacion": "nuevo", "competidor": "Monge"}]
+
+    def test_faltar_las_recomendaciones_bloquea_el_reporte(self):
+        r = validar.validar(
+            "## Resumen ejecutivo\nMonge lanzó tres anuncios [A1].\n"
+            "## Panorama de la competencia\nDetalle.\n"
+            "## Qué está haciendo cada competidor\nDetalle.\n"
+            "## Movimientos que vale la pena mirar de cerca\nNada.", self.ANUNCIOS)
+        self.assertFalse(r["aprobado"])
+        self.assertTrue(any(p["tipo"] == "seccion_faltante" for p in r["problemas"]))
+
+    def test_una_seccion_secundaria_solo_avisa(self):
+        r = validar.validar(
+            "## Resumen ejecutivo\nMonge lanzó tres anuncios [A1].\n"
+            "## Qué haría yo esta semana\nRevise su oferta de financiamiento esta semana.",
+            self.ANUNCIOS)
+        self.assertTrue(any(a["tipo"] == "seccion_faltante" for a in r["avisos"]))
+        self.assertFalse(any(p["tipo"] == "seccion_faltante" for p in r["problemas"]))

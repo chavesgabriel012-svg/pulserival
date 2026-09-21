@@ -153,7 +153,11 @@ def ejecutar(
                 if intento < reintentos:
                     # Un 429 es el límite por minuto del tier gratuito: hay que
                     # esperar de verdad, no dos segundos.
-                    espera = 20 * intento if "429" in str(e) else 2 * intento
+                    # 429 = límite por minuto; 503 = el modelo está saturado.
+                    # En ambos casos esperar poco no sirve de nada.
+                    texto_error = str(e)
+                    lento = "429" in texto_error or "503" in texto_error
+                    espera = 20 * intento if lento else 2 * intento
                     time.sleep(espera)
                 continue
             resp.costo_usd = costo(resp.proveedor, resp.modelo, resp.tokens_entrada, resp.tokens_salida)

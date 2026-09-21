@@ -25,6 +25,7 @@ PROHIBIDAS = [
     "impresiones", "alcance de", "clics", "conversiones", "ctr",
     "engagement de", "tasa de conversión", "retorno de inversión",
 ]
+SECCIONES_OBLIGATORIAS = ["resumen ejecutivo", "que haria yo"]
 SECCIONES_ESPERADAS = [
     "resumen ejecutivo",
     "panorama de la competencia",
@@ -36,6 +37,15 @@ SECCIONES_ESPERADAS = [
 # que solo reconocía [A16], esas 32 referencias de un reporte real pasaban
 # sin validar: una inventada ahí dentro no se habría detectado.
 REF = re.compile(r"\[\s*A\d+(?:\s*,\s*A\d+)*\s*\]")
+
+
+def _menciona(texto_plano: str, palabras: tuple[str, ...]) -> bool:
+    """Busca palabras completas, no subcadenas.
+
+    Sin esto, "tiene" coincidía dentro de "mantiene", "sostiene" y "obtiene",
+    y el validador rechazaba frases correctas.
+    """
+    return any(re.search(rf"\b{re.escape(p)}\b", texto_plano) for p in palabras)
 REF_NUM = re.compile(r"A(\d+)")
 
 
@@ -106,11 +116,14 @@ def validar(borrador: str, anuncios: list[dict[str, Any]],
             # otra afirmación sale de conocimiento externo, no de la fuente.
             if any(util.normalizar_texto(p) in plano_oracion for p in
                    ("no registra", "no tiene anuncios", "sin actividad", "no aparece",
-                    "no pauta", "no registro", "inactivo", "no hubo")):
+                    "no pauta", "no registro", "inactivo", "no hubo", "ausente",
+                    "no registro movimientos", "no pauto")):
                 continue
-            if any(util.normalizar_texto(p) in plano_oracion for p in
-                   ("tiene", "suele", "presencia", "tiendas", "sucursales", "sede",
-                    "clientes", "cobertura", "mercado", "posicion")):
+            # Palabras completas. Buscar "tiene" como subcadena marcaba
+            # "se mantiene ausente", que es justo lo que sí se puede decir.
+            if _menciona(plano_oracion, ("tiene", "suele", "presencia", "tiendas",
+                                         "sucursales", "sede", "clientes", "cobertura",
+                                         "mercado", "posicion", "atiende", "opera")):
                 problemas.append({
                     "tipo": "conocimiento_externo",
                     "detalle": f"No hay un solo anuncio de {nombre} en los datos, pero el "
@@ -132,8 +145,13 @@ def validar(borrador: str, anuncios: list[dict[str, Any]],
 
     # 6. forma
     for seccion in SECCIONES_ESPERADAS:
-        if seccion not in plano:
-            avisos.append({"tipo": "seccion_faltante", "detalle": f"Falta la sección '{seccion}'."})
+        if seccion in plano:
+            continue
+        # Sin resumen ejecutivo ni recomendaciones el reporte no sirve: son
+        # las dos secciones por las que el cliente paga. El resto es aviso.
+        destino = problemas if seccion in SECCIONES_OBLIGATORIAS else avisos
+        destino.append({"tipo": "seccion_faltante",
+                        "detalle": f"Falta la sección '{seccion}'."})
     palabras = util.contar_palabras(borrador)
     if palabras < 350:
         avisos.append({"tipo": "muy_corto", "detalle": f"Solo {palabras} palabras."})
