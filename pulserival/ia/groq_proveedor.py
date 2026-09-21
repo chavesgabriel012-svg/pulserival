@@ -12,6 +12,7 @@ from .. import config
 from .base import Peticion, ProveedorError, Respuesta
 
 URL = "https://api.groq.com/openai/v1/chat/completions"
+URL_MODELOS = "https://api.groq.com/openai/v1/models"
 
 
 class ProveedorGroq:
@@ -77,3 +78,28 @@ class ProveedorGroq:
             tokens_entrada=int(uso.get("prompt_tokens") or 0),
             tokens_salida=int(uso.get("completion_tokens") or 0),
         )
+
+    def listar_modelos(self) -> list[str]:
+        """Los nombres que esta llave puede usar HOY.
+
+        Groq retira modelos sin avisar: `llama-3.3-70b-versatile` empezó a
+        devolver 404 "does not exist or you do not have access to it" con el
+        YAML sin tocar. Esto evita adivinar nombres.
+        """
+        if not self.clave:
+            raise ProveedorError("Falta GROQ_API_KEY en .env")
+        try:
+            r = requests.get(
+                URL_MODELOS,
+                headers={"Authorization": f"Bearer {self.clave}"},
+                timeout=60,
+            )
+        except requests.RequestException as e:
+            raise ProveedorError(f"Groq no respondió: {e}") from e
+        if r.status_code >= 400:
+            raise ProveedorError(f"Groq respondió {r.status_code}: {r.text[:300]}")
+        try:
+            datos = r.json()
+        except ValueError as e:
+            raise ProveedorError(f"Groq devolvió algo que no es JSON: {r.text[:200]}") from e
+        return sorted(str(m.get("id")) for m in (datos.get("data") or []) if m.get("id"))

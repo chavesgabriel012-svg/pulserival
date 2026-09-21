@@ -147,25 +147,6 @@ class TestRespuestaCortada(unittest.TestCase):
         self.assertIn("Resumen ejecutivo", r.texto)
         self.assertEqual(r.tokens_salida, 70, "el razonamiento se factura como salida")
 
-    def test_el_nivel_de_razonamiento_se_envia_cuando_se_configura(self):
-        from pulserival.ia.base import Peticion as P
-
-        cuerpo = {"candidates": [{"finishReason": "STOP",
-                                  "content": {"parts": [{"text": "ok"}]}}],
-                  "usageMetadata": {}}
-        pet = P(tarea="redactar_reporte", sistema="s", usuario="u", nivel_razonamiento="low")
-        with mock.patch("requests.post", return_value=respuesta(200, cuerpo)) as post:
-            ProveedorGemini(clave="k").generar(pet, "gemini-3.8-flash")
-        self.assertEqual(post.call_args.kwargs["json"]["generationConfig"]["thinkingLevel"], "low")
-
-    def test_sin_configurar_no_se_envia_el_campo(self):
-        cuerpo = {"candidates": [{"finishReason": "STOP",
-                                  "content": {"parts": [{"text": "ok"}]}}],
-                  "usageMetadata": {}}
-        with mock.patch("requests.post", return_value=respuesta(200, cuerpo)) as post:
-            ProveedorGemini(clave="k").generar(PETICION, "gemini-2.5-flash")
-        self.assertNotIn("thinkingLevel", post.call_args.kwargs["json"]["generationConfig"])
-
     def test_groq_rechaza_una_respuesta_cortada(self):
         cuerpo = {"choices": [{"finish_reason": "length",
                                "message": {"content": "texto a medias"}}],
@@ -174,3 +155,81 @@ class TestRespuestaCortada(unittest.TestCase):
             with self.assertRaises(ProveedorError) as ctx:
                 ProveedorGroq(clave="k").generar(PETICION, "llama-3.3-70b-versatile")
         self.assertIn("cortó la respuesta", str(ctx.exception))
+
+
+class TestNivelRazonamiento(unittest.TestCase):
+    """El nivel de razonamiento va anidado, y si el campo desaparece no se cae.
+
+    Esto salió de una corrida real: `thinkingLevel` iba suelto en
+    generationConfig, la API devolvió 400 "Unknown name", los cuatro modelos
+    de la cadena fallaron y el reporte lo terminó escribiendo el stub.
+    """
+
+    def setUp(self):
+        self.prov = ProveedorGemini(clave="k")
+        self.peticion = Peticion(tarea="redactar_reporte", sistema="s", usuario="u",
+                                 max_tokens=500, nivel_razonamiento="low")
+
+    def test_va_anidado_en_thinking_config(self):
+        cuerpo = {"candidates": [{"finishReason": "STOP",
+                                  "content": {"parts": [{"text": "ok"}]}}],
+                  "usageMetadata": {}}
+        with mock.patch("requests.post", return_value=respuesta(200, cuerpo)) as post:
+            self.prov.generar(self.peticion, "gemini-3.8-flash")
+        gen = post.call_args.kwargs["json"]["generationConfig"]
+        self.assertEqual(gen.get("thinkingConfig"), {"thinkingLevel": "low"})
+        self.assertNotIn("thinkingLevel", gen)
+
+    def test_si_el_campo_no_existe_reintenta_sin_razonamiento(self):
+        malo = respuesta(400, {}, 'Unknown name "thinkingLevel" at \'generation_config\'')
+        bueno = respuesta(200, {"candidates": [{"finishReason": "STOP",
+                                                "content": {"parts": [{"text": "listo"}]}}],
+                                "usageMetadata": {}})
+        with mock.patch("requests.post", side_effect=[malo, bueno]) as post:
+            r = self.prov.generar(self.peticion, "gemini-3.8-flash")
+        self.assertEqual(r.texto, "listo")
+        self.assertEqual(post.call_count, 2)
+        segundo = post.call_args_list[1].kwargs["json"]["generationConfig"]
+        self.assertNotIn("thinkingConfig", segundo)
+
+    def test_otro_400_no_se_reintenta(self):
+        malo = respuesta(400, {}, "API key not valid")
+        with mock.patch("requests.post", return_value=malo) as post:
+            with self.assertRaises(ProveedorError):
+                self.prov.generar(self.peticion, "gemini-3.8-flash")
+        self.assertEqual(post.call_count, 1)
+
+    def test_sin_nivel_no_se_manda_el_campo(self):
+        cuerpo = {"candidates": [{"finishReason": "STOP",
+                                  "content": {"parts": [{"text": "ok"}]}}],
+                  "usageMetadata": {}}
+        sin_nivel = Peticion(tarea="t", sistema="s", usuario="u", max_tokens=100)
+        with mock.patch("requests.post", return_value=respuesta(200, cuerpo)) as post:
+            self.prov.generar(sin_nivel, "gemini-3.8-flash")
+        self.assertNotIn("thinkingConfig", post.call_args.kwargs["json"]["generationConfig"])
+
+
+class TestListarModelos(unittest.TestCase):
+    """Los proveedores retiran modelos sin avisar; hay que poder preguntar."""
+
+    def test_gemini_filtra_los_que_no_generan_contenido(self):
+        cuerpo = {"models": [
+            {"name": "models/gemini-3.8-flash",
+             "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/text-embedding-004",
+             "supportedGenerationMethods": ["embedContent"]},
+        ]}
+        with mock.patch("requests.get", return_value=respuesta(200, cuerpo)):
+            nombres = ProveedorGemini(clave="k").listar_modelos()
+        self.assertEqual(nombres, ["gemini-3.8-flash"])
+
+    def test_groq_lee_los_ids(self):
+        cuerpo = {"data": [{"id": "llama-3.1-8b-instant"}, {"id": "otro-modelo"}]}
+        with mock.patch("requests.get", return_value=respuesta(200, cuerpo)):
+            nombres = ProveedorGroq(clave="k").listar_modelos()
+        self.assertEqual(nombres, ["llama-3.1-8b-instant", "otro-modelo"])
+
+    def test_error_del_proveedor_se_reporta(self):
+        with mock.patch("requests.get", return_value=respuesta(401, {}, "no autorizado")):
+            with self.assertRaises(ProveedorError):
+                ProveedorGroq(clave="k").listar_modelos()

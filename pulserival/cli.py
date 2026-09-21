@@ -443,6 +443,59 @@ def cmd_diagnostico(args) -> int:
     return 0
 
 
+def cmd_modelos(args) -> int:
+    """Lista los modelos que cada llave puede usar HOY y marca los del YAML.
+
+    Existe porque Google y Groq retiran modelos sin avisar: un reporte salió
+    escrito por el stub porque los cuatro modelos de la cadena habían dejado
+    de existir, con config/modelos.yaml sin tocar.
+    """
+    from .ia.base import ProveedorError
+    from .ia.router import _proveedor as _proveedor_ia
+    from .ia.router import proveedores_configurados
+
+    configurados = proveedores_configurados()
+    problemas = 0
+    verificados = 0
+    for nombre in sorted(configurados):
+        pedidos = configurados[nombre]
+        try:
+            prov = _proveedor_ia(nombre)
+        except KeyError:
+            aviso(f"{nombre}: no existe ese proveedor en el código")
+            problemas += 1
+            continue
+        listar = getattr(prov, "listar_modelos", None)
+        if not prov.disponible() or listar is None:
+            print(f"  {nombre}: sin clave o sin listado disponible "
+                  f"(pedidos en el YAML: {', '.join(sorted(pedidos)) or 'ninguno'})")
+            continue
+        try:
+            disponibles = listar()
+        except ProveedorError as e:
+            aviso(f"{nombre}: {e}")
+            problemas += 1
+            continue
+        verificados += 1
+        faltan = sorted(m for m in pedidos if m not in disponibles)
+        print(f"\n  {nombre}: {len(disponibles)} modelos disponibles")
+        for m in disponibles:
+            print(f"    {'<-- en el YAML' if m in pedidos else '':<15}{m}")
+        if faltan:
+            aviso(f"{nombre}: config/modelos.yaml pide modelos que ya no existen: "
+                  f"{', '.join(faltan)}")
+            problemas += len(faltan)
+    if problemas:
+        return 1
+    if not verificados:
+        # Sin llaves no se verificó nada. Decir "todo bien" aquí sería
+        # exactamente el silencio que hizo falta detectar.
+        aviso("No se pudo verificar ningún proveedor: faltan las llaves de API.")
+        return 1
+    ok("Todos los modelos de config/modelos.yaml existen.")
+    return 0
+
+
 def cmd_presupuesto(args) -> int:
     """Proyecta el gasto mensual de scrapers con los clientes ya cargados."""
     with db.sesion() as con:
@@ -653,6 +706,10 @@ def construir_parser() -> argparse.ArgumentParser:
     sub.add_parser("diagnostico",
                    help="probar los proveedores de IA y ver cuál responde").set_defaults(
         func=cmd_diagnostico)
+
+    sub.add_parser("modelos",
+                   help="ver qué modelos de IA existen hoy y si el YAML pide alguno "
+                        "que ya se retiró").set_defaults(func=cmd_modelos)
 
     b = sub.add_parser("presupuesto", help="cuánto va a costar al mes, antes de gastarlo")
     b.add_argument("--limite", type=int, default=40,

@@ -70,6 +70,22 @@ def _proveedor(nombre: str):
     return {"groq": ProveedorGroq, "gemini": ProveedorGemini, "stub": ProveedorStub}[nombre]()
 
 
+def proveedores_configurados() -> dict[str, set[str]]:
+    """Qué modelo pide config/modelos.yaml a cada proveedor, sin el stub.
+
+    El stub no se lista: no es un servicio, es el respaldo escrito en el
+    código y siempre está.
+    """
+    pedidos: dict[str, set[str]] = {}
+    for lista in (config.config_modelos().get("tareas") or {}).values():
+        for cand in lista or []:
+            nombre = cand.get("proveedor", "stub")
+            if nombre == "stub":
+                continue
+            pedidos.setdefault(nombre, set()).add(str(cand.get("modelo") or ""))
+    return {n: {m for m in ms if m} for n, ms in pedidos.items()}
+
+
 def costo(proveedor: str, modelo: str, tokens_entrada: int, tokens_salida: int) -> float:
     precios = config.config_modelos().get("precios_usd_por_millon") or {}
     clave = f"{proveedor}/{modelo.replace('/', '-')}"
