@@ -179,6 +179,9 @@ def ciclo_completo(
     return {
         "corrida_id": corrida.id,
         "totales": corrida.totales(),
+        # Cuántas fuentes respondieron. Distinto de los totales: una fuente
+        # puede responder correctamente con cero anuncios nuevos.
+        "fuentes_ok": len(corrida.resultados),
         "errores": corrida.errores,
         "saltados": corrida.saltados,
         "sospechosas": corrida.sospechosas,

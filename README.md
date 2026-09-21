@@ -110,7 +110,7 @@ cambiar de modelo o arreglar un campo de un scraper no requiere tocar código.
 ## Pruebas
 
 ```bash
-make prueba     # 104 tests, sin red, en un segundo
+make prueba     # 108 tests, sin red, en un segundo
 ```
 
 Cubren lo que más duele si se rompe: la detección de cambios, la clasificación

@@ -62,6 +62,28 @@ cambiar en `pulserival/ia/prompts/redactar_reporte.md`.
 
 ---
 
+## Configurar los secretos en GitHub (una sola vez)
+
+El cron corre en las máquinas de GitHub, así que las claves tienen que estar
+ahí, no solo en tu `.env` local. Van en:
+
+**Settings → Secrets and variables → Actions → New repository secret**
+
+| Nombre del secreto | De dónde sale |
+|---|---|
+| `APIFY_TOKEN` | <https://console.apify.com/account/integrations> |
+| `GEMINI_API_KEY` | <https://aistudio.google.com/apikey> |
+| `GROQ_API_KEY` | <https://console.groq.com/keys> |
+
+El nombre tiene que coincidir exactamente (mayúsculas incluidas): el workflow
+los busca por nombre. Conectar tu cuenta de Apify a GitHub desde el panel de
+Apify **no** crea estos secretos; es otra cosa (sirve para desplegar actores
+propios desde un repo).
+
+Para verificar que quedaron bien, sin exponerlos: pestaña **Actions → Prueba
+de scraper → Run workflow**. Si falta el secreto, el workflow lo dice en la
+primera línea y no gasta nada.
+
 ## Cuando algo falla
 
 ### "El reporte salió vacío / no detectó nada"

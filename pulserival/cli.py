@@ -174,7 +174,7 @@ def cmd_recolectar(args) -> int:
         aviso(f"{s['competidor']} [{s['plataforma']}]: {s['motivo']}")
     for e in corrida.errores:
         error(f"{e['competidor']} [{e['plataforma']}]: {e['error']}")
-    return 0
+    return _salida_segun_corrida(corrida.errores, corrida.resultados)
 
 
 def cmd_reporte(args) -> int:
@@ -275,6 +275,23 @@ def cmd_ciclo(args) -> int:
         aviso(f"REVISAR · {s['competidor']} [{s['plataforma']}]: {s['motivo']}")
     for s in res["saltados"]:
         aviso(f"{s['competidor']} [{s['plataforma']}]: {s['motivo']}")
+    return _salida_segun_corrida(res["errores"], res["fuentes_ok"])
+
+
+def _salida_segun_corrida(errores: list, fuentes_ok) -> int:
+    """Código de salida de una recolección.
+
+    Importa más de lo que parece: el cron de GitHub solo se pone en rojo (y te
+    manda el correo de aviso) si el comando sale con código distinto de cero.
+    Si todas las fuentes fallaron y aun así saliéramos con 0, tendrías un
+    workflow en verde recolectando nada durante semanas, y te enterarías el
+    día que un cliente pregunte por su reporte.
+    """
+    if errores and not fuentes_ok:
+        return error(f"Ninguna fuente funcionó ({len(errores)} errores). "
+                     "No se recolectó nada en esta corrida.")
+    if errores:
+        aviso(f"Corrida parcial: {len(errores)} fuente(s) fallaron, el resto sí trajo datos.")
     return 0
 
 
