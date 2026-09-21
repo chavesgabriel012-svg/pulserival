@@ -84,6 +84,16 @@ def recolectar(
                                   "activos: no se marcó nada como pausado. Verificá a mano "
                                   "en la biblioteca pública antes de reportarlo.",
                     })
+                if res.nunca_tuvo_datos:
+                    corrida.sospechosas.append({
+                        "competidor": comp["nombre"], "plataforma": plataforma,
+                        "motivo": "nunca devolvió un solo anuncio, en ninguna corrida. Puede "
+                                  "ser que no esté pautando, pero es igual de probable que la "
+                                  "página o el dominio configurados no sean los suyos. Pasó "
+                                  "con Artelec, que tenía ~51 anuncios activos mientras el "
+                                  "sistema la reportaba como ausente: verificá a mano antes "
+                                  "de darlo por bueno.",
+                    })
                 con.commit()
 
     if corrida.errores:

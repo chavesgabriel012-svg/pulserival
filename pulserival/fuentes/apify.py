@@ -46,8 +46,14 @@ class FuenteApify:
         if self.plataforma == "meta":
             entrada["resultsLimit"] = limite
             urls = []
+            # El id de página manda sobre la URL con nombre: no obliga al
+            # actor a resolver la página, que es donde falló con Artelec.
+            pagina_id = _texto(competidor.get("meta_pagina_id"))
+            plantilla_pagina = self.cfg.get("plantilla_url_pagina", "")
+            if pagina_id and plantilla_pagina:
+                urls.append({"url": plantilla_pagina.format(id=pagina_id), "method": "GET"})
             pagina = competidor.get("meta_pagina_url")
-            if pagina:
+            if not urls and pagina:
                 urls.append({"url": pagina.rstrip("/") + "/", "method": "GET"})
             consulta = competidor.get("meta_consulta") or competidor.get("nombre")
             if not urls and consulta:
@@ -99,7 +105,10 @@ class FuenteApify:
         entrada = self.construir_entrada(competidor, limite)
         crudos = self._correr_actor(entrada)
         self._guardar_crudo(competidor, crudos)
-        return [a for a in (self.mapear(item) for item in crudos) if a and not a.vacio()]
+        anuncios = [a for a in (self.mapear(item) for item in crudos) if a and not a.vacio()]
+        if self.plataforma == "google":
+            anuncios, self.descartados = _solo_del_anunciante(anuncios, competidor)
+        return anuncios
 
     # ── traducción a AnuncioCrudo usando el mapeo del YAML ───────────
     def mapear(self, item: dict) -> AnuncioCrudo | None:
@@ -225,3 +234,47 @@ def _fecha(valor: Any) -> str | None:
             return None
     texto = _texto(valor)
     return texto.split("T")[0] if texto else None
+
+
+def _solo_del_anunciante(
+    anuncios: list[AnuncioCrudo], competidor: dict
+) -> tuple[list[AnuncioCrudo], dict[str, int]]:
+    """Deja fuera los anuncios de OTRAS empresas que pautan el mismo dominio.
+
+    El Centro de Transparencia se busca por dominio, y devuelve a cualquiera
+    que anuncie ese dominio. Buscando siman.com aparecieron, junto a los de
+    Almacenes Siman, los de "Publicentro de Guatemala Sociedad Anonima". Sin
+    este filtro esos anuncios se le contaban al competidor y el reporte
+    afirmaba actividad que no era suya.
+
+    Si el competidor tiene `google_anunciante_id` configurado, manda ese. Si
+    no, se queda con el anunciante que más anuncios aportó, que es el que la
+    búsqueda por dominio estaba buscando.
+    """
+    if not anuncios:
+        return anuncios, {}
+
+    def clave(a: AnuncioCrudo) -> str:
+        return _texto((a.metadata or {}).get("anunciante_id")) or ""
+
+    esperado = _texto(competidor.get("google_anunciante_id"))
+    if not esperado:
+        conteo: dict[str, int] = {}
+        for a in anuncios:
+            conteo[clave(a)] = conteo.get(clave(a), 0) + 1
+        if len(conteo) <= 1:
+            return anuncios, {}
+        esperado = max(conteo, key=lambda k: (conteo[k], k != ""))
+
+    guardados, descartados = [], {}
+    for a in anuncios:
+        if clave(a) == esperado:
+            guardados.append(a)
+        else:
+            nombre = _texto(a.anunciante) or clave(a) or "(anunciante desconocido)"
+            descartados[nombre] = descartados.get(nombre, 0) + 1
+    # Si el id esperado no aparece en la respuesta, no se descarta nada: es
+    # preferible revisar de más que devolver vacío por una config vieja.
+    if not guardados:
+        return anuncios, {}
+    return guardados, descartados
