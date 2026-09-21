@@ -41,7 +41,7 @@ clientes:
       - clave: siman
         nombre: "Almacenes SIMAN"
         meta_pagina_url: "https://www.facebook.com/simancostarica/"
-        google_dominio: "cr.siman.com"
+        google_dominio: "siman.com"
         prioridad: 1
         notas: "Tienda por departamentos; compite en electrodomésticos y tecnología"
 

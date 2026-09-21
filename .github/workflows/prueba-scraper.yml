@@ -31,6 +31,10 @@ on:
         description: "Dominio del anunciante (solo para Google, ej: gollo.com)"
         required: false
         type: string
+      pagina:
+        description: "URL de la página de Facebook (más preciso que la consulta)"
+        required: false
+        type: string
       limite:
         description: "Máximo de anuncios a traer (se paga por anuncio)"
         default: "10"
@@ -91,6 +95,7 @@ jobs:
             --plataforma "${{ inputs.plataforma }}" \
             --consulta "${{ inputs.consulta }}" \
             ${{ inputs.dominio && format('--dominio "{0}"', inputs.dominio) || '' }} \
+            ${{ inputs.pagina && format('--pagina "{0}"', inputs.pagina) || '' }} \
             --limite "${{ inputs.limite }}" \
             --mostrar 5
 
