@@ -331,3 +331,52 @@ class TestPalabrasProhibidasCompletas(unittest.TestCase):
                 self.assertTrue(
                     any(p["tipo"] == "dato_inventado" for p in r["problemas"]),
                     f"'{palabra}' sí es una métrica que la fuente no entrega")
+
+
+class TestRecomendacionSobreAusencia(unittest.TestCase):
+    """Ninguna recomendación puede apoyarse en que un competidor no aparezca.
+
+    Un reporte real recomendó "aproveche la ausencia total de pauta de
+    Artelec". Artelec sí estaba pautando (~51 anuncios activos en Meta); el
+    scraper no la había encontrado. El cliente habría invertido sobre un
+    hueco que no existía.
+    """
+
+    ANUNCIOS = [{"referencia": "[A1]", "clasificacion": "nuevo",
+                 "competidor": "Tienda Monge"}]
+    COMPETIDORES = ["Tienda Monge", "Artelec"]
+
+    def borrador(self, recomendacion):
+        return ("## Resumen ejecutivo\n\nMonge sostuvo la presion de la semana "
+                "con mensajes de financiamiento [A1].\n\n"
+                "## Que haria yo esta semana\n\n" + recomendacion + "\n")
+
+    def test_rechaza_la_recomendacion_que_se_apoya_en_el_hueco(self):
+        for frase in (
+            "- Aproveche la ausencia total de pauta de Artelec para captar busquedas.",
+            "- Artelec no pauta: tome esos terminos de busqueda ahora [A1].",
+            "- Use el silencio de Artelec para ganar participacion.",
+        ):
+            with self.subTest(frase):
+                r = validar.validar(self.borrador(frase), self.ANUNCIOS,
+                                    self.COMPETIDORES, proveedor="gemini")
+                self.assertIn("recomendacion_sobre_ausencia",
+                              [p["tipo"] for p in r["problemas"]])
+
+    def test_acepta_la_recomendacion_construida_sobre_lo_detectado(self):
+        frase = ("- Responda al financiamiento a 24 meses de Monge visibilizando "
+                 "su propia cuota mensual en pantallas y celulares [A1].")
+        r = validar.validar(self.borrador(frase), self.ANUNCIOS,
+                            self.COMPETIDORES, proveedor="gemini")
+        self.assertEqual(
+            [p for p in r["problemas"] if p["tipo"] == "recomendacion_sobre_ausencia"], [])
+
+    def test_constatar_la_ausencia_fuera_de_las_recomendaciones_sigue_valiendo(self):
+        # Decir que no se detectaron anuncios es un hecho; apoyar una
+        # recomendación en eso es lo que no se puede.
+        texto = ("## Resumen ejecutivo\n\nNo detectamos anuncios de Artelec en el "
+                 "periodo [A1].\n\n## Que haria yo esta semana\n\n"
+                 "- Responda al financiamiento de Monge con su cuota propia [A1].\n")
+        r = validar.validar(texto, self.ANUNCIOS, self.COMPETIDORES, proveedor="gemini")
+        self.assertEqual(
+            [p for p in r["problemas"] if p["tipo"] == "recomendacion_sobre_ausencia"], [])

@@ -13,6 +13,7 @@ nombre de campo, se arregla en el YAML.
 from __future__ import annotations
 
 import json
+import re
 import time
 from typing import Any
 
@@ -39,6 +40,10 @@ class FuenteApify:
                 "https://console.apify.com/account/integrations"
             )
         self.nombre = f"apify:{self.actor}"
+        # Anuncios de OTRAS empresas que la búsqueda por dominio arrastró y
+        # el filtro dejó fuera, por nombre de anunciante. Se reporta en la
+        # corrida: descartar en silencio es cómo se cuelan los errores.
+        self.descartados: dict[str, int] = {}
 
     # ── entrada que se le manda al actor ─────────────────────────────
     def construir_entrada(self, competidor: dict, limite: int) -> dict[str, Any]:
@@ -46,8 +51,14 @@ class FuenteApify:
         if self.plataforma == "meta":
             entrada["resultsLimit"] = limite
             urls = []
+            # El id de página manda sobre la URL con nombre: no obliga al
+            # actor a resolver la página, que es donde falló con Artelec.
+            pagina_id = _texto(competidor.get("meta_pagina_id"))
+            plantilla_pagina = self.cfg.get("plantilla_url_pagina", "")
+            if pagina_id and plantilla_pagina:
+                urls.append({"url": plantilla_pagina.format(id=pagina_id), "method": "GET"})
             pagina = competidor.get("meta_pagina_url")
-            if pagina:
+            if not urls and pagina:
                 urls.append({"url": pagina.rstrip("/") + "/", "method": "GET"})
             consulta = competidor.get("meta_consulta") or competidor.get("nombre")
             if not urls and consulta:
@@ -99,7 +110,10 @@ class FuenteApify:
         entrada = self.construir_entrada(competidor, limite)
         crudos = self._correr_actor(entrada)
         self._guardar_crudo(competidor, crudos)
-        return [a for a in (self.mapear(item) for item in crudos) if a and not a.vacio()]
+        anuncios = [a for a in (self.mapear(item) for item in crudos) if a and not a.vacio()]
+        if self.plataforma == "google":
+            anuncios, self.descartados = _solo_del_anunciante(anuncios, competidor)
+        return anuncios
 
     # ── traducción a AnuncioCrudo usando el mapeo del YAML ───────────
     def mapear(self, item: dict) -> AnuncioCrudo | None:
@@ -225,3 +239,82 @@ def _fecha(valor: Any) -> str | None:
             return None
     texto = _texto(valor)
     return texto.split("T")[0] if texto else None
+
+
+def _solo_del_anunciante(
+    anuncios: list[AnuncioCrudo], competidor: dict
+) -> tuple[list[AnuncioCrudo], dict[str, int]]:
+    """Deja fuera los anuncios de OTRAS empresas que pautan el mismo dominio.
+
+    El Centro de Transparencia se busca por dominio y devuelve a cualquiera
+    que anuncie ese dominio. Buscando siman.com aparecieron, junto a los de
+    Almacenes Siman, los de "Publicentro de Guatemala Sociedad Anonima".
+
+    Se conserva:
+      1. el anunciante fijado en `google_anunciante_id`, si está configurado;
+      2. el que más anuncios aportó (la empresa suele pautar por medio de una
+         agencia o de una sociedad con otro nombre: tiendamonge.com lo pauta
+         "HAVAS COSTA RICA, S.A.");
+      3. cualquiera cuyo nombre comparta una palabra distintiva con la del
+         competidor ("Financiera Monge S.A" para Tienda Monge).
+
+    La regla 3 no es un detalle: quedarse solo con el dominante descartaba
+    "Financiera Monge S.A" y conservaba a la agencia, y esos anuncios, que sí
+    son del competidor, aparecían como apagados en el reporte siguiente.
+    """
+    if not anuncios:
+        return anuncios, {}
+
+    def id_de(a: AnuncioCrudo) -> str:
+        return _texto((a.metadata or {}).get("anunciante_id")) or ""
+
+    conteo: dict[str, int] = {}
+    for a in anuncios:
+        conteo[id_de(a)] = conteo.get(id_de(a), 0) + 1
+    if len(conteo) <= 1:
+        return anuncios, {}
+
+    aceptados: set[str] = set()
+    fijado = _texto(competidor.get("google_anunciante_id"))
+    if fijado and fijado in conteo:
+        aceptados.add(fijado)
+    else:
+        if fijado:
+            # El id configurado no aparece: puede haber quedado viejo. Se sigue
+            # con las otras reglas en vez de devolver vacío.
+            pass
+        aceptados.add(max(conteo, key=lambda k: (conteo[k], k != "")))
+        palabras = _palabras_distintivas(competidor.get("nombre"))
+        for a in anuncios:
+            if palabras & _palabras_distintivas(a.anunciante):
+                aceptados.add(id_de(a))
+
+    guardados, descartados = [], {}
+    for a in anuncios:
+        if id_de(a) in aceptados:
+            guardados.append(a)
+        else:
+            nombre = _texto(a.anunciante) or id_de(a) or "(anunciante desconocido)"
+            descartados[nombre] = descartados.get(nombre, 0) + 1
+    if not guardados:
+        return anuncios, {}
+    return guardados, descartados
+
+
+# Palabras que aparecen en cualquier razón social y no distinguen a nadie.
+_GENERICAS = {
+    "sociedad", "anonima", "anónima", "sa", "s", "a", "srl", "ltda", "limitada",
+    "inc", "corp", "corporacion", "corporación", "company", "cia", "compañia",
+    "compañía", "de", "del", "la", "el", "los", "las", "y", "grupo", "tienda",
+    "tiendas", "almacenes", "almacen", "almacén", "comercial", "internacional",
+    "international", "services", "costa", "rica", "cr", "financiera",
+}
+
+
+def _palabras_distintivas(nombre) -> set[str]:
+    """Las palabras de una razón social que de verdad identifican a alguien."""
+    if not nombre:
+        return set()
+    limpio = util.normalizar_texto(str(nombre))
+    return {p for p in re.findall(r"[a-z0-9]+", limpio)
+            if len(p) > 2 and p not in _GENERICAS}

@@ -9,6 +9,7 @@ duplica anuncios ni inventa cambios.
 """
 from __future__ import annotations
 
+import json
 import sqlite3
 from dataclasses import dataclass, field
 from typing import Any
@@ -75,6 +76,15 @@ def recolectar(
                         "competidor": comp["nombre"], "plataforma": plataforma, "error": str(e),
                     })
                     continue
+                descartados = getattr(fuente, "descartados", None)
+                if descartados:
+                    detalle = ", ".join(f"{n} ({c})" for n, c in sorted(descartados.items()))
+                    corrida.saltados.append({
+                        "competidor": comp["nombre"], "plataforma": plataforma,
+                        "motivo": f"se dejaron fuera anuncios de otros anunciantes que pautan "
+                                  f"el mismo dominio: {detalle}. Si alguno SÍ es de este "
+                                  "competidor, fijá google_anunciante_id en config/clientes.yaml.",
+                    })
                 res = priorizar.conciliar(con, competidor, plataforma, vistos, corrida.id)
                 corrida.resultados.append(res)
                 if res.sospechosa:
@@ -83,6 +93,16 @@ def recolectar(
                         "motivo": "la fuente no devolvió ningún anuncio pero antes había "
                                   "activos: no se marcó nada como pausado. Verificá a mano "
                                   "en la biblioteca pública antes de reportarlo.",
+                    })
+                if res.nunca_tuvo_datos:
+                    corrida.sospechosas.append({
+                        "competidor": comp["nombre"], "plataforma": plataforma,
+                        "motivo": "nunca devolvió un solo anuncio, en ninguna corrida. Puede "
+                                  "ser que no esté pautando, pero es igual de probable que la "
+                                  "página o el dominio configurados no sean los suyos. Pasó "
+                                  "con Artelec, que tenía ~51 anuncios activos mientras el "
+                                  "sistema la reportaba como ausente: verificá a mano antes "
+                                  "de darlo por bueno.",
                     })
                 con.commit()
 
@@ -120,16 +140,51 @@ def _toca_reportar(con: sqlite3.Connection, cliente_id: int, periodicidad: str, 
     La regla: se reporta solo si el último reporte de ese cliente cerró antes
     de que arrancara el periodo actual. Para un cliente semanal eso es todas
     las semanas; para uno mensual, una vez cada 30 días.
+
+    Con una excepción: un borrador del periodo ACTUAL que nadie revisó
+    todavía se rehace si entró algo nuevo después de escribirlo. No rompe la
+    cadencia porque no crea un reporte nuevo, reescribe el mismo, y no gasta
+    IA de gusto porque exige que la recolección haya movido algo. Sin esta
+    excepción el refresco de más abajo era código muerto: la cadencia cortaba
+    antes de llegar, y una corrida que trajo 39 anuncios nuevos, 13 cambiados
+    y 6 apagados dejó el borrador tal como estaba.
     """
     ultimo = db.fila(
         con,
-        "SELECT periodo_fin FROM reportes_generados WHERE cliente_id = ? "
-        "ORDER BY date(periodo_fin) DESC LIMIT 1",
+        "SELECT periodo_fin, estado, generado_en FROM reportes_generados "
+        "WHERE cliente_id = ? ORDER BY date(periodo_fin) DESC LIMIT 1",
         (cliente_id,),
     )
     if not ultimo or not ultimo["periodo_fin"]:
         return True
-    return str(ultimo["periodo_fin"])[:10] < inicio
+    if str(ultimo["periodo_fin"])[:10] < inicio:
+        return True
+    if ultimo["estado"] != "borrador":
+        return False        # ya revisado o enviado: no se toca
+    return _hubo_movimiento_despues(con, ultimo["generado_en"])
+
+
+def _hubo_movimiento_despues(con: sqlite3.Connection, momento: str | None) -> bool:
+    """¿Alguna recolección posterior a `momento` movió algo?
+
+    Una corrida donde todos los anuncios siguen igual no cambia el reporte:
+    rehacerlo sería pagar IA para reescribir lo mismo.
+    """
+    if not momento:
+        return True
+    for fila in db.filas(
+        con,
+        "SELECT resumen_json FROM corridas_recoleccion "
+        "WHERE terminada_en IS NOT NULL AND terminada_en > ?",
+        (momento,),
+    ):
+        try:
+            totales = (json.loads(fila["resumen_json"]) or {}).get("totales") or {}
+        except (ValueError, TypeError):
+            continue
+        if any(int(totales.get(k) or 0) for k in ("nuevos", "cambiados", "pausados")):
+            return True
+    return False
 
 
 def ciclo_completo(

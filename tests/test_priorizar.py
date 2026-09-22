@@ -79,3 +79,37 @@ class TestConciliar(CasoBase):
         # Mismo contenido, distinto id de plataforma: la huella colisiona.
         r = self.conciliar([anuncio(id_externo="X1"), anuncio(id_externo="X2")])
         self.assertEqual(r.resumen()["nuevos"], 1, "no se guarda dos veces el mismo contenido")
+
+
+class TestNuncaTuvoDatos(CasoBase):
+    """Cero anuncios sin historial no es lo mismo que "no pauta".
+
+    Artelec tenía ~51 anuncios activos en Meta mientras el sistema la
+    reportaba como ausente, y el reporte llegó a recomendar aprovechar ese
+    hueco. La corrida tiene que señalarlo para que se revise la config.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.cli = self.cliente()
+        self.comp_id = self.competidor(self.cli, "Artelec")
+        self.comp = db.fila(self.con,
+                            "SELECT * FROM competidores_seguidos WHERE id = ?",
+                            (self.comp_id,))
+
+    def test_sin_anuncios_y_sin_historial_se_marca(self):
+        r = priorizar.conciliar(self.con, self.comp, "meta", [])
+        self.assertTrue(r.nunca_tuvo_datos)
+        self.assertFalse(r.sospechosa, "no es una corrida sospechosa: nunca hubo datos")
+
+    def test_con_historial_previo_es_sospechosa_no_nunca(self):
+        priorizar.conciliar(self.con, self.comp, "meta", [anuncio()])
+        self.con.commit()
+        r = priorizar.conciliar(self.con, self.comp, "meta", [])
+        self.assertTrue(r.sospechosa)
+        self.assertFalse(r.nunca_tuvo_datos)
+
+    def test_con_anuncios_no_se_marca_nada(self):
+        r = priorizar.conciliar(self.con, self.comp, "meta", [anuncio()])
+        self.assertFalse(r.nunca_tuvo_datos)
+        self.assertFalse(r.sospechosa)

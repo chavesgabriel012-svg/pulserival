@@ -113,7 +113,7 @@ max_anuncios_en_prompt: 45
 # "[Mensaje recortado]": con 180 anuncios el reporte llegaba cortado justo
 # en el anexo. Los que no se listan se resumen en una línea con su conteo;
 # ninguno se pierde, siguen en la base y en el comparativo.
-max_anuncios_en_detalle: 12
+max_anuncios_en_detalle: 10
 
 # Segundos de espera entre llamadas a la IA. Sin esto se agota el límite por
 # minuto del tier gratuito y todo cae al respaldo.

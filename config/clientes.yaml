@@ -41,13 +41,26 @@ clientes:
       - clave: siman
         nombre: "Almacenes SIMAN"
         meta_pagina_url: "https://www.facebook.com/simancostarica/"
-        google_dominio: "cr.siman.com"
+        google_dominio: "siman.com"
         prioridad: 1
         notas: "Tienda por departamentos; compite en electrodomésticos y tecnología"
 
       - clave: artelec
         nombre: "Artelec"
         meta_pagina_url: "https://www.facebook.com/ArtelecCR/"
+        # PENDIENTE: el scraper devuelve 0 anuncios con esta URL, aunque la
+        # página tiene anuncios activos (confirmado a mano). Pedirle al actor
+        # que resuelva el nombre de la página es lo que falla; con el id
+        # numérico no hace falta resolver nada.
+        #
+        # Cómo sacar el id, una sola vez:
+        #   1. Abrir https://www.facebook.com/ads/library/ y buscar Artelec.
+        #   2. Entrar a los anuncios de la página.
+        #   3. Copiar el número que aparece en la URL después de
+        #      view_all_page_id= y pegarlo acá abajo, sin comillas raras.
+        # meta_pagina_id: "1234567890"
+        #
+        # En Google no hay nada que arreglar: 0 anuncios está confirmado.
         google_dominio: "artelec.cr"
         prioridad: 2
         notas: "Retail de electrodomésticos"

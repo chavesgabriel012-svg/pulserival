@@ -28,6 +28,7 @@ class ResultadoCompetidor:
     competidor: str
     plataforma: str
     sospechosa: bool = False   # la fuente no devolvió nada y antes sí había
+    nunca_tuvo_datos: bool = False  # jamás devolvió un anuncio: revisar la config
     nuevos: list[int] = field(default_factory=list)
     cambiados: list[int] = field(default_factory=list)
     continuan: list[int] = field(default_factory=list)
@@ -70,6 +71,15 @@ def conciliar(
         # Marcar todo como "pausado" produciría un reporte falso y alarmista,
         # así que no se toca nada y la corrida queda señalada para que la mires.
         res.sospechosa = True
+        return res
+
+    if not vistos and not previos:
+        # Nunca devolvió un solo anuncio, en ninguna corrida. Eso NO prueba
+        # que la empresa no pautara: es igual de probable que la página o el
+        # dominio configurados no sean los suyos. Pasó con Artelec, que tenía
+        # ~51 anuncios activos en Meta mientras el sistema la reportaba como
+        # ausente, y el reporte llegó a recomendar aprovechar ese hueco.
+        res.nunca_tuvo_datos = True
         return res
 
     reemplazados: set[int] = set()   # versiones viejas de anuncios que cambiaron

@@ -288,3 +288,116 @@ class TestRespuestasRealesCompletas(unittest.TestCase):
         plantillas = [a for a in (fuente.mapear(i) for i in self.meta)
                       if "{{" in (a.texto or "")]
         self.assertTrue(plantillas, "el fixture debe incluir catálogos dinámicos")
+
+
+class TestFiltroDeAnunciante(unittest.TestCase):
+    """La búsqueda por dominio en Google devuelve a cualquiera que lo anuncie.
+
+    Buscando siman.com aparecieron, junto a los de Almacenes Siman, los de
+    "Publicentro de Guatemala Sociedad Anonima". Sin filtrar, esos anuncios
+    se le contaban a SIMAN y el reporte afirmaba actividad que no era suya.
+    """
+
+    def anuncio(self, anunciante, anunciante_id, cid):
+        from pulserival.fuentes.base import AnuncioCrudo
+        return AnuncioCrudo(
+            plataforma="google", fuente="apify:x", id_externo=cid,
+            anunciante=anunciante, titulo=None, texto=None,
+            metadata={"anunciante_id": anunciante_id},
+        )
+
+    def test_descarta_a_la_empresa_ajena_que_pauta_el_mismo_dominio(self):
+        # Caso real: buscando siman.com aparecieron los de Almacenes Siman y
+        # los de "Publicentro de Guatemala Sociedad Anonima".
+        from pulserival.fuentes.apify import _solo_del_anunciante
+        anuncios = [self.anuncio("Almacenes Siman", "AR074", f"c{i}") for i in range(5)]
+        anuncios += [self.anuncio("Publicentro de Guatemala Sociedad Anonima", "AR146", "c9")]
+        guardados, descartados = _solo_del_anunciante(anuncios, {"nombre": "Almacenes SIMAN"})
+        self.assertEqual(len(guardados), 5)
+        self.assertEqual(descartados, {"Publicentro de Guatemala Sociedad Anonima": 1})
+
+    def test_conserva_a_la_agencia_y_tambien_a_la_empresa_misma(self):
+        # Caso real: tiendamonge.com lo pauta "HAVAS COSTA RICA, S.A." (la
+        # agencia, que es la dominante) y también "Financiera Monge S.A".
+        # Quedarse solo con la dominante descartaba los 5 de la financiera, y
+        # en la corrida siguiente aparecían como apagados.
+        from pulserival.fuentes.apify import _solo_del_anunciante
+        anuncios = [self.anuncio("HAVAS COSTA RICA, S.A.", "ARh", f"h{i}") for i in range(32)]
+        anuncios += [self.anuncio("Financiera Monge S.A", "ARf", f"f{i}") for i in range(5)]
+        guardados, descartados = _solo_del_anunciante(anuncios, {"nombre": "Tienda Monge"})
+        self.assertEqual(len(guardados), 37)
+        self.assertEqual(descartados, {})
+
+    def test_las_palabras_genericas_no_emparejan(self):
+        # "Sociedad Anonima" o "Costa Rica" no identifican a nadie: si
+        # emparejaran, no se descartaría nunca nada.
+        from pulserival.fuentes.apify import _solo_del_anunciante
+        anuncios = [self.anuncio("Almacenes Siman", "AR074", f"c{i}") for i in range(5)]
+        anuncios += [self.anuncio("Otra Cosa Costa Rica Sociedad Anonima", "AR146", "c9")]
+        guardados, descartados = _solo_del_anunciante(
+            anuncios, {"nombre": "Almacenes SIMAN Costa Rica Sociedad Anonima"})
+        self.assertEqual(len(guardados), 5)
+        self.assertIn("Otra Cosa Costa Rica Sociedad Anonima", descartados)
+
+    def test_el_id_configurado_manda_sobre_el_conteo(self):
+        from pulserival.fuentes.apify import _solo_del_anunciante
+        anuncios = [self.anuncio("Agencia", "AR999", f"c{i}") for i in range(5)]
+        anuncios += [self.anuncio("Almacenes Siman", "AR074", "c9")]
+        guardados, descartados = _solo_del_anunciante(
+            anuncios, {"nombre": "Almacenes SIMAN", "google_anunciante_id": "AR074"})
+        self.assertEqual([a.id_externo for a in guardados], ["c9"])
+        self.assertEqual(descartados, {"Agencia": 5})
+
+    def test_un_solo_anunciante_no_se_toca(self):
+        from pulserival.fuentes.apify import _solo_del_anunciante
+        anuncios = [self.anuncio("Almacenes Siman", "AR074", f"c{i}") for i in range(3)]
+        guardados, descartados = _solo_del_anunciante(anuncios, {"nombre": "SIMAN"})
+        self.assertEqual(len(guardados), 3)
+        self.assertEqual(descartados, {})
+
+    def test_si_el_id_configurado_no_aparece_se_cae_a_las_otras_reglas(self):
+        # Preferible revisar de más que devolver vacío por una config vieja.
+        from pulserival.fuentes.apify import _solo_del_anunciante
+        anuncios = [self.anuncio("Almacenes Siman", "AR074", f"c{i}") for i in range(3)]
+        anuncios += [self.anuncio("Publicentro de Guatemala", "AR146", "c9")]
+        guardados, descartados = _solo_del_anunciante(
+            anuncios, {"nombre": "Almacenes SIMAN", "google_anunciante_id": "AR-viejo"})
+        self.assertEqual(len(guardados), 3)
+        self.assertEqual(descartados, {"Publicentro de Guatemala": 1})
+
+
+class TestPaginaPorId(unittest.TestCase):
+    """El id de página es la forma confiable de pedir los anuncios de Meta.
+
+    La URL con el nombre obliga al actor a resolver la página, y con
+    facebook.com/ArtelecCR/ esa resolución devolvió cero mientras la página
+    tenía ~51 anuncios activos.
+    """
+
+    def fuente(self):
+        from pulserival.fuentes.apify import FuenteApify
+        return FuenteApify("meta", token="apify_prueba")
+
+    def test_el_id_tiene_prioridad_sobre_la_url_con_nombre(self):
+        entrada = self.fuente().construir_entrada(
+            {"nombre": "Artelec", "meta_pagina_id": "123456789",
+             "meta_pagina_url": "https://www.facebook.com/ArtelecCR/"}, 10)
+        url = entrada["startUrls"][0]["url"]
+        self.assertIn("view_all_page_id=123456789", url)
+        self.assertNotIn("ArtelecCR", url)
+
+    def test_sin_id_se_usa_la_url_con_nombre(self):
+        entrada = self.fuente().construir_entrada(
+            {"nombre": "Artelec",
+             "meta_pagina_url": "https://www.facebook.com/ArtelecCR/"}, 10)
+        self.assertEqual(entrada["startUrls"][0]["url"],
+                         "https://www.facebook.com/ArtelecCR/")
+
+
+class TestDescartadosSeReportan(unittest.TestCase):
+    """Descartar anuncios en silencio es cómo se cuelan los errores."""
+
+    def test_el_atributo_existe_aunque_no_se_haya_llamado_a_traer(self):
+        from pulserival.fuentes.apify import FuenteApify
+        self.assertEqual(FuenteApify("google", token="t").descartados, {})
+        self.assertEqual(FuenteApify("meta", token="t").descartados, {})

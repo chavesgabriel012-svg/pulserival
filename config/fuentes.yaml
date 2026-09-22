@@ -28,6 +28,12 @@ meta:
     # apagaron, que son justo la mitad de lo que el reporte cuenta.
   # URL de búsqueda que se arma por competidor (país fijo Costa Rica = CR).
   plantilla_url_busqueda: "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&q={consulta}&search_type=keyword_unordered"
+  # Forma MÁS confiable de pedir los anuncios de un competidor: por id de
+  # página. La URL con el nombre (facebook.com/NombreCR/) obliga al actor a
+  # resolver la página primero, y con Artelec esa resolución devolvió cero
+  # mientras la página tenía ~51 anuncios activos. El id se saca abriendo la
+  # biblioteca pública del anunciante y copiando view_all_page_id de la URL.
+  plantilla_url_pagina: "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CR&view_all_page_id={id}"
   # El actor NO devuelve un link a la ficha pública del anuncio: se arma con
   # el id de archivo. Sin esto el reporte pierde la trazabilidad a la fuente.
   plantilla_url_anuncio: "https://www.facebook.com/ads/library/?id={id}"

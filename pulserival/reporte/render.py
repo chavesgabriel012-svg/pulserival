@@ -111,9 +111,54 @@ def markdown_a_html(md: str) -> str:
 _ENTORNO = Environment(autoescape=True)
 
 
+# Gmail recorta los correos de más de 102 KB y muestra "[Mensaje recortado]":
+# el anexo llega cortado justo donde el cliente iba a comprobar los datos.
+LIMITE_GMAIL_BYTES = 102_400
+# El servidor de correo agrega encabezados y codifica el cuerpo, así que el
+# tope propio va por debajo del de Gmail.
+MARGEN_BYTES = 4_000
+TOPES_DE_RECORTE = (8, 6, 5, 4, 3, 2, 1)
+
+
 def email_html(reporte: dict[str, Any]) -> str:
+    """Arma el correo y garantiza que entre sin que Gmail lo recorte.
+
+    El tope por competidor de config/modelos.yaml no alcanza por sí solo: es
+    por competidor Y plataforma, así que el tamaño total crece con la cantidad
+    de competidores. Con 4 competidores en 2 plataformas y un tope de 12, el
+    correo llegó a 103.111 bytes, 711 por encima del límite. Acá se mide lo
+    que de verdad se generó y se recorta hasta que entra.
+    """
     plantilla = _ENTORNO.from_string((PLANTILLAS / "reporte.html.j2").read_text(encoding="utf-8"))
-    return plantilla.render(cuerpo_html=markdown_a_html(reporte["cuerpo_md"]), **reporte)
+
+    def armar(datos: dict[str, Any]) -> str:
+        return plantilla.render(cuerpo_html=markdown_a_html(datos["cuerpo_md"]), **datos)
+
+    html = armar(reporte)
+    if _cabe(html) or not reporte.get("por_competidor"):
+        return html
+
+    # Copia propia: el mismo diccionario alimenta el .md que se edita a mano,
+    # y ahí no hay límite de tamaño que respetar.
+    recortado = dict(reporte)
+    grupos = [dict(g) for g in reporte["por_competidor"]]
+    recortado["por_competidor"] = grupos
+    for tope in TOPES_DE_RECORTE:
+        for g in grupos:
+            for plataforma in ("meta", "google"):
+                lista = list(g.get(plataforma) or [])
+                if len(lista) > tope:
+                    clave = f"{plataforma}_no_listados"
+                    g[clave] = int(g.get(clave) or 0) + len(lista) - tope
+                    g[plataforma] = lista[:tope]
+        html = armar(recortado)
+        if _cabe(html):
+            return html
+    return html
+
+
+def _cabe(html: str) -> bool:
+    return len(html.encode("utf-8")) <= LIMITE_GMAIL_BYTES - MARGEN_BYTES
 
 
 def email_texto(reporte: dict[str, Any]) -> str:

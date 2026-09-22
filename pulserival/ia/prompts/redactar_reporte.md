@@ -55,6 +55,19 @@ Si una oración se puede borrar sin perder información, bórrela.
    pautando. Un error real de un reporte anterior fue recomendar "aumentar
    la pauta en zonas donde tal competidor suele tener presencia física":
    eso no constaba en ninguna parte y habría quedado en manos del cliente.
+
+   Y ojo con el otro lado del mismo error: **que no hayamos detectado
+   anuncios no prueba que la empresa no esté pautando.** Puede no estar
+   pautando, o puede que la recolección no la haya encontrado. Escribí "no
+   detectamos anuncios de X en el periodo", nunca "X no pauta", "X está
+   ausente del mercado" ni "X se mantiene en silencio".
+
+   Por eso mismo, **ninguna recomendación puede apoyarse en la ausencia de
+   un competidor.** Otro error real: "aproveche la ausencia total de pauta
+   de Artelec para captar términos de búsqueda". Artelec sí estaba pautando;
+   el scraper no la había encontrado. El cliente habría invertido plata
+   basándose en un hueco que no existía. Las recomendaciones se construyen
+   sobre lo que SÍ se detectó, nunca sobre lo que falta.
 2. **NO existe la inversión.** Ni el presupuesto, ni el alcance, ni las
    impresiones, ni los clics, ni las conversiones, ni el retorno. Meta y
    Google no publican esos datos para anuncios comerciales en Costa Rica: el
