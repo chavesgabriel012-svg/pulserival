@@ -301,3 +301,35 @@ class TestPesoConMuchosGrupos(unittest.TestCase):
         reporte = self.reporte_con(["Monge", "SIMAN", "MExpress", "Artelec"], 50)
         html = render.email_html(reporte)
         self.assertRegex(html, r"y \d+ anuncios?\s+más de este competidor")
+
+
+class TestLogo(unittest.TestCase):
+    """El wordmark va embebido: no hay servidor de assets que mantener."""
+
+    def test_el_logo_aparece_en_el_correo(self):
+        html = render.email_html(REPORTE)
+        self.assertIn('src="data:image/png;base64,', html)
+        self.assertIn('alt="PulseRival"', html)
+
+    def test_el_logo_se_lee_una_sola_vez(self):
+        # Se cachea a nivel de módulo: no hay que reabrir el archivo en cada
+        # correo.
+        primero = render.logo_data_uri()
+        segundo = render.logo_data_uri()
+        self.assertIs(primero, segundo)
+
+    def test_el_archivo_del_logo_existe_y_es_liviano(self):
+        # Es un PNG blanco-sobre-transparente: tiene que pesar poco, porque
+        # va incrustado en TODOS los correos y compite por el presupuesto de
+        # 102 KB de Gmail.
+        self.assertTrue(render.LOGO.exists())
+        self.assertLess(render.LOGO.stat().st_size, 20_000)
+
+    def test_sin_logo_en_el_contexto_cae_al_texto(self):
+        # La plantilla se puede llamar directo (como en las otras pruebas de
+        # este archivo) sin pasar por email_html, y ahí no hay logo_data_uri.
+        plantilla = render._ENTORNO.from_string(
+            (render.PLANTILLAS / "reporte.html.j2").read_text(encoding="utf-8"))
+        html = plantilla.render(cuerpo_html="<p>x</p>", **REPORTE)
+        self.assertNotIn("data:image/png;base64,", html)
+        self.assertIn("PulseRival", html)

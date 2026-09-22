@@ -16,6 +16,7 @@ from jinja2 import Environment
 from .. import util
 
 PLANTILLAS = Path(__file__).parent / "plantillas"
+LOGO = PLANTILLAS / "activos" / "logo.png"
 
 NEGRITA = re.compile(r"\*\*(.+?)\*\*")
 ITALICA = re.compile(r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)")
@@ -120,6 +121,28 @@ MARGEN_BYTES = 4_000
 TOPES_DE_RECORTE = (8, 6, 5, 4, 3, 2, 1)
 
 
+_logo_cache: str | None = None
+
+
+def logo_data_uri() -> str:
+    """El wordmark de PulseRival, embebido como data URI.
+
+    Va incrustado (no como URL externa) porque el proyecto no tiene ni
+    necesita un servidor de assets: es un PNG de ~8 KB, blanco sobre
+    transparente, así que se ve bien en el header negro del correo sin
+    depender de que el cliente de correo cargue imágenes remotas ni de
+    mantener un hosting aparte solo para un logo.
+
+    Se lee una sola vez por proceso: el archivo no cambia entre reportes.
+    """
+    global _logo_cache
+    if _logo_cache is None:
+        import base64
+        datos = LOGO.read_bytes()
+        _logo_cache = "data:image/png;base64," + base64.b64encode(datos).decode("ascii")
+    return _logo_cache
+
+
 def email_html(reporte: dict[str, Any]) -> str:
     """Arma el correo y garantiza que entre sin que Gmail lo recorte.
 
@@ -132,7 +155,8 @@ def email_html(reporte: dict[str, Any]) -> str:
     plantilla = _ENTORNO.from_string((PLANTILLAS / "reporte.html.j2").read_text(encoding="utf-8"))
 
     def armar(datos: dict[str, Any]) -> str:
-        return plantilla.render(cuerpo_html=markdown_a_html(datos["cuerpo_md"]), **datos)
+        return plantilla.render(cuerpo_html=markdown_a_html(datos["cuerpo_md"]),
+                                logo_data_uri=logo_data_uri(), **datos)
 
     html = armar(reporte)
     if _cabe(html) or not reporte.get("por_competidor"):
