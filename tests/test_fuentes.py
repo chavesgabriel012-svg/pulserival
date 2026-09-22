@@ -401,3 +401,22 @@ class TestDescartadosSeReportan(unittest.TestCase):
         from pulserival.fuentes.apify import FuenteApify
         self.assertEqual(FuenteApify("google", token="t").descartados, {})
         self.assertEqual(FuenteApify("meta", token="t").descartados, {})
+
+
+class TestUrlDePagina(unittest.TestCase):
+    """La barra final solo va cuando la URL es un nombre de página."""
+
+    def test_al_nombre_de_pagina_se_le_agrega_la_barra(self):
+        from pulserival.fuentes.apify import _url_de_pagina
+        self.assertEqual(_url_de_pagina("https://www.facebook.com/ArtelecCR"),
+                         "https://www.facebook.com/ArtelecCR/")
+        self.assertEqual(_url_de_pagina("https://www.facebook.com/ArtelecCR/"),
+                         "https://www.facebook.com/ArtelecCR/")
+
+    def test_una_url_con_parametros_no_se_toca(self):
+        # "?id=1590787819092831/" ya no es ese anuncio.
+        from pulserival.fuentes.apify import _url_de_pagina
+        url = "https://www.facebook.com/ads/library/?id=1590787819092831"
+        self.assertEqual(_url_de_pagina(url), url)
+        conparams = "https://www.facebook.com/ads/library/?active_status=active&view_all_page_id=123"
+        self.assertEqual(_url_de_pagina(conparams), conparams)
