@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import unittest
+from collections import Counter
+from unittest import mock
 
 from pulserival import db, util
 from pulserival.reporte import datos as datos_mod
@@ -121,52 +123,91 @@ class TestCupoPorCompetidorEnElPrompt(unittest.TestCase):
     prioridad 1 y tenían 115. El modelo solo vio los totales de Artelec, así
     que lo describió por formatos y días sin citar ni interpretar un mensaje,
     y se perdió el único que le importaba al cliente: el de crédito propio.
+
+    Los valores se fijan acá en vez de leerlos de config/modelos.yaml: leerlos
+    hacía que el test pasara igual con el cupo en 0 (sin probar nada) y que se
+    rompiera al subirlo, sin que el código cambiara.
     """
 
-    def anuncios(self, competidor, n, prioridad, desde):
+    TOPE = 45
+    CUPO = 6
+
+    def setUp(self):
+        for nombre, valor in (("max_anuncios_en_prompt", self.TOPE),
+                              ("min_anuncios_por_competidor_en_prompt", self.CUPO)):
+            parche = mock.patch(f"pulserival.config.{nombre}", return_value=valor)
+            parche.start()
+            self.addCleanup(parche.stop)
+
+    def anuncios(self, competidor, n, prioridad, desde, variantes=1):
         return [{"anuncio_id": desde + i, "referencia": f"[A{desde + i}]",
                  "competidor": competidor, "plataforma": "meta",
                  "clasificacion": "nuevo", "prioridad": prioridad,
-                 "variantes": 1, "sin_texto": False,
+                 "variantes": variantes, "sin_texto": False,
                  "titulo": f"Anuncio {desde + i}", "texto": f"Texto {desde + i}"}
                 for i in range(n)]
 
-    def escenario(self):
+    def seleccion(self, anuncios):
+        from pulserival.reporte.generar import _seleccionar_para_prompt
+        return _seleccionar_para_prompt(anuncios)
+
+    def reparto(self, anuncios):
+        return Counter(a["competidor"] for a in self.seleccion(anuncios))
+
+    def escenario_real(self):
         return (self.anuncios("SIMAN", 60, 1, 0)
                 + self.anuncios("Monge", 55, 1, 100)
-                + self.anuncios("Artelec", 28, 2, 200))
+                + self.anuncios("MExpress", 57, 2, 200)
+                + self.anuncios("Artelec", 28, 2, 300))
 
     def test_el_competidor_de_prioridad_2_no_desaparece(self):
-        from pulserival.reporte.generar import _seleccionar_para_prompt
-        sel = _seleccionar_para_prompt(self.escenario())
-        de_artelec = [a for a in sel if a["competidor"] == "Artelec"]
-        self.assertTrue(de_artelec, "Artelec quedaba fuera del prompt por completo")
+        self.assertIn("Artelec", self.reparto(self.escenario_real()))
 
-    def test_cada_competidor_llega_al_cupo_minimo(self):
-        from pulserival import config
-        from pulserival.reporte.generar import _seleccionar_para_prompt
-        sel = _seleccionar_para_prompt(self.escenario())
-        minimo = config.min_anuncios_por_competidor_en_prompt()
-        for comp in ("SIMAN", "Monge", "Artelec"):
-            with self.subTest(comp):
-                self.assertGreaterEqual(
-                    len([a for a in sel if a["competidor"] == comp]), minimo)
+    def test_no_se_pasa_del_tope(self):
+        self.assertEqual(len(self.seleccion(self.escenario_real())), self.TOPE)
 
-    def test_no_se_pasa_del_tope_del_prompt(self):
-        from pulserival import config
-        from pulserival.reporte.generar import _seleccionar_para_prompt
-        sel = _seleccionar_para_prompt(self.escenario())
-        self.assertEqual(len(sel), config.max_anuncios_en_prompt())
-
-    def test_el_resto_se_llena_por_relevancia(self):
-        # Con el cupo cubierto, el prioridad 1 sigue llevándose la mayoría.
-        from pulserival.reporte.generar import _seleccionar_para_prompt
-        sel = _seleccionar_para_prompt(self.escenario())
+    def test_el_prioritario_se_lleva_la_mayoria(self):
+        sel = self.seleccion(self.escenario_real())
         p1 = len([a for a in sel if a["prioridad"] == 1])
-        p2 = len([a for a in sel if a["prioridad"] == 2])
-        self.assertGreater(p1, p2)
+        self.assertGreater(p1, len(sel) / 2)
+
+    def test_con_muchos_competidores_ninguno_queda_en_cero(self):
+        # Con 9 competidores y cupo 6, el cupo se comía los 45 lugares antes
+        # de llegar al noveno, que quedaba en cero.
+        muchos = []
+        for k in range(9):
+            muchos += self.anuncios(f"Comp{k}", 20, (k % 3) + 1, k * 100)
+        reparto = self.reparto(muchos)
+        self.assertEqual(len(reparto), 9)
+        self.assertTrue(all(v >= 1 for v in reparto.values()), reparto)
+
+    def test_con_muchos_competidores_la_prioridad_sigue_decidiendo(self):
+        # Recortar el cupo a tope/competidores repartía 5 y 5 y la prioridad
+        # dejaba de pesar. La mitad del presupuesto va al piso, la otra al
+        # mérito.
+        muchos = []
+        for k in range(9):
+            muchos += self.anuncios(f"Comp{k}", 20, (k % 3) + 1, k * 100)
+        sel = self.seleccion(muchos)
+        por_prioridad = Counter(a["prioridad"] for a in sel)
+        self.assertGreater(por_prioridad[1], por_prioridad[2])
+        self.assertGreater(por_prioridad[1], por_prioridad[3])
+
+    def test_dos_competidores_iguales_se_reparten_parejo(self):
+        # El desempate lo definía el orden de entrada, que viene ordenado por
+        # NOMBRE: dos competidores del mismo peso se repartían 27 y 6.
+        par = self.anuncios("Aaa", 40, 1, 0) + self.anuncios("Zzz", 40, 1, 500)
+        reparto = self.reparto(par)
+        self.assertLessEqual(abs(reparto["Aaa"] - reparto["Zzz"]), 2, reparto)
 
     def test_con_pocos_anuncios_entran_todos(self):
-        from pulserival.reporte.generar import _seleccionar_para_prompt
         pocos = self.anuncios("SIMAN", 3, 1, 0) + self.anuncios("Artelec", 2, 2, 50)
-        self.assertEqual(len(_seleccionar_para_prompt(pocos)), 5)
+        self.assertEqual(len(self.seleccion(pocos)), 5)
+
+    def test_dentro_de_un_competidor_manda_la_relevancia(self):
+        # El turno reparte entre competidores, pero no debe pisar el criterio
+        # de qué anuncio de cada uno entra primero.
+        uno = (self.anuncios("SIMAN", 5, 1, 0, variantes=1)
+               + self.anuncios("SIMAN", 2, 1, 50, variantes=9))
+        sel = [a for a in self.seleccion(uno) if a["competidor"] == "SIMAN"]
+        self.assertEqual(sel[0]["variantes"], 9, "el de más variantes va primero")

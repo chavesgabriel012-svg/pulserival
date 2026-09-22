@@ -372,6 +372,7 @@ def cmd_prueba_scraper(args) -> int:
         "nombre": args.consulta,
         "meta_consulta": args.consulta,
         "meta_pagina_url": args.pagina,
+        "meta_pagina_id": getattr(args, "pagina_id", None),
         "google_dominio": args.dominio or args.consulta,
     }
     print(f"  Consultando {args.plataforma} · '{args.consulta}' · máximo {args.limite} anuncios")
@@ -740,6 +741,9 @@ def construir_parser() -> argparse.ArgumentParser:
     t_.add_argument("--plataforma", default="meta", choices=["meta", "google"])
     t_.add_argument("--consulta", required=True, help="nombre del anunciante a buscar")
     t_.add_argument("--pagina", help="URL de la página de Facebook (más preciso que la consulta)")
+    t_.add_argument("--pagina-id", dest="pagina_id",
+                    help="id numérico de la página de Meta (lo más confiable: el actor "
+                         "no tiene que resolver el nombre)")
     t_.add_argument("--dominio", help="dominio del anunciante, para Google")
     t_.add_argument("--limite", type=int, default=10, help="máximo de anuncios (cuesta por anuncio)")
     t_.add_argument("--mostrar", type=int, default=3, help="cuántos imprimir en pantalla")

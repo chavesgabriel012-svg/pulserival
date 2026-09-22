@@ -111,8 +111,9 @@ class FuenteApify:
         crudos = self._correr_actor(entrada)
         self._guardar_crudo(competidor, crudos)
         anuncios = [a for a in (self.mapear(item) for item in crudos) if a and not a.vacio()]
-        if self.plataforma == "google":
-            anuncios, self.descartados = _solo_del_anunciante(anuncios, competidor)
+        anuncios, self.descartados = _solo_del_anunciante(
+            anuncios, competidor, self.plataforma
+        )
         return anuncios
 
     # ── traducción a AnuncioCrudo usando el mapeo del YAML ───────────
@@ -242,25 +243,28 @@ def _fecha(valor: Any) -> str | None:
 
 
 def _solo_del_anunciante(
-    anuncios: list[AnuncioCrudo], competidor: dict
+    anuncios: list[AnuncioCrudo], competidor: dict, plataforma: str = "google"
 ) -> tuple[list[AnuncioCrudo], dict[str, int]]:
-    """Deja fuera los anuncios de OTRAS empresas que pautan el mismo dominio.
+    """Deja fuera los anuncios que no son del competidor.
 
-    El Centro de Transparencia se busca por dominio y devuelve a cualquiera
-    que anuncie ese dominio. Buscando siman.com aparecieron, junto a los de
-    Almacenes Siman, los de "Publicentro de Guatemala Sociedad Anonima".
+    En Google la búsqueda es por dominio y devuelve a cualquiera que anuncie
+    ese dominio: buscando siman.com aparecieron, junto a los de Almacenes
+    Siman, los de "Publicentro de Guatemala Sociedad Anonima".
 
-    Se conserva:
-      1. el anunciante fijado en `google_anunciante_id`, si está configurado;
-      2. el que más anuncios aportó (la empresa suele pautar por medio de una
-         agencia o de una sociedad con otro nombre: tiendamonge.com lo pauta
-         "HAVAS COSTA RICA, S.A.");
-      3. cualquiera cuyo nombre comparta una palabra distintiva con la del
-         competidor ("Financiera Monge S.A" para Tienda Monge).
+    En Meta el riesgo es otro. Cuando se configura `meta_pagina_id` a mano,
+    un número mal copiado devuelve los anuncios de OTRA página y el sistema
+    los guardaría como del competidor sin que nada avise: llegan anuncios,
+    así que no se marca ni sospechosa ni sin datos. Por eso ahí el id
+    configurado es estricto: si ningún anuncio es de esa página, no se guarda
+    nada y la corrida lo señala.
 
-    La regla 3 no es un detalle: quedarse solo con el dominante descartaba
-    "Financiera Monge S.A" y conservaba a la agencia, y esos anuncios, que sí
-    son del competidor, aparecían como apagados en el reporte siguiente.
+    En Google el id configurado NO es estricto, porque la empresa suele
+    pautar por medio de una agencia o de una sociedad con otro nombre y el id
+    puede quedar viejo; ahí se cae a las otras dos reglas:
+      - el anunciante que más anuncios aportó (tiendamonge.com lo pauta
+        "HAVAS COSTA RICA, S.A.");
+      - cualquiera cuyo nombre comparta una palabra distintiva con la del
+        competidor ("Financiera Monge S.A" para Tienda Monge).
     """
     if not anuncios:
         return anuncios, {}
@@ -268,21 +272,28 @@ def _solo_del_anunciante(
     def id_de(a: AnuncioCrudo) -> str:
         return _texto((a.metadata or {}).get("anunciante_id")) or ""
 
+    campo = "meta_pagina_id" if plataforma == "meta" else "google_anunciante_id"
+    fijado = _texto(competidor.get(campo))
+    estricto = bool(fijado) and plataforma == "meta"
+
     conteo: dict[str, int] = {}
     for a in anuncios:
         conteo[id_de(a)] = conteo.get(id_de(a), 0) + 1
-    if len(conteo) <= 1:
-        return anuncios, {}
 
     aceptados: set[str] = set()
-    fijado = _texto(competidor.get("google_anunciante_id"))
     if fijado and fijado in conteo:
         aceptados.add(fijado)
+    elif estricto:
+        # El id configurado no aparece en la respuesta: son anuncios de otra
+        # página. No se guarda nada; la corrida queda marcada.
+        descartados = {}
+        for a in anuncios:
+            nombre = _texto(a.anunciante) or id_de(a) or "(anunciante desconocido)"
+            descartados[nombre] = descartados.get(nombre, 0) + 1
+        return [], descartados
     else:
-        if fijado:
-            # El id configurado no aparece: puede haber quedado viejo. Se sigue
-            # con las otras reglas en vez de devolver vacío.
-            pass
+        if len(conteo) <= 1:
+            return anuncios, {}
         aceptados.add(max(conteo, key=lambda k: (conteo[k], k != "")))
         palabras = _palabras_distintivas(competidor.get("nombre"))
         for a in anuncios:
@@ -296,7 +307,7 @@ def _solo_del_anunciante(
         else:
             nombre = _texto(a.anunciante) or id_de(a) or "(anunciante desconocido)"
             descartados[nombre] = descartados.get(nombre, 0) + 1
-    if not guardados:
+    if not guardados and not estricto:
         return anuncios, {}
     return guardados, descartados
 

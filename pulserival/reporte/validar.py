@@ -54,6 +54,13 @@ RELLENO = ("pendiente de revision", "por definir", "sin informacion",
 # Un umbral de palabras es a ojo, así que una sección flaca solo avisa.
 # Lo que bloquea es el relleno, que es el fallo que de verdad se vio.
 MINIMO_POR_SECCION = 15   # palabras
+# Absolutos que el cliente puede desmentir abriendo la biblioteca. Avisan, no
+# bloquean: "todos los competidores" es correcto, y distinguir eso de "todos
+# sus anuncios" con una expresión regular da más falsos positivos que ayuda.
+# Lo que hace falta es que el ojo del editor vaya ahí.
+ABSOLUTOS = ("el 100%", "un 100%", "unicamente", "exclusivamente",
+             "en su totalidad", "la totalidad de", "sin excepcion",
+             "absolutamente todos", "ninguno de sus")
 
 
 def _cuerpo_de_seccion(borrador: str, seccion: str) -> str | None:
@@ -248,6 +255,17 @@ def validar(borrador: str, anuncios: list[dict[str, Any]],
                 "tipo": "seccion_flaca",
                 "detalle": f"La sección '{seccion}' tiene {cuenta} palabras.",
             })
+    encontrados = sorted({a for a in ABSOLUTOS
+                          if re.search(rf"\b{re.escape(a)}", plano)})
+    if encontrados:
+        avisos.append({
+            "tipo": "absoluto_sin_respaldo",
+            "detalle": "Revisá estos absolutos contra los datos: "
+                       + ", ".join(f"'{a}'" for a in encontrados)
+                       + ". Un reporte real decía 'el 100%' y 'únicamente' cuando eran "
+                         "27 de 28: la diferencia era de un anuncio, pero el cliente lo "
+                         "desmiente en un clic.",
+        })
     palabras = util.contar_palabras(borrador)
     if palabras < 350:
         avisos.append({"tipo": "muy_corto", "detalle": f"Solo {palabras} palabras."})

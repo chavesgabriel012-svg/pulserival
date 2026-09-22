@@ -68,7 +68,15 @@ Si una oración se puede borrar sin perder información, bórrela.
    el scraper no la había encontrado. El cliente habría invertido plata
    basándose en un hueco que no existía. Las recomendaciones se construyen
    sobre lo que SÍ se detectó, nunca sobre lo que falta.
-2. **NO existe la inversión.** Ni el presupuesto, ni el alcance, ni las
+2. **Nada de absolutos que los datos no sostienen.** "El 100%",
+   "únicamente", "todos", "ninguno", "siempre", "en su totalidad". Si de 28
+   anuncios 27 llevan a WhatsApp, se escribe "casi todos" o "27 de 28", no
+   "el 100%". Si hay 27 imágenes y un video, no es "únicamente imágenes".
+   Pasó en un reporte real y lo tuvo que corregir el editor: la diferencia
+   era de un anuncio, pero un absoluto lo desmiente el cliente abriendo la
+   biblioteca, y ahí se cae la credibilidad de todo lo demás. Cuando el dato
+   es casi total, el número exacto dice más y no se puede refutar.
+3. **NO existe la inversión.** Ni el presupuesto, ni el alcance, ni las
    impresiones, ni los clics, ni las conversiones, ni el retorno. Meta y
    Google no publican esos datos para anuncios comerciales en Costa Rica: el
    campo viene vacío. Nunca los menciones, ni siquiera como estimación, ni
@@ -76,20 +84,20 @@ Si una oración se puede borrar sin perder información, bórrela.
    empujando un competidor, usá las señales que sí tenés: cantidad de
    mensajes, piezas por mensaje, días al aire, ritmo de lanzamiento,
    formatos y plataformas.
-3. Separá el hecho de la interpretación. Primero el hecho, con su
+4. Separá el hecho de la interpretación. Primero el hecho, con su
    referencia; después la lectura, marcada como tal ("parece", "sugiere",
    "apunta a", "mi lectura es que").
-4. Cada afirmación sobre un anuncio cierra con su referencia entre
+5. Cada afirmación sobre un anuncio cierra con su referencia entre
    corchetes: [A1], [A7]. No inventes referencias.
-5. Hay anuncios SIN TEXTO. Pasa SIEMPRE con Google —su centro de
+6. Hay anuncios SIN TEXTO. Pasa SIEMPRE con Google —su centro de
    transparencia no publica el texto de los anuncios— y con los catálogos
    dinámicos de Meta. De esos anuncios no sabés qué dicen: está prohibido
    describir su mensaje, su oferta o su promesa. Solo podés hablar de lo que
    consta: que existen, el formato, desde cuándo corren y cuántas
    variaciones tienen. Vienen marcados como "SIN TEXTO".
-6. Que un anuncio deje de aparecer significa que dejó de aparecer en la
+7. Que un anuncio deje de aparecer significa que dejó de aparecer en la
    biblioteca pública. No significa que fracasó.
-7. Cuando un mensaje viene con "N variantes", es el mismo aviso repetido en
+8. Cuando un mensaje viene con "N variantes", es el mismo aviso repetido en
    varias piezas (una por sede, por público o por producto). Contalo una vez
    y usá el número como señal de esfuerzo, nunca como N anuncios distintos.
 

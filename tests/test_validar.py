@@ -380,3 +380,37 @@ class TestRecomendacionSobreAusencia(unittest.TestCase):
         r = validar.validar(texto, self.ANUNCIOS, self.COMPETIDORES, proveedor="gemini")
         self.assertEqual(
             [p for p in r["problemas"] if p["tipo"] == "recomendacion_sobre_ausencia"], [])
+
+
+class TestAbsolutosSinRespaldo(unittest.TestCase):
+    """Los absolutos avisan, porque el cliente los desmiente en un clic.
+
+    Un reporte real decía que un competidor canalizaba "el 100%" de su
+    esfuerzo a WhatsApp y operaba "únicamente" con imágenes, cuando eran 27
+    de 28 y había un video. La diferencia era de un anuncio.
+    """
+
+    ANUNCIOS = [{"referencia": "[A1]", "clasificacion": "nuevo"}]
+
+    def test_avisa_del_absoluto_sin_bloquear(self):
+        r = validar.validar(
+            "## Lo más importante\nCanaliza el 100% de su esfuerzo a WhatsApp [A1].",
+            self.ANUNCIOS)
+        tipos = [a["tipo"] for a in r["avisos"]]
+        self.assertIn("absoluto_sin_respaldo", tipos)
+        self.assertEqual(
+            [p for p in r["problemas"] if p["tipo"] == "absoluto_sin_respaldo"], [],
+            "avisa, no bloquea")
+
+    def test_detecta_los_absolutos_mas_comunes(self):
+        for frase in ("opera únicamente con imágenes", "el 100% de sus anuncios",
+                      "en su totalidad son videos", "exclusivamente por WhatsApp"):
+            with self.subTest(frase):
+                r = validar.validar(f"## Lo más importante\n{frase} [A1].", self.ANUNCIOS)
+                self.assertIn("absoluto_sin_respaldo", [a["tipo"] for a in r["avisos"]])
+
+    def test_no_avisa_cuando_el_texto_es_preciso(self):
+        r = validar.validar(
+            "## Lo más importante\n27 de sus 28 anuncios llevan a WhatsApp [A1].",
+            self.ANUNCIOS)
+        self.assertNotIn("absoluto_sin_respaldo", [a["tipo"] for a in r["avisos"]])

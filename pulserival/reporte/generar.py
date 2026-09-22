@@ -235,15 +235,17 @@ def _seleccionar_para_prompt(anuncios: list[dict[str, Any]]) -> list[dict[str, A
     """Los anuncios más relevantes para escribir el análisis.
 
     Criterio: primero lo que es noticia (nuevo, cambiado, apagado), después
-    el competidor prioritario, después los mensajes con más variantes —que
-    es donde el competidor está poniendo más esfuerzo— y por último los que
-    tienen texto, porque de los que no lo tienen no hay nada que interpretar.
+    el competidor prioritario, después el turno del competidor —para que dos
+    competidores del mismo peso se reparten los cupos en vez de que uno se
+    lleve todo—, después los mensajes con más variantes, que es donde el
+    competidor pone más esfuerzo, y por último los que tienen texto, porque
+    de los que no lo tienen no hay nada que interpretar.
     """
     from .. import config as _config
 
     orden = {"nuevo": 0, "cambiado": 1, "pausado": 2, "continua": 3}
 
-    def clave(a):
+    def clave_interna(a):
         return (
             orden.get(a["clasificacion"], 9),
             a.get("prioridad") or 9,
@@ -251,9 +253,27 @@ def _seleccionar_para_prompt(anuncios: list[dict[str, Any]]) -> list[dict[str, A
             -(a.get("variantes") or 1),
         )
 
-    ordenados = sorted(anuncios, key=clave)
+    # Turno de cada anuncio dentro de SU competidor: el mejor de cada uno es
+    # turno 0, el siguiente turno 1. Entra en la clave después de la
+    # prioridad, así que entre competidores del mismo peso se alternan.
+    #
+    # Sin esto el desempate lo definía el orden de entrada, que viene
+    # ordenado por NOMBRE de competidor: dos competidores iguales se
+    # repartían 27 y 6 según cuál iba primero en el alfabeto.
+    turnos: dict[str, int] = {}
+    con_turno = []
+    for a in sorted(anuncios, key=clave_interna):
+        comp = a.get("competidor") or ""
+        con_turno.append((turnos.get(comp, 0), a))
+        turnos[comp] = turnos.get(comp, 0) + 1
+
+    def clave(par):
+        turno, a = par
+        k = clave_interna(a)
+        return (k[0], k[1], turno, k[2], k[3])
+
+    ordenados = [a for _, a in sorted(con_turno, key=clave)]
     tope = _config.max_anuncios_en_prompt()
-    minimo = _config.min_anuncios_por_competidor_en_prompt()
 
     # Cupo mínimo por competidor ANTES de llenar por relevancia global.
     #
@@ -264,6 +284,19 @@ def _seleccionar_para_prompt(anuncios: list[dict[str, Any]]) -> list[dict[str, A
     # describió por formatos y días sin poder citar ni interpretar un
     # mensaje, y se perdió el único que le importaba al cliente: el de
     # "Crédito Artelec", que compite de frente con su crédito propio.
+    competidores = {a.get("competidor") or "" for a in ordenados}
+    minimo = _config.min_anuncios_por_competidor_en_prompt()
+    # El cupo se recorta a la MITAD del presupuesto como techo, por dos
+    # razones distintas:
+    #   - Con 9 competidores y un cupo de 6 se consumían los 45 lugares antes
+    #     de llegar al noveno, que volvía a quedar en cero.
+    #   - Recortarlo solo a tope/competidores tampoco sirve: repartía los 45
+    #     en 5 y 5 y la prioridad dejaba de decidir nada.
+    # Con la mitad reservada al piso y la mitad al mérito, todos aparecen y
+    # el competidor prioritario sigue llevándose la mayor parte.
+    if competidores:
+        minimo = max(1, min(minimo, max(1, (tope // 2) // len(competidores))))
+
     elegidos: list[int] = []
     por_competidor: dict[str, int] = {}
     for i, a in enumerate(ordenados):

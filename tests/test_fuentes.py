@@ -312,7 +312,7 @@ class TestFiltroDeAnunciante(unittest.TestCase):
         from pulserival.fuentes.apify import _solo_del_anunciante
         anuncios = [self.anuncio("Almacenes Siman", "AR074", f"c{i}") for i in range(5)]
         anuncios += [self.anuncio("Publicentro de Guatemala Sociedad Anonima", "AR146", "c9")]
-        guardados, descartados = _solo_del_anunciante(anuncios, {"nombre": "Almacenes SIMAN"})
+        guardados, descartados = _solo_del_anunciante(anuncios, {"nombre": "Almacenes SIMAN"}, "google")
         self.assertEqual(len(guardados), 5)
         self.assertEqual(descartados, {"Publicentro de Guatemala Sociedad Anonima": 1})
 
@@ -324,7 +324,7 @@ class TestFiltroDeAnunciante(unittest.TestCase):
         from pulserival.fuentes.apify import _solo_del_anunciante
         anuncios = [self.anuncio("HAVAS COSTA RICA, S.A.", "ARh", f"h{i}") for i in range(32)]
         anuncios += [self.anuncio("Financiera Monge S.A", "ARf", f"f{i}") for i in range(5)]
-        guardados, descartados = _solo_del_anunciante(anuncios, {"nombre": "Tienda Monge"})
+        guardados, descartados = _solo_del_anunciante(anuncios, {"nombre": "Tienda Monge"}, "google")
         self.assertEqual(len(guardados), 37)
         self.assertEqual(descartados, {})
 
@@ -335,7 +335,7 @@ class TestFiltroDeAnunciante(unittest.TestCase):
         anuncios = [self.anuncio("Almacenes Siman", "AR074", f"c{i}") for i in range(5)]
         anuncios += [self.anuncio("Otra Cosa Costa Rica Sociedad Anonima", "AR146", "c9")]
         guardados, descartados = _solo_del_anunciante(
-            anuncios, {"nombre": "Almacenes SIMAN Costa Rica Sociedad Anonima"})
+            anuncios, {"nombre": "Almacenes SIMAN Costa Rica Sociedad Anonima"}, "google")
         self.assertEqual(len(guardados), 5)
         self.assertIn("Otra Cosa Costa Rica Sociedad Anonima", descartados)
 
@@ -344,14 +344,14 @@ class TestFiltroDeAnunciante(unittest.TestCase):
         anuncios = [self.anuncio("Agencia", "AR999", f"c{i}") for i in range(5)]
         anuncios += [self.anuncio("Almacenes Siman", "AR074", "c9")]
         guardados, descartados = _solo_del_anunciante(
-            anuncios, {"nombre": "Almacenes SIMAN", "google_anunciante_id": "AR074"})
+            anuncios, {"nombre": "Almacenes SIMAN", "google_anunciante_id": "AR074"}, "google")
         self.assertEqual([a.id_externo for a in guardados], ["c9"])
         self.assertEqual(descartados, {"Agencia": 5})
 
     def test_un_solo_anunciante_no_se_toca(self):
         from pulserival.fuentes.apify import _solo_del_anunciante
         anuncios = [self.anuncio("Almacenes Siman", "AR074", f"c{i}") for i in range(3)]
-        guardados, descartados = _solo_del_anunciante(anuncios, {"nombre": "SIMAN"})
+        guardados, descartados = _solo_del_anunciante(anuncios, {"nombre": "SIMAN"}, "google")
         self.assertEqual(len(guardados), 3)
         self.assertEqual(descartados, {})
 
@@ -361,7 +361,7 @@ class TestFiltroDeAnunciante(unittest.TestCase):
         anuncios = [self.anuncio("Almacenes Siman", "AR074", f"c{i}") for i in range(3)]
         anuncios += [self.anuncio("Publicentro de Guatemala", "AR146", "c9")]
         guardados, descartados = _solo_del_anunciante(
-            anuncios, {"nombre": "Almacenes SIMAN", "google_anunciante_id": "AR-viejo"})
+            anuncios, {"nombre": "Almacenes SIMAN", "google_anunciante_id": "AR-viejo"}, "google")
         self.assertEqual(len(guardados), 3)
         self.assertEqual(descartados, {"Publicentro de Guatemala": 1})
 
@@ -420,3 +420,64 @@ class TestUrlDePagina(unittest.TestCase):
         self.assertEqual(_url_de_pagina(url), url)
         conparams = "https://www.facebook.com/ads/library/?active_status=active&view_all_page_id=123"
         self.assertEqual(_url_de_pagina(conparams), conparams)
+
+
+class TestIdDePaginaEstricto(unittest.TestCase):
+    """Un meta_pagina_id mal copiado no puede atribuir anuncios ajenos.
+
+    El id se configura a mano. Si el número está mal, el actor devuelve los
+    anuncios de OTRA página y llegan anuncios, así que no se marca ni
+    sospechosa ni sin datos: se guardarían como del competidor sin que nada
+    avise. En Meta el id configurado es estricto.
+    """
+
+    def ad(self, nombre, aid, cid):
+        from pulserival.fuentes.base import AnuncioCrudo
+        return AnuncioCrudo(plataforma="meta", fuente="x", id_externo=cid,
+                            anunciante=nombre, metadata={"anunciante_id": aid})
+
+    def filtrar(self, anuncios, competidor):
+        from pulserival.fuentes.apify import _solo_del_anunciante
+        return _solo_del_anunciante(anuncios, competidor, "meta")
+
+    def test_el_id_correcto_deja_pasar_todo(self):
+        ads = [self.ad("Artelec", "1881630875265820", f"a{i}") for i in range(5)]
+        guardados, descartados = self.filtrar(
+            ads, {"nombre": "Artelec", "meta_pagina_id": "1881630875265820"})
+        self.assertEqual(len(guardados), 5)
+        self.assertEqual(descartados, {})
+
+    def test_un_id_equivocado_no_guarda_nada(self):
+        ads = [self.ad("Otra Tienda", "999999", f"b{i}") for i in range(5)]
+        guardados, descartados = self.filtrar(
+            ads, {"nombre": "Artelec", "meta_pagina_id": "1881630875265820"})
+        self.assertEqual(guardados, [], "eran anuncios de otra página")
+        self.assertEqual(descartados, {"Otra Tienda": 5})
+
+    def test_sin_id_configurado_no_se_filtra(self):
+        # Pedir por URL de página devuelve una sola página: no hay nada que
+        # filtrar y no se puede exigir un id que nadie configuró.
+        ads = [self.ad("Artelec", "1881630875265820", f"c{i}") for i in range(3)]
+        guardados, descartados = self.filtrar(ads, {"nombre": "Artelec"})
+        self.assertEqual(len(guardados), 3)
+        self.assertEqual(descartados, {})
+
+    def test_mezcla_con_id_configurado_deja_solo_la_pagina_correcta(self):
+        ads = ([self.ad("Artelec", "1881630875265820", f"d{i}") for i in range(3)]
+               + [self.ad("Beetech", "777", "d9")])
+        guardados, descartados = self.filtrar(
+            ads, {"nombre": "Artelec", "meta_pagina_id": "1881630875265820"})
+        self.assertEqual(len(guardados), 3)
+        self.assertEqual(descartados, {"Beetech": 1})
+
+    def test_en_google_un_id_viejo_no_deja_al_competidor_en_cero(self):
+        # En Google la empresa pauta por medio de agencias y el id puede
+        # quedar viejo: ahí se cae a las otras reglas en vez de vaciar.
+        from pulserival.fuentes.apify import _solo_del_anunciante
+        from pulserival.fuentes.base import AnuncioCrudo
+        ads = [AnuncioCrudo(plataforma="google", fuente="x", id_externo=f"e{i}",
+                            anunciante="Almacenes Siman",
+                            metadata={"anunciante_id": "AR074"}) for i in range(5)]
+        guardados, _ = _solo_del_anunciante(
+            ads, {"nombre": "Almacenes SIMAN", "google_anunciante_id": "AR-viejo"}, "google")
+        self.assertEqual(len(guardados), 5)
