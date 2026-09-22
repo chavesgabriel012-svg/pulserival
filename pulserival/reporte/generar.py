@@ -242,16 +242,44 @@ def _seleccionar_para_prompt(anuncios: list[dict[str, Any]]) -> list[dict[str, A
     from .. import config as _config
 
     orden = {"nuevo": 0, "cambiado": 1, "pausado": 2, "continua": 3}
-    ordenados = sorted(
-        anuncios,
-        key=lambda a: (
+
+    def clave(a):
+        return (
             orden.get(a["clasificacion"], 9),
             a.get("prioridad") or 9,
             1 if a.get("sin_texto") else 0,
             -(a.get("variantes") or 1),
-        ),
-    )
-    return ordenados[: _config.max_anuncios_en_prompt()]
+        )
+
+    ordenados = sorted(anuncios, key=clave)
+    tope = _config.max_anuncios_en_prompt()
+    minimo = _config.min_anuncios_por_competidor_en_prompt()
+
+    # Cupo mínimo por competidor ANTES de llenar por relevancia global.
+    #
+    # Sin esto, un competidor de prioridad 2 puede quedar invisible para el
+    # análisis: Artelec entró con 28 anuncios activos y los 45 cupos se los
+    # llevaron enteros los nuevos de SIMAN y Monge, que son prioridad 1 y
+    # tenían 115. El modelo solo vio los totales de Artelec, así que lo
+    # describió por formatos y días sin poder citar ni interpretar un
+    # mensaje, y se perdió el único que le importaba al cliente: el de
+    # "Crédito Artelec", que compite de frente con su crédito propio.
+    elegidos: list[int] = []
+    por_competidor: dict[str, int] = {}
+    for i, a in enumerate(ordenados):
+        if len(elegidos) >= tope:
+            break
+        comp = a.get("competidor") or ""
+        if por_competidor.get(comp, 0) < minimo:
+            elegidos.append(i)
+            por_competidor[comp] = por_competidor.get(comp, 0) + 1
+    tomados = set(elegidos)
+    for i in range(len(ordenados)):
+        if len(tomados) >= tope:
+            break
+        tomados.add(i)
+    # Se devuelven en el orden de relevancia, no en el del cupo.
+    return [a for i, a in enumerate(ordenados) if i in tomados]
 
 
 def _asunto(cliente: dict, inicio: str, fin: str, conteo: dict[str, int]) -> str:

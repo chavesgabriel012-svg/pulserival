@@ -1,6 +1,8 @@
 """Clasificación de los anuncios que entran al reporte del periodo."""
 from __future__ import annotations
 
+import unittest
+
 from pulserival import db, util
 from pulserival.reporte import datos as datos_mod
 from tests.base import CasoBase
@@ -109,3 +111,62 @@ class TestVariantesYPlantillas(CasoBase):
         res = datos_mod.clasificar(self.con, self.cli, self.inicio, self.fin)
         self.assertEqual(len(res), 2)
         self.assertTrue(all(a["sin_texto"] for a in res))
+
+
+class TestCupoPorCompetidorEnElPrompt(unittest.TestCase):
+    """Ningún competidor puede quedar invisible para el análisis.
+
+    Pasó de verdad: Artelec entró con 28 anuncios activos y los 45 cupos del
+    prompt se los llevaron enteros los nuevos de SIMAN y Monge, que son
+    prioridad 1 y tenían 115. El modelo solo vio los totales de Artelec, así
+    que lo describió por formatos y días sin citar ni interpretar un mensaje,
+    y se perdió el único que le importaba al cliente: el de crédito propio.
+    """
+
+    def anuncios(self, competidor, n, prioridad, desde):
+        return [{"anuncio_id": desde + i, "referencia": f"[A{desde + i}]",
+                 "competidor": competidor, "plataforma": "meta",
+                 "clasificacion": "nuevo", "prioridad": prioridad,
+                 "variantes": 1, "sin_texto": False,
+                 "titulo": f"Anuncio {desde + i}", "texto": f"Texto {desde + i}"}
+                for i in range(n)]
+
+    def escenario(self):
+        return (self.anuncios("SIMAN", 60, 1, 0)
+                + self.anuncios("Monge", 55, 1, 100)
+                + self.anuncios("Artelec", 28, 2, 200))
+
+    def test_el_competidor_de_prioridad_2_no_desaparece(self):
+        from pulserival.reporte.generar import _seleccionar_para_prompt
+        sel = _seleccionar_para_prompt(self.escenario())
+        de_artelec = [a for a in sel if a["competidor"] == "Artelec"]
+        self.assertTrue(de_artelec, "Artelec quedaba fuera del prompt por completo")
+
+    def test_cada_competidor_llega_al_cupo_minimo(self):
+        from pulserival import config
+        from pulserival.reporte.generar import _seleccionar_para_prompt
+        sel = _seleccionar_para_prompt(self.escenario())
+        minimo = config.min_anuncios_por_competidor_en_prompt()
+        for comp in ("SIMAN", "Monge", "Artelec"):
+            with self.subTest(comp):
+                self.assertGreaterEqual(
+                    len([a for a in sel if a["competidor"] == comp]), minimo)
+
+    def test_no_se_pasa_del_tope_del_prompt(self):
+        from pulserival import config
+        from pulserival.reporte.generar import _seleccionar_para_prompt
+        sel = _seleccionar_para_prompt(self.escenario())
+        self.assertEqual(len(sel), config.max_anuncios_en_prompt())
+
+    def test_el_resto_se_llena_por_relevancia(self):
+        # Con el cupo cubierto, el prioridad 1 sigue llevándose la mayoría.
+        from pulserival.reporte.generar import _seleccionar_para_prompt
+        sel = _seleccionar_para_prompt(self.escenario())
+        p1 = len([a for a in sel if a["prioridad"] == 1])
+        p2 = len([a for a in sel if a["prioridad"] == 2])
+        self.assertGreater(p1, p2)
+
+    def test_con_pocos_anuncios_entran_todos(self):
+        from pulserival.reporte.generar import _seleccionar_para_prompt
+        pocos = self.anuncios("SIMAN", 3, 1, 0) + self.anuncios("Artelec", 2, 2, 50)
+        self.assertEqual(len(_seleccionar_para_prompt(pocos)), 5)
