@@ -410,6 +410,20 @@ def cmd_prueba_scraper(args) -> int:
         print(f"      link:   {util.recortar(a.link_destino, 80) or '(sin link)'}")
         print(f"      ficha:  {util.recortar(a.url_anuncio, 80) or '(sin ficha)'}")
         print(f"      huella: {a.huella()}")
+    # El id del anunciante es lo que se copia a config/clientes.yaml cuando la
+    # búsqueda por nombre de página falla. En Meta es el id numérico de la
+    # página (meta_pagina_id); en Google, el del anunciante
+    # (google_anunciante_id). Sin imprimirlo había que abrir la respuesta
+    # cruda a mano para encontrarlo.
+    ids = {}
+    for a in anuncios:
+        clave = (a.anunciante or "(sin anunciante)", str((a.metadata or {}).get("anunciante_id") or ""))
+        ids[clave] = ids.get(clave, 0) + 1
+    if ids:
+        campo = "meta_pagina_id" if args.plataforma == "meta" else "google_anunciante_id"
+        print(f"\n  Anunciantes en la respuesta (para {campo} en config/clientes.yaml):")
+        for (nombre, ident), cuantos in sorted(ids.items(), key=lambda x: -x[1]):
+            print(f"    {cuantos:>3} anuncio(s) · {nombre} · id: {ident or '(no informado)'}")
     crudos = sorted((config.DIR_DATOS / "crudo").glob("*.json"))
     if crudos:
         print(f"\n  Respuesta cruda guardada en: {crudos[-1]}")
