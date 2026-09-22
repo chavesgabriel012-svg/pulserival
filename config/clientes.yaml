@@ -48,18 +48,15 @@ clientes:
       - clave: artelec
         nombre: "Artelec"
         meta_pagina_url: "https://www.facebook.com/ArtelecCR/"
-        # PENDIENTE: el scraper devuelve 0 anuncios con esta URL, aunque la
-        # página tiene anuncios activos (confirmado a mano). Pedirle al actor
-        # que resuelva el nombre de la página es lo que falla; con el id
-        # numérico no hace falta resolver nada.
+        # Pedir por nombre de página devolvía 0 anuncios mientras la página
+        # tenía ~52 activos: el actor no resuelve facebook.com/ArtelecCR/,
+        # aunque sí resuelve las de SIMAN, Monge y MExpress en la misma
+        # corrida. Con el id numérico no tiene que resolver nada, y manda
+        # sobre meta_pagina_url.
         #
-        # Cómo sacar el id, una sola vez:
-        #   1. Abrir https://www.facebook.com/ads/library/ y buscar Artelec.
-        #   2. Entrar a los anuncios de la página.
-        #   3. Copiar el número que aparece en la URL después de
-        #      view_all_page_id= y pegarlo acá abajo, sin comillas raras.
-        # meta_pagina_id: "1234567890"
-        #
+        # Este id salió de pedirle al actor la ficha de un anuncio activo de
+        # Artelec; `cli prueba-scraper` lo imprime en la respuesta.
+        meta_pagina_id: "1881630875265820"
         # En Google no hay nada que arreglar: 0 anuncios está confirmado.
         google_dominio: "artelec.cr"
         prioridad: 2

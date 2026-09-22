@@ -59,7 +59,7 @@ class FuenteApify:
                 urls.append({"url": plantilla_pagina.format(id=pagina_id), "method": "GET"})
             pagina = competidor.get("meta_pagina_url")
             if not urls and pagina:
-                urls.append({"url": pagina.rstrip("/") + "/", "method": "GET"})
+                urls.append({"url": _url_de_pagina(pagina), "method": "GET"})
             consulta = competidor.get("meta_consulta") or competidor.get("nombre")
             if not urls and consulta:
                 plantilla = self.cfg.get("plantilla_url_busqueda", "")
@@ -309,6 +309,19 @@ _GENERICAS = {
     "tiendas", "almacenes", "almacen", "almacén", "comercial", "internacional",
     "international", "services", "costa", "rica", "cr", "financiera",
 }
+
+
+def _url_de_pagina(pagina: str) -> str:
+    """Normaliza la URL de una página de Facebook.
+
+    La barra final solo va cuando la URL es un nombre de página. Si trae
+    parámetros (por ejemplo la ficha de un anuncio, ?id=...), agregarla
+    corrompe el valor: "?id=1590787819092831/" ya no es ese anuncio.
+    """
+    limpio = str(pagina).strip()
+    if "?" in limpio or "#" in limpio:
+        return limpio
+    return limpio.rstrip("/") + "/"
 
 
 def _palabras_distintivas(nombre) -> set[str]:

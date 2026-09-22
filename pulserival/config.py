@@ -86,6 +86,10 @@ def max_anuncios_en_prompt() -> int:
     return int(config_modelos().get("max_anuncios_en_prompt", 45))
 
 
+def min_anuncios_por_competidor_en_prompt() -> int:
+    return int(config_modelos().get("min_anuncios_por_competidor_en_prompt", 6))
+
+
 def max_anuncios_en_detalle() -> int:
     return int(config_modelos().get("max_anuncios_en_detalle", 12))
 

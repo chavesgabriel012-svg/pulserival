@@ -108,6 +108,14 @@ max_anuncios_analizados: 25
 # del total sin inventar.
 max_anuncios_en_prompt: 45
 
+# Cupo mínimo de anuncios por competidor dentro de ese prompt.
+#
+# Sin cupo, un competidor de prioridad 2 desaparece del análisis: Artelec
+# entró con 28 anuncios activos y los 45 cupos se los llevaron los nuevos de
+# SIMAN y Monge (prioridad 1, 115 anuncios). El reporte lo describía por
+# formatos y días, sin poder citar ni un mensaje.
+min_anuncios_por_competidor_en_prompt: 6
+
 # Cuántos anuncios se listan en el detalle del correo, por competidor y
 # plataforma. Gmail recorta los mensajes que pasan de 102 KB y muestra
 # "[Mensaje recortado]": con 180 anuncios el reporte llegaba cortado justo
