@@ -14,7 +14,7 @@ import sqlite3
 from dataclasses import dataclass, field
 from typing import Any
 
-from . import db, priorizar, util
+from . import db, planes, priorizar, util
 from .fuentes import FuenteError, obtener_fuente
 
 PLATAFORMAS = ("meta", "google")
@@ -59,6 +59,17 @@ def recolectar(
     con.commit()
 
     for cliente in db.clientes_activos(con, cliente_id):
+        # Una prueba ya usada, una suscripción vencida o cancelada no va a
+        # generar más reportes: raspar sus competidores es gastar Apify para
+        # llenar una base que nadie va a leer.
+        if not planes.reporta(cliente):
+            corrida.saltados.append({
+                "competidor": f"(todos los de {cliente['nombre_empresa']})",
+                "plataforma": "-",
+                "motivo": f"suscripción en estado "
+                          f"'{db.valor(cliente, 'estado_suscripcion')}': no se recolecta",
+            })
+            continue
         for competidor in db.competidores_de(con, int(cliente["id"])):
             comp = dict(competidor)
             for plataforma in plataformas:
@@ -129,7 +140,8 @@ def recolectar(
     return corrida
 
 
-def _toca_reportar(con: sqlite3.Connection, cliente_id: int, periodicidad: str, inicio: str) -> bool:
+def _toca_reportar(con: sqlite3.Connection, cliente_id: int, periodicidad: str,
+                   inicio: str, recurrente: bool = True) -> bool:
     """¿Le toca reporte a este cliente hoy?
 
     El cron corre todas las semanas, pero un cliente mensual paga un reporte
@@ -148,6 +160,10 @@ def _toca_reportar(con: sqlite3.Connection, cliente_id: int, periodicidad: str, 
     excepción el refresco de más abajo era código muerto: la cadencia cortaba
     antes de llegar, y una corrida que trajo 39 anuncios nuevos, 13 cambiados
     y 6 apagados dejó el borrador tal como estaba.
+
+    `recurrente=False` es la prueba gratis: un solo reporte y se acabó. Sin
+    esto, la aritmética de fechas le abriría un periodo nuevo a la semana
+    siguiente igual que a cualquier cliente que paga.
     """
     ultimo = db.fila(
         con,
@@ -158,7 +174,10 @@ def _toca_reportar(con: sqlite3.Connection, cliente_id: int, periodicidad: str, 
     if not ultimo or not ultimo["periodo_fin"]:
         return True
     if str(ultimo["periodo_fin"])[:10] < inicio:
-        return True
+        # Le tocaría un periodo nuevo por calendario. El plan sin recurrencia
+        # ya gastó el suyo: el borrador que tiene se puede seguir refrescando
+        # (abajo), pero no se le abre otro.
+        return recurrente
     if ultimo["estado"] != "borrador":
         return False        # ya revisado o enviado: no se toca
     return _hubo_movimiento_despues(con, ultimo["generado_en"])
@@ -215,9 +234,24 @@ def ciclo_completo(
     reportes: list[dict[str, Any]] = []
 
     for cliente in db.clientes_activos(con, cliente_id):
-        periodicidad = cliente["periodicidad"] or "semanal"
-        inicio, fin = util.periodo(periodicidad)
-        if not solo_reporte and not _toca_reportar(con, int(cliente["id"]), periodicidad, inicio):
+        periodicidad = db.valor(cliente, "periodicidad", "semanal")
+        # La cadencia sale del plan (o de lo acordado con este cliente), no
+        # del enum viejo: es lo que hace posible "cada N días".
+        inicio, fin = planes.periodo_de(cliente)
+        # `solo_reporte` rehace lo que ya está en la base sin llamar al
+        # scraper: se permite aunque la suscripción esté cerrada, porque es
+        # una acción explícita y no cuesta nada. Lo que no se hace es
+        # empezar un periodo nuevo.
+        if not solo_reporte and not planes.reporta(cliente):
+            reportes.append({
+                "cliente": cliente["nombre_empresa"],
+                "omitido": f"suscripción en estado "
+                           f"'{db.valor(cliente, 'estado_suscripcion')}'",
+            })
+            continue
+        if not solo_reporte and not _toca_reportar(
+                con, int(cliente["id"]), periodicidad, inicio,
+                recurrente=planes.es_recurrente(cliente)):
             reportes.append({"cliente": cliente["nombre_empresa"],
                              "omitido": "todavía no cierra el periodo de este cliente"})
             continue
@@ -239,6 +273,13 @@ def ciclo_completo(
         except (ProveedorError, RuntimeError) as e:
             reportes.append({"cliente": cliente["nombre_empresa"], "error": str(e)})
             continue
+        # La prueba gratis se marca como usada en cuanto tiene su reporte.
+        # Es lo que impide que una corrida posterior le abra otro periodo si
+        # alguien le cambia las fechas a mano.
+        if not planes.es_recurrente(cliente) and not rep.get("ya_existia"):
+            if db.valor(cliente, "estado_suscripcion") == "prueba_pendiente":
+                db.actualizar(con, "clientes", int(cliente["id"]),
+                              {"estado_suscripcion": "prueba_usada"})
         con.commit()
         item = {
             "cliente": cliente["nombre_empresa"],

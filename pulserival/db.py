@@ -32,7 +32,31 @@ def conectar(ruta: Path | None = None) -> sqlite3.Connection:
 MIGRACIONES = (
     ("clientes", "clave", "TEXT"),
     ("competidores_seguidos", "clave", "TEXT"),
+    # Planes y suscripción. Se agregan como columnas nuevas, sin tocar el
+    # CHECK de `periodicidad`: SQLite no sabe modificar un CHECK sin
+    # reconstruir la tabla entera, y reconstruirla se llevaría por delante
+    # las claves foráneas de los reportes y anuncios ya guardados.
+    # `cadencia_dias` es lo que permite cadencias arbitrarias sin ampliar
+    # ese enum.
+    ("clientes", "plan", "TEXT"),
+    ("clientes", "estado_suscripcion", "TEXT"),
+    ("clientes", "cadencia_dias", "INTEGER"),
+    ("clientes", "precio_mensual_usd", "REAL"),
+    ("clientes", "pago_proveedor", "TEXT"),
+    ("clientes", "pago_referencia", "TEXT"),
 )
+
+# Qué poner en las filas que ya existían cuando se agrega una columna.
+# Solo corre en la misma transacción en que la columna se crea: un cliente
+# que después cambie de plan a mano no se pisa en la corrida siguiente.
+RELLENOS = {
+    # Un cliente que ya existía estaba ahí porque alguien lo cargó y le está
+    # reportando: su plan es la cadencia que ya tenía, y su suscripción está
+    # activa. Marcarlo como 'prueba' le cortaría los reportes.
+    "clientes.plan": "UPDATE clientes SET plan = periodicidad WHERE plan IS NULL",
+    "clientes.estado_suscripcion":
+        "UPDATE clientes SET estado_suscripcion = 'activa' WHERE estado_suscripcion IS NULL",
+}
 
 
 def inicializar(ruta: Path | None = None) -> Path:
@@ -44,8 +68,12 @@ def inicializar(ruta: Path | None = None) -> Path:
         # Las migraciones van ANTES del esquema: el esquema crea un índice
         # sobre una columna nueva, y ese CREATE INDEX falla si la tabla ya
         # existe sin esa columna.
-        _migrar(con)
+        aplicadas = _migrar(con)
         con.executescript(ESQUEMA.read_text(encoding="utf-8"))
+        for columna in aplicadas:
+            relleno = RELLENOS.get(columna)
+            if relleno:
+                con.execute(relleno)
     con.close()
     return destino
 
@@ -105,6 +133,26 @@ def fila(con: sqlite3.Connection, sql: str, params: tuple = ()) -> sqlite3.Row |
 
 def json_o_nada(valor: Any) -> str | None:
     return json.dumps(valor, ensure_ascii=False) if valor is not None else None
+
+
+def valor(fila: Any, columna: str, defecto: Any = None) -> Any:
+    """Lee una columna que puede no existir todavía en esta base.
+
+    Las columnas nuevas entran por MIGRACIONES, que solo corre en
+    `inicializar()`. El cron siempre lo llama, pero alguien puede correr un
+    comando suelto contra una base vieja copiada de otro lado; sin esto, eso
+    revienta con un KeyError en vez de seguir con el valor por defecto.
+    """
+    if fila is None:
+        return defecto
+    try:
+        claves = fila.keys()
+    except AttributeError:
+        return (fila or {}).get(columna, defecto)
+    if columna not in claves:
+        return defecto
+    leido = fila[columna]
+    return defecto if leido is None else leido
 
 
 def leer_json(valor: Any, defecto: Any = None) -> Any:

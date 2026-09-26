@@ -17,6 +17,19 @@ CREATE TABLE IF NOT EXISTS clientes (
     contacto_whatsapp TEXT,
     periodicidad      TEXT    NOT NULL DEFAULT 'semanal'
                               CHECK (periodicidad IN ('semanal','mensual')),
+    -- Plan vendido. El catálogo (precios, qué incluye) vive en
+    -- config/planes.yaml; acá solo queda la clave. Sin CHECK a propósito:
+    -- agregar un plan nuevo no debería necesitar reconstruir la tabla, y
+    -- los valores válidos se validan en Python (planes.PLANES_VALIDOS).
+    plan              TEXT,                       -- prueba|mensual|semanal|custom
+    estado_suscripcion TEXT,                      -- ver planes.ESTADOS_VALIDOS
+    -- Cada cuántos días toca reporte. Cuando está, manda sobre
+    -- `periodicidad`: es lo que hace posible el plan a la medida sin
+    -- tener que meter valores nuevos en el CHECK de arriba.
+    cadencia_dias     INTEGER,
+    precio_mensual_usd REAL,                      -- lo acordado con ESTE cliente
+    pago_proveedor    TEXT,                       -- tilopay|onvopay|manual
+    pago_referencia   TEXT,                       -- id de suscripción o comprobante
     dia_envio         TEXT    DEFAULT 'martes',   -- día preferido de entrega
     industria         TEXT,
     notas             TEXT,                       -- contexto que mejora el reporte

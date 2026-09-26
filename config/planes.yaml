@@ -1,0 +1,68 @@
+# ─────────────────────────────────────────────────────────────────────
+#  Los planes que se venden. Precios y cadencias viven acá, no en el
+#  código: cambiar un precio o agregar un plan no debería necesitar que
+#  alguien entienda Python.
+#
+#  Cómo lo usa el sistema:
+#    - `clave` es lo que se guarda en clientes.plan
+#    - `cadencia_dias` define cada cuántos días toca reporte
+#    - `periodicidad` es el valor heredado de la columna vieja
+#      (semanal|mensual). Se mantiene para no romper los clientes que ya
+#      existían y porque util.periodo() todavía lo entiende.
+#    - `recurrente: false` significa "un solo reporte y se acabó"
+# ─────────────────────────────────────────────────────────────────────
+
+planes:
+  - clave: prueba
+    nombre: "Prueba gratis"
+    precio_usd: 0
+    # Un solo reporte, sin recurrencia. El periodo se calcula como el
+    # semanal para que el reporte cubra una ventana con movimiento real.
+    recurrente: false
+    periodicidad: semanal
+    cadencia_dias: 7
+    resumen: "Un reporte completo de su competencia, sin costo y sin compromiso."
+    incluye:
+      - "Un reporte con hasta 3 competidores"
+      - "Anuncios activos en Meta y Google, con enlace a la fuente"
+      - "Interpretación y recomendaciones, no solo una lista"
+
+  - clave: mensual
+    nombre: "Mensual"
+    precio_usd: 20
+    recurrente: true
+    periodicidad: mensual
+    cadencia_dias: 30
+    resumen: "Un reporte por mes. Para seguir el pulso sin saturarse."
+    incluye:
+      - "Un reporte cada 30 días"
+      - "Hasta 4 competidores"
+      - "Qué cambió respecto del mes anterior"
+
+  - clave: semanal
+    nombre: "Semanal"
+    precio_usd: 100
+    recurrente: true
+    periodicidad: semanal
+    cadencia_dias: 7
+    resumen: "Un reporte por semana. Para categorías donde el precio se mueve rápido."
+    incluye:
+      - "Un reporte cada 7 días"
+      - "Hasta 6 competidores"
+      - "Detección de cambios semana a semana"
+      - "Prioridad en el soporte"
+
+  - clave: custom
+    nombre: "A la medida"
+    # Sin precio fijo: se acuerda por cliente y se guarda en
+    # clientes.precio_mensual_usd.
+    precio_usd: null
+    recurrente: true
+    periodicidad: semanal
+    # Sin cadencia fija: se define por cliente en clientes.cadencia_dias.
+    cadencia_dias: null
+    resumen: "Cadencia, competidores y alcance definidos con usted."
+    incluye:
+      - "La cadencia que necesite (cada N días)"
+      - "Los competidores que pida, sin tope"
+      - "Ajustes al formato del reporte"

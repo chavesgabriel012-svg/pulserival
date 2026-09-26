@@ -101,7 +101,12 @@ def generar(
     """Genera (o regenera) el borrador del reporte de un cliente."""
     cliente = dict(cliente)
     if not inicio or not fin:
-        inicio, fin = util.periodo(cliente.get("periodicidad") or "semanal")
+        # Mismo criterio que el pipeline: la cadencia del plan le gana al
+        # enum viejo. Acá solo se usa cuando alguien llama a generar() sin
+        # fechas (CLI suelto); el cron siempre las pasa calculadas.
+        from .. import planes as planes_mod
+
+        inicio, fin = planes_mod.periodo_de(cliente)
 
     existente = db.fila(
         con,

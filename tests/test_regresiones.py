@@ -374,3 +374,120 @@ class TestRecalculoDeHuellas(CasoBase):
         mantenimiento.recalcular_huellas(self.con, aplicar=False)
         self.assertEqual(
             db.fila(self.con, "SELECT huella FROM anuncios_detectados")["huella"], "vieja")
+
+
+class TestPruebaGratisNoSeRepite(CasoBase):
+    """Antes: la prueba gratis se cobraba sola cada semana.
+
+    `_toca_reportar()` decidía por aritmética de fechas: si el último reporte
+    cerró antes de que arrancara el periodo actual, toca uno nuevo. Eso vale
+    para quien paga, pero a la semana siguiente le abría un periodo nuevo al
+    plan de prueba igual que a todos, y cada uno gasta Apify e IA. Un plan que
+    se vende como "un solo reporte" habría entregado uno por semana para
+    siempre.
+    """
+
+    def cliente_con_plan(self, plan, estado, **extra):
+        cid = self.cliente(plan=plan, estado_suscripcion=estado, **extra)
+        return db.fila(self.con, "SELECT * FROM clientes WHERE id = ?", (cid,))
+
+    def _reporte_viejo(self, cliente_id, dias_atras=14):
+        """Un reporte cuyo periodo ya cerró: por calendario, tocaría otro."""
+        inicio, fin = util.periodo("semanal")
+        db.insertar(self.con, "reportes_generados", {
+            "cliente_id": cliente_id, "periodo_inicio": inicio, "periodo_fin": fin,
+            "asunto": "x", "borrador_md": "y", "estado": "enviado",
+        })
+        self.con.execute(
+            "UPDATE reportes_generados SET periodo_inicio = date(periodo_inicio, ?), "
+            "periodo_fin = date(periodo_fin, ?) WHERE cliente_id = ?",
+            (f"-{dias_atras} day", f"-{dias_atras} day", cliente_id))
+        self.con.commit()
+
+    def test_sin_recurrencia_no_abre_un_periodo_nuevo(self):
+        cid = self.cliente()
+        self._reporte_viejo(cid)
+        inicio, _ = util.periodo("semanal")
+        self.assertFalse(
+            pipeline._toca_reportar(self.con, cid, "semanal", inicio, recurrente=False),
+            "la prueba gratis ya gastó su único reporte")
+
+    def test_el_que_paga_si_recibe_el_periodo_siguiente(self):
+        # El mismo escenario, con recurrencia: tiene que seguir reportando.
+        cid = self.cliente()
+        self._reporte_viejo(cid)
+        inicio, _ = util.periodo("semanal")
+        self.assertTrue(
+            pipeline._toca_reportar(self.con, cid, "semanal", inicio, recurrente=True))
+
+    def test_por_defecto_sigue_siendo_recurrente(self):
+        # Los clientes cargados antes de que existieran los planes no tienen
+        # `plan`: no se les puede cortar el reporte por un valor que falta.
+        cid = self.cliente()
+        self._reporte_viejo(cid)
+        inicio, _ = util.periodo("semanal")
+        self.assertTrue(pipeline._toca_reportar(self.con, cid, "semanal", inicio))
+
+    def test_una_prueba_usada_no_gasta_scraper(self):
+        # No es solo que no reporte: raspar a sus competidores sería pagarle
+        # Apify a una base que nadie va a leer.
+        from pulserival import planes
+        self.assertFalse(planes.reporta({"estado_suscripcion": "prueba_usada"}))
+        self.assertFalse(planes.reporta({"estado_suscripcion": "cancelada"}))
+        self.assertFalse(planes.reporta({"estado_suscripcion": "pendiente_pago"}))
+        self.assertTrue(planes.reporta({"estado_suscripcion": "activa"}))
+        self.assertTrue(planes.reporta({"estado_suscripcion": "prueba_pendiente"}))
+        self.assertTrue(planes.reporta({}), "un cliente viejo sin estado sigue reportando")
+
+
+class TestMigracionDePlanes(CasoBase):
+    """Antes de los planes, `clientes` solo tenía `periodicidad` con un CHECK
+    de ('semanal','mensual'). SQLite no sabe modificar un CHECK sin reconstruir
+    la tabla, y reconstruirla se llevaría por delante el historial de anuncios
+    y reportes. Por eso la cadencia arbitraria entra por una columna nueva.
+    """
+
+    def test_un_cliente_viejo_queda_activo_y_con_su_cadencia(self):
+        # Simula una base anterior a los planes: sin las columnas nuevas.
+        import sqlite3
+        ruta = self.ruta.parent / "vieja.db"
+        con = sqlite3.connect(ruta)
+        con.executescript("""
+            CREATE TABLE clientes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                clave TEXT UNIQUE,
+                nombre_empresa TEXT NOT NULL,
+                contacto_nombre TEXT,
+                contacto_email TEXT NOT NULL,
+                contacto_whatsapp TEXT,
+                periodicidad TEXT NOT NULL DEFAULT 'semanal'
+                    CHECK (periodicidad IN ('semanal','mensual')),
+                dia_envio TEXT DEFAULT 'martes',
+                industria TEXT, notas TEXT,
+                activo INTEGER NOT NULL DEFAULT 1,
+                creado_en TEXT NOT NULL DEFAULT (datetime('now')));
+            INSERT INTO clientes (nombre_empresa, contacto_email, periodicidad)
+            VALUES ('Cliente Viejo', 'viejo@ejemplo.test', 'mensual');
+        """)
+        con.commit()
+        con.close()
+
+        db.inicializar(ruta)
+
+        con = sqlite3.connect(ruta)
+        con.row_factory = sqlite3.Row
+        fila = con.execute("SELECT * FROM clientes WHERE id = 1").fetchone()
+        self.assertEqual(fila["periodicidad"], "mensual", "no se le toca la cadencia")
+        self.assertEqual(fila["plan"], "mensual", "hereda el plan de su periodicidad")
+        self.assertEqual(fila["estado_suscripcion"], "activa",
+                         "un cliente que ya existía está activo, no en prueba")
+        con.close()
+
+    def test_el_relleno_no_pisa_un_plan_elegido_a_mano(self):
+        # La migración corre en cada `init`. Si el relleno se aplicara siempre,
+        # un cliente al que le cambiaste el plan volvería a su periodicidad.
+        cid = self.cliente(plan="custom", estado_suscripcion="activa", cadencia_dias=10)
+        db.inicializar(self.ruta)
+        fila = db.fila(self.con, "SELECT * FROM clientes WHERE id = ?", (cid,))
+        self.assertEqual(fila["plan"], "custom")
+        self.assertEqual(fila["cadencia_dias"], 10)

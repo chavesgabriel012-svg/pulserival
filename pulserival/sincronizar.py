@@ -24,7 +24,9 @@ from . import config, db
 
 CAMPOS_CLIENTE = (
     "nombre_empresa", "contacto_nombre", "contacto_email", "contacto_whatsapp",
-    "periodicidad", "dia_envio", "industria", "notas", "activo",
+    "periodicidad", "plan", "estado_suscripcion", "cadencia_dias",
+    "precio_mensual_usd", "pago_proveedor", "pago_referencia",
+    "dia_envio", "industria", "notas", "activo",
 )
 CAMPOS_COMPETIDOR = (
     "nombre", "meta_pagina_url", "meta_pagina_id", "meta_consulta",
@@ -97,6 +99,15 @@ def aplicar(con: sqlite3.Connection, ruta: Path | None = None) -> dict[str, Any]
             "contacto_email": entrada.get("contacto_email"),
             "contacto_whatsapp": entrada.get("contacto_whatsapp"),
             "periodicidad": entrada.get("periodicidad", "semanal"),
+            # El plan manda sobre la periodicidad para calcular la cadencia;
+            # los clientes de antes de los planes no traen nada de esto y
+            # siguen funcionando con la periodicidad sola.
+            "plan": entrada.get("plan"),
+            "estado_suscripcion": entrada.get("estado_suscripcion"),
+            "cadencia_dias": entrada.get("cadencia_dias"),
+            "precio_mensual_usd": entrada.get("precio_mensual_usd"),
+            "pago_proveedor": entrada.get("pago_proveedor"),
+            "pago_referencia": entrada.get("pago_referencia"),
             "dia_envio": entrada.get("dia_envio", "martes"),
             "industria": entrada.get("industria"),
             "notas": (entrada.get("notas") or "").strip() or None,

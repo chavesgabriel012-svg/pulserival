@@ -28,7 +28,8 @@ import json
 import sys
 from pathlib import Path
 
-from . import config, db, pipeline, presupuesto as presupuesto_mod, sincronizar, util
+from . import (config, db, pipeline, planes,
+               presupuesto as presupuesto_mod, sincronizar, util)
 from .ia import Presupuesto, PresupuestoExcedido, ProveedorError
 from .reporte import generar as generar_mod
 from .reporte import validar as validar_mod
@@ -78,18 +79,62 @@ def cmd_clientes(args) -> int:
         if args.accion == "agregar":
             if not args.empresa or not args.email:
                 return error("Para agregar un cliente hacen falta --empresa y --email")
-            periodicidad = args.periodicidad or "semanal"
+            plan = args.plan or "semanal"
+            datos_plan = planes.plan(plan)
+            if not datos_plan:
+                return error(f"El plan '{plan}' no está en config/planes.yaml. "
+                             f"Disponibles: {', '.join(planes.PLANES_VALIDOS)}")
+            # La periodicidad sale del plan salvo que se pida otra: el enum
+            # viejo sigue existiendo y tiene que quedar coherente.
+            periodicidad = args.periodicidad or datos_plan.get("periodicidad") or "semanal"
+            estado = args.estado or ("prueba_pendiente" if plan == "prueba"
+                                     else "pendiente_pago")
+            if estado not in planes.ESTADOS_VALIDOS:
+                return error(f"Estado '{estado}' inválido. "
+                             f"Válidos: {', '.join(planes.ESTADOS_VALIDOS)}")
             cid = db.insertar(con, "clientes", {
                 "nombre_empresa": args.empresa,
                 "contacto_nombre": args.contacto,
                 "contacto_email": args.email,
                 "contacto_whatsapp": args.whatsapp,
                 "periodicidad": periodicidad,
+                "plan": plan,
+                "estado_suscripcion": estado,
+                "cadencia_dias": args.cadencia_dias,
+                "precio_mensual_usd": args.precio,
+                "pago_proveedor": args.pago_proveedor,
+                "pago_referencia": args.pago_referencia,
                 "dia_envio": args.dia or "martes",
                 "industria": args.industria,
                 "notas": args.notas,
             })
-            ok(f"Cliente #{cid}: {args.empresa} ({periodicidad})")
+            ok(f"Cliente #{cid}: {args.empresa} · plan {plan} · {estado}")
+            if estado == "pendiente_pago":
+                print(f"    No se le van a generar reportes hasta confirmar el pago:")
+                print(f"      python3 -m pulserival.cli clientes activar --id {cid} "
+                      f"--referencia \"<comprobante>\"")
+            return 0
+        if args.accion == "activar":
+            # El paso manual del flujo híbrido: usted confirma el pago en el
+            # panel de Tilopay/Onvopay y acá deja constancia de cuál fue.
+            if args.id is None:
+                return error("Falta --id: qué cliente activar (los ves con: clientes lista)")
+            fila = db.fila(con, "SELECT * FROM clientes WHERE id = ?", (args.id,))
+            if not fila:
+                return error(f"No existe el cliente {args.id}")
+            cambios = {"estado_suscripcion": "activa", "activo": 1}
+            if args.pago_referencia:
+                cambios["pago_referencia"] = args.pago_referencia
+            if args.pago_proveedor:
+                cambios["pago_proveedor"] = args.pago_proveedor
+            if args.precio is not None:
+                cambios["precio_mensual_usd"] = args.precio
+            db.actualizar(con, "clientes", args.id, cambios)
+            ok(f"Cliente #{args.id} ({fila['nombre_empresa']}) activo · "
+               f"plan {db.valor(fila, 'plan', '?')}")
+            if not args.pago_referencia:
+                aviso("Sin --referencia no queda registrado contra qué pago se activó. "
+                      "Conviene anotar el comprobante o el id de la suscripción.")
             return 0
         if args.accion == "editar":
             if args.id is None:
@@ -108,7 +153,8 @@ def cmd_clientes(args) -> int:
             ok(f"Cliente #{args.id} actualizado: {', '.join(cambios)}")
             return 0
         tabla(db.filas(con, "SELECT * FROM clientes ORDER BY id"),
-              ["id", "nombre_empresa", "contacto_email", "periodicidad", "industria", "activo"])
+              ["id", "nombre_empresa", "plan", "estado_suscripcion", "cadencia_dias",
+               "contacto_email", "activo"])
         return 0
 
 
@@ -629,14 +675,30 @@ def construir_parser() -> argparse.ArgumentParser:
 
     # clientes
     c = sub.add_parser("clientes", help="administrar clientes")
-    c.add_argument("accion", nargs="?", default="lista", choices=["lista", "agregar", "editar"])
+    c.add_argument("accion", nargs="?", default="lista",
+                   choices=["lista", "agregar", "editar", "activar"])
     c.add_argument("--id", type=int)
     c.add_argument("--empresa")
     c.add_argument("--contacto")
     c.add_argument("--email")
     c.add_argument("--whatsapp")
+    c.add_argument("--plan", choices=list(planes.PLANES_VALIDOS),
+                   help="plan vendido (ver config/planes.yaml). Por defecto: semanal")
+    c.add_argument("--estado", choices=list(planes.ESTADOS_VALIDOS),
+                   help="estado de la suscripción. Al agregar: pendiente_pago, "
+                        "o prueba_pendiente si el plan es 'prueba'")
+    c.add_argument("--cadencia-dias", dest="cadencia_dias", type=int,
+                   help="cada cuántos días toca reporte (plan a la medida). "
+                        "Le gana a --periodicidad")
+    c.add_argument("--precio", type=float,
+                   help="lo acordado con ESTE cliente, en USD por mes")
+    c.add_argument("--pago-proveedor", dest="pago_proveedor",
+                   choices=["tilopay", "onvopay", "manual"],
+                   help="por dónde paga")
+    c.add_argument("--referencia", dest="pago_referencia",
+                   help="comprobante o id de suscripción contra el que se activa")
     c.add_argument("--periodicidad", choices=["semanal", "mensual"],
-                   help="semanal (por defecto al agregar); al editar, solo cambia si la pasás")
+                   help="normalmente sale del plan; pasala solo para forzar otra")
     c.add_argument("--dia", help="día preferido de entrega (martes por defecto al agregar)")
     c.add_argument("--industria")
     c.add_argument("--notas", help="contexto del cliente: mejora mucho el reporte")

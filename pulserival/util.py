@@ -42,18 +42,26 @@ def huella(*partes: Any) -> str:
 DIAS_PERIODO = {"semanal": 7, "mensual": 30}
 
 
-def periodo(periodicidad: str, referencia: date | None = None) -> tuple[str, str]:
+def periodo(periodicidad: str, referencia: date | None = None,
+            dias: int | None = None) -> tuple[str, str]:
     """Devuelve (inicio, fin) del periodo que se está reportando, ambos incluidos.
 
     Semanal  -> 7 días: de hoy-6 a hoy.
     Mensual  -> 30 días: de hoy-29 a hoy.
+
+    `dias` le gana a `periodicidad`: es lo que permite una cadencia
+    arbitraria (cada 10 días, cada 45) sin tener que meter valores nuevos en
+    el CHECK de la columna `periodicidad`, que SQLite no sabe modificar sin
+    reconstruir la tabla entera.
 
     El -1 importa: las comparaciones de fecha del reporte incluyen los dos
     extremos, así que con `hoy - 7` el día del borde caía dentro de dos
     periodos seguidos y el mismo anuncio se reportaba dos veces como nuevo.
     """
     fin = referencia or hoy()
-    dias = DIAS_PERIODO.get(periodicidad, 30)
+    if dias is None:
+        dias = DIAS_PERIODO.get(periodicidad, 30)
+    dias = max(1, int(dias))
     return (fin - timedelta(days=dias - 1)).isoformat(), fin.isoformat()
 
 

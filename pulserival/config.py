@@ -70,6 +70,10 @@ def config_fuentes() -> dict[str, Any]:
     return _yaml("fuentes.yaml")
 
 
+def config_planes() -> dict[str, Any]:
+    return _yaml("planes.yaml")
+
+
 def huella_incluye_creativo() -> bool:
     return bool((config_fuentes().get("deteccion") or {}).get("huella_incluye_creativo", True))
 
