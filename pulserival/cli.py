@@ -557,6 +557,24 @@ def cmd_modelos(args) -> int:
     return 0
 
 
+def cmd_landing(args) -> int:
+    """Genera la landing estática a partir de config/planes.yaml y landing.yaml."""
+    from .landing import construir
+    from .landing import pendientes
+
+    destino = construir(Path(args.destino) if args.destino else None)
+    ok(f"Landing generada: {destino}")
+    print(f"    Ábrala en el navegador para revisarla, o súbala tal cual a "
+          f"cualquier hosting de archivos.")
+    faltantes = pendientes()
+    for f in faltantes:
+        aviso(f)
+    if faltantes:
+        print("\n    La página se genera igual: lo de arriba es lo que falta "
+              "para que cobre sola.")
+    return 0
+
+
 def cmd_presupuesto(args) -> int:
     """Proyecta el gasto mensual de scrapers con los clientes ya cargados."""
     with db.sesion() as con:
@@ -783,6 +801,10 @@ def construir_parser() -> argparse.ArgumentParser:
     sub.add_parser("diagnostico",
                    help="probar los proveedores de IA y ver cuál responde").set_defaults(
         func=cmd_diagnostico)
+
+    lp = sub.add_parser("landing", help="generar la landing estática (planes + alta)")
+    lp.add_argument("--destino", help="dónde escribir el index.html")
+    lp.set_defaults(func=cmd_landing)
 
     sub.add_parser("modelos",
                    help="ver qué modelos de IA existen hoy y si el YAML pide alguno "

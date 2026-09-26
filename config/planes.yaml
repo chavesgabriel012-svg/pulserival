@@ -10,6 +10,10 @@
 #      (semanal|mensual). Se mantiene para no romper los clientes que ya
 #      existían y porque util.periodo() todavía lo entiende.
 #    - `recurrente: false` significa "un solo reporte y se acabó"
+#    - `enlace_pago` es el link de cobro que genera la pasarela desde su
+#      panel (Tilopay ruta "No-Code", u ONVO Link). Se crea una vez a mano,
+#      se pega acá y la landing lo usa tal cual. Mientras esté vacío, el
+#      botón del plan invita a escribir por WhatsApp en vez de cobrar.
 # ─────────────────────────────────────────────────────────────────────
 
 planes:
@@ -22,6 +26,7 @@ planes:
     periodicidad: semanal
     cadencia_dias: 7
     resumen: "Un reporte completo de su competencia, sin costo y sin compromiso."
+    enlace_pago: ""
     incluye:
       - "Un reporte con hasta 3 competidores"
       - "Anuncios activos en Meta y Google, con enlace a la fuente"
@@ -34,6 +39,7 @@ planes:
     periodicidad: mensual
     cadencia_dias: 30
     resumen: "Un reporte por mes. Para seguir el pulso sin saturarse."
+    enlace_pago: ""
     incluye:
       - "Un reporte cada 30 días"
       - "Hasta 4 competidores"
@@ -46,6 +52,7 @@ planes:
     periodicidad: semanal
     cadencia_dias: 7
     resumen: "Un reporte por semana. Para categorías donde el precio se mueve rápido."
+    enlace_pago: ""
     incluye:
       - "Un reporte cada 7 días"
       - "Hasta 6 competidores"
@@ -62,6 +69,7 @@ planes:
     # Sin cadencia fija: se define por cliente en clientes.cadencia_dias.
     cadencia_dias: null
     resumen: "Cadencia, competidores y alcance definidos con usted."
+    enlace_pago: ""
     incluye:
       - "La cadencia que necesite (cada N días)"
       - "Los competidores que pida, sin tope"

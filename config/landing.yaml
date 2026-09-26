@@ -1,0 +1,49 @@
+# ─────────────────────────────────────────────────────────────────────
+#  Textos y datos de contacto de la landing.
+#
+#  Está en YAML y no en el HTML por la misma razón que los precios: cambiar
+#  una frase o un número de WhatsApp no debería necesitar tocar código.
+#  Después de editar acá, regenerar con:
+#      python3 -m pulserival.cli landing
+# ─────────────────────────────────────────────────────────────────────
+
+marca: PulseRival
+dominio: ""                      # pulserival.com, cuando lo compren
+
+# A dónde llega el formulario de alta. Sin servidor, el formulario arma un
+# mensaje de WhatsApp con los datos ya ordenados. Es el canal donde de
+# verdad se cierran ventas en Costa Rica.
+contacto:
+  whatsapp: ""                   # solo dígitos con código de país: 50688887777
+  email: ""                      # respaldo si no hay WhatsApp
+
+titulo: "Sepa qué está anunciando su competencia, todas las semanas"
+subtitulo: >-
+  Revisamos los anuncios activos de sus competidores en Facebook, Instagram
+  y Google, y le mandamos un reporte que explica qué cambió y qué conviene
+  hacer. No una lista de anuncios: un análisis.
+
+# Por qué alguien pagaría por esto. Tres, no diez.
+argumentos:
+  - titulo: "Los datos son públicos. El trabajo de mirarlos, no."
+    texto: >-
+      Cualquiera puede abrir la Biblioteca de Anuncios de Meta. Casi nadie lo
+      hace todas las semanas, ni compara contra la semana pasada, ni saca
+      conclusiones. Eso es lo que hacemos.
+  - titulo: "Cada afirmación tiene su enlace"
+    texto: >-
+      Todo lo que dice el reporte se puede verificar en un clic: cada anuncio
+      que mencionamos enlaza a su ficha pública en la plataforma.
+  - titulo: "Lo que no se sabe, no se inventa"
+    texto: >-
+      Las plataformas no publican cuánto invirtió un competidor, ni su
+      alcance, ni sus clics. Ningún proveedor los tiene. Nosotros no se los
+      vamos a estimar: el reporte dice lo que se puede comprobar.
+
+# Lo que el cliente tiene que mandarnos para arrancar. Es el mismo contenido
+# de docs/05-que-necesito-de-vos.md, en versión formulario.
+formulario:
+  titulo: "Empecemos"
+  nota: >-
+    Entre más nos cuente del negocio, mejor sale el reporte. El contexto que
+    solo usted sabe es lo que separa un reporte correcto de uno útil.
