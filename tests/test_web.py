@@ -158,3 +158,88 @@ class TestVerificacionDeCompetidores(CasoWeb):
         from pulserival.web.app import _verificar
 
         self.assertEqual(_verificar([{"nombre": "X", "google_dominio": "x.com"}]), [])
+
+
+class TestSinBaseDeDatos(CasoWeb):
+    """El mismo formulario cuando el servidor no tiene disco (Vercel).
+
+    El alta se deposita como YAML en el repositorio. Lo que hay que probar es
+    que el flujo no le miente al cliente: sin base no hay suscripción activa,
+    así que la pantalla final no puede decir que la cuenta quedó activa.
+    """
+
+    def setUp(self):
+        super().setUp()
+        from pulserival.web import deposito as deposito_mod
+        from pulserival.web.app import crear_app
+
+        self.deposito = deposito_mod.DepositoGitHub(
+            repo="alguien/pulserival", token="ghp_falso")
+        self.app = crear_app(str(self.ruta), deposito=self.deposito)
+        self.app.config["TESTING"] = True
+        self.cliente_web = self.app.test_client()
+        from pulserival.web import app as modulo
+
+        modulo._VISTAS.clear()
+
+    def test_el_alta_no_manda_a_un_checkout_que_no_existe(self):
+        # Sin base no hay id de cliente. Antes de separar el depósito, el alta
+        # redirigía siempre a /checkout/<id> con el id del resultado: acá sería
+        # /checkout/None y un 404 justo después de que el cliente cargó todo.
+        import unittest.mock as mock
+
+        class Ok:
+            status_code = 201
+            text = "{}"
+
+        with mock.patch("requests.put", return_value=Ok()):
+            r = self.alta()
+        self.assertEqual(r.status_code, 200)
+        texto = r.get_data(as_text=True)
+        self.assertIn("Recibimos su solicitud", texto)
+        self.assertNotIn("quedó activa", texto)
+
+    def test_le_dice_que_todavia_no_esta_activa(self):
+        import unittest.mock as mock
+
+        class Ok:
+            status_code = 201
+            text = "{}"
+
+        with mock.patch("requests.put", return_value=Ok()):
+            texto = self.alta().get_data(as_text=True)
+        self.assertIn("Todavía no está activa", texto)
+        self.assertIn("ana@tornillo.test", texto)
+
+    def test_si_el_deposito_falla_el_cliente_se_entera(self):
+        # Lo peor que puede pasar acá es tragarse el error: el cliente cree que
+        # se registró, nadie tiene sus datos, y no hay forma de saber que pasó.
+        import unittest.mock as mock
+
+        class Falla:
+            status_code = 403
+            text = "sin permiso"
+
+        with mock.patch("requests.put", return_value=Falla()):
+            r = self.alta()
+        self.assertEqual(r.status_code, 502)
+        self.assertIn("Escríbanos", r.get_data(as_text=True))
+
+    def test_salud_avisa_si_falta_configurar_el_deposito(self):
+        from pulserival.web import deposito as deposito_mod
+        from pulserival.web.app import crear_app
+
+        app = crear_app(str(self.ruta),
+                        deposito=deposito_mod.DepositoGitHub(repo="", token=""))
+        r = app.test_client().get("/salud")
+        self.assertEqual(r.status_code, 500)
+        self.assertFalse(r.get_json()["ok"])
+        self.assertIn("PULSERIVAL_REPO", " ".join(r.get_json()["falta_configurar"]))
+
+    def test_valida_antes_de_depositar(self):
+        import unittest.mock as mock
+
+        with mock.patch("requests.put") as put:
+            r = self.alta(email="no-es-un-correo")
+        self.assertEqual(r.status_code, 400)
+        put.assert_not_called()

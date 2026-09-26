@@ -12,6 +12,7 @@ Todo se opera desde acá. Los comandos están en español y hacen una sola cosa:
   reporte enviar               mandar el reporte al cliente (paso 4)
   reporte lista                ver el estado de los reportes
   aplicar-config               cargar clientes y competidores desde config/clientes.yaml
+  altas                        ver las solicitudes que llegaron por la landing
   prueba-scraper               llamar al scraper real una vez y ver qué devuelve
   ciclo                        recolectar + generar + exportar (lo que corre el cron)
   feedback agregar             anotar qué preguntó o destacó el cliente
@@ -400,6 +401,45 @@ def cmd_aplicar_config(args) -> int:
         return error(str(e))
     ok("Configuración aplicada")
     print("  " + sincronizar.formatear(resumen).replace("\n", "\n  "))
+    return 0
+
+
+def cmd_altas(args) -> int:
+    """Lista las solicitudes que dejó el formulario de la landing.
+
+    Es la bandeja de entrada del flujo híbrido: el servidor web deposita cada
+    alta como un YAML en config/altas/ y acá se ve qué hay sin activar. No toca
+    la base ni cobra nada: solo lee archivos.
+    """
+    clientes, avisos = sincronizar.leer_altas()
+    if not clientes and not avisos:
+        print("  No hay solicitudes pendientes en config/altas/")
+        return 0
+
+    try:
+        ya_cargados = {c["clave"] for c in sincronizar.leer()}
+    except sincronizar.ConfigInvalida:
+        ya_cargados = set()
+
+    filas = []
+    for entrada in clientes:
+        filas.append({
+            "clave": entrada["clave"],
+            "empresa": entrada.get("empresa"),
+            "plan": entrada.get("plan") or "—",
+            "email": entrada.get("contacto_email"),
+            "competidores": len(entrada.get("competidores") or []),
+            "estado": entrada.get("estado_suscripcion") or "—",
+            # Una clave que ya está en clientes.yaml significa que el alta ya
+            # se procesó y el archivo quedó de más: se puede borrar.
+            "nota": "ya está en clientes.yaml" if entrada["clave"] in ya_cargados else "",
+        })
+    tabla(filas, ["clave", "empresa", "plan", "email", "competidores", "estado", "nota"])
+    for a in avisos:
+        aviso(a)
+    print("\n  Para activar una: revisar los competidores con `prueba-scraper`, pasar la")
+    print("  entrada a config/clientes.yaml con activo: true y estado_suscripcion: activa,")
+    print("  y correr `aplicar-config`. El detalle está en config/altas/README.md")
     return 0
 
 
@@ -848,6 +888,10 @@ def construir_parser() -> argparse.ArgumentParser:
                        help="crear/actualizar clientes y competidores desde config/clientes.yaml")
     a.add_argument("--archivo", help="otro archivo YAML (por defecto config/clientes.yaml)")
     a.set_defaults(func=cmd_aplicar_config)
+
+    al = sub.add_parser("altas",
+                        help="ver las solicitudes que llegaron por el formulario de la landing")
+    al.set_defaults(func=cmd_altas)
 
     t_ = sub.add_parser("prueba-scraper",
                         help="llamar al scraper real una vez y ver qué devuelve")

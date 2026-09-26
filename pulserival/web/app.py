@@ -11,11 +11,12 @@ Sirve tres cosas y nada más:
 Deliberadamente NO incluye el panel de administración: eso sigue operándose
 por CLI hasta que haga falta.
 
-Sobre la base de datos: usa la misma que el CLI, la que apunte
-`PULSERIVAL_DB`. Eso significa que este proceso necesita un disco que
-persista entre reinicios. No funciona en un hosting serverless (Vercel,
-Netlify Functions): ahí el sistema de archivos es efímero y la base se
-borra sola.
+Sobre dónde queda el alta: depende de PULSERIVAL_DEPOSITO, y eso decide qué
+hosting sirve. Con `sqlite` (por defecto) escribe en la base que apunte
+`PULSERIVAL_DB`, y el proceso necesita un disco que persista entre reinicios.
+Con `github` escribe un YAML en el repositorio y no toca ninguna base, que es
+lo que permite correr en un hosting serverless como Vercel. El detalle está en
+`pulserival/web/deposito.py`.
 """
 from __future__ import annotations
 
@@ -28,6 +29,7 @@ from flask import Flask, abort, redirect, render_template, request, url_for
 
 from .. import altas, config, db, planes
 from ..landing import generador
+from . import deposito as deposito_mod
 
 # El cobro real todavía no existe. Mientras esta bandera esté encendida, el
 # checkout es una simulación y lo dice en pantalla.
@@ -35,7 +37,7 @@ def cobro_simulado() -> bool:
     return (config.env("PULSERIVAL_COBRO") or "simulado").lower() != "real"
 
 
-def crear_app(ruta_db: str | None = None) -> Flask:
+def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
     # Las plantillas son las mismas que usa la landing estática: una sola
     # copia del HTML para los dos modos.
     app = Flask(__name__, template_folder=str(generador.PLANTILLAS))
@@ -46,6 +48,9 @@ def crear_app(ruta_db: str | None = None) -> Flask:
         con.row_factory = sqlite3.Row
         con.execute("PRAGMA foreign_keys = ON")
         return con
+
+    deposito = deposito or deposito_mod.obtener(conectar)
+    app.config["DEPOSITO"] = deposito
 
     # ── landing ──────────────────────────────────────────────────────
     @app.get("/")
@@ -77,25 +82,39 @@ def crear_app(ruta_db: str | None = None) -> Flask:
                 "prioridad": 1 if n == 1 else 2,
             })
 
-        con = conectar()
         try:
-            with con:
-                resultado = altas.crear(
-                    con,
-                    empresa=datos.get("empresa", ""),
-                    email=datos.get("email", ""),
-                    competidores=competidores,
-                    plan=datos.get("plan") or "semanal",
-                    contacto=datos.get("contacto"),
-                    whatsapp=datos.get("whatsapp"),
-                    industria=datos.get("industria"),
-                    notas=datos.get("contexto"),
-                )
+            resultado = deposito.guardar({
+                "empresa": datos.get("empresa", ""),
+                "email": datos.get("email", ""),
+                "competidores": competidores,
+                "plan": datos.get("plan") or "semanal",
+                "contacto": datos.get("contacto"),
+                "whatsapp": datos.get("whatsapp"),
+                "industria": datos.get("industria"),
+                "notas": datos.get("contexto"),
+            })
         except altas.AltaInvalida as e:
             return _pagina("No pudimos completar el registro", str(e), volver=True), 400
-        finally:
-            con.close()
+        except deposito_mod.DepositoError as e:
+            # Un fallo del depósito no es culpa de quien llenó el formulario, y
+            # perder el alta en silencio es lo peor que puede pasar acá: se le
+            # dice que escriba, con los datos que ya cargó a la vista.
+            app.logger.error("No se pudo depositar el alta: %s", e)
+            return _pagina(
+                "No pudimos guardar su solicitud",
+                "Hubo un problema de nuestro lado, no con los datos que cargó. "
+                "Escríbanos y la registramos a mano: "
+                + (_contacto_visible() or "el contacto está al pie de la página") + ".",
+                volver=True), 502
 
+        if resultado.get("cliente_id") is None:
+            # Sin base no hay suscripción que transicionar, así que no hay
+            # checkout que confirmar: el alta queda para activación manual.
+            return render_template(
+                "gracias.html.j2", **generador.contexto(),
+                cliente=None, simulado=cobro_simulado(), alta=resultado,
+                empresa=datos.get("empresa", ""), email=datos.get("email", ""),
+                plan=planes.plan(datos.get("plan") or "semanal"))
         return redirect(url_for("checkout", cliente_id=resultado["cliente_id"]))
 
     # ── cobro (simulado) ─────────────────────────────────────────────
@@ -155,21 +174,45 @@ def crear_app(ruta_db: str | None = None) -> Flask:
             **generador.contexto(),
             cliente=cliente,
             simulado=cobro_simulado(),
+            alta=None,
+            plan=planes.plan(db.valor(cliente, "plan")),
+            empresa=cliente["nombre_empresa"],
+            email=cliente["contacto_email"],
         )
 
     @app.get("/salud")
     def salud():
         """Para que el hosting sepa si el proceso está vivo."""
-        con = conectar()
-        try:
-            total = db.fila(con, "SELECT COUNT(*) AS n FROM clientes")["n"]
-        except sqlite3.Error as e:
-            return {"ok": False, "error": str(e)}, 500
-        finally:
-            con.close()
-        return {"ok": True, "clientes": total, "cobro": "simulado" if cobro_simulado() else "real"}
+        estado = {
+            "ok": True,
+            "deposito": deposito.nombre,
+            "cobro": "simulado" if cobro_simulado() else "real",
+        }
+        faltan = deposito.pendientes()
+        if faltan:
+            # Configuración incompleta es un 500 a propósito: el formulario
+            # está publicado y no puede guardar nada. Mejor que el hosting lo
+            # marque caído que descubrirlo por un alta perdida.
+            return {**estado, "ok": False, "falta_configurar": faltan}, 500
+        if deposito.nombre == "sqlite":
+            con = conectar()
+            try:
+                estado["clientes"] = db.fila(con, "SELECT COUNT(*) AS n FROM clientes")["n"]
+            except sqlite3.Error as e:
+                return {**estado, "ok": False, "error": str(e)}, 500
+            finally:
+                con.close()
+        return estado
 
     return app
+
+
+def _contacto_visible() -> str:
+    """WhatsApp o correo de config/landing.yaml, para el mensaje de error."""
+    contacto = config.config_landing().get("contacto") or {}
+    if contacto.get("whatsapp"):
+        return f"WhatsApp {contacto['whatsapp']}"
+    return contacto.get("email") or ""
 
 
 def _pagina(titulo: str, mensaje: str, volver: bool = False) -> str:

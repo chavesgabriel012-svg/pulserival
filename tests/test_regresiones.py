@@ -548,3 +548,70 @@ class TestSospechosasEnElBorrador(CasoBase):
         self.con.commit()
         texto = flujo.exportar(self.con, rid).read_text(encoding="utf-8")
         self.assertNotIn("REVISAR ANTES DE ENVIAR", texto)
+
+
+class TestBandejaDeAltasYSincronizar(CasoBase):
+    """Dos formas en que la bandeja de altas podía romper al cliente que paga.
+
+    La bandeja (config/altas/*.yaml) la escribe el servidor web cuando corre sin
+    base propia. `aplicar-config` la lee además de clientes.yaml, y ese cruce
+    tiene dos bordes que hay que dejar clavados.
+    """
+
+    def setUp(self):
+        super().setUp()
+        from pathlib import Path
+
+        self.dir_altas = Path(self.tmp.name) / "altas"
+        self.dir_altas.mkdir()
+        self.curado = Path(self.tmp.name) / "clientes.yaml"
+
+    def _yaml(self, clave, empresa, activo=False):
+        import yaml
+
+        return yaml.safe_dump({"clientes": [{
+            "clave": clave, "empresa": empresa,
+            "contacto_email": f"{clave}@ejemplo.test", "activo": activo,
+            "competidores": [{"nombre": "EPA", "google_dominio": "epa.cr"}],
+        }]}, allow_unicode=True)
+
+    def test_un_alta_activada_no_se_desactiva_sola_en_la_corrida_siguiente(self):
+        # `aplicar()` desactiva a todo cliente activo que no esté en el archivo.
+        # Si el barrido mirara solo clientes.yaml, el cliente que se activó
+        # dejando su YAML en la bandeja se desactivaría en la corrida siguiente
+        # y dejaría de recibir reportes habiendo pagado.
+        from unittest import mock
+
+        from pulserival import db, sincronizar
+
+        self.curado.write_text("clientes: []\n", encoding="utf-8")
+        (self.dir_altas / "2026-01-01-pagando.yaml").write_text(
+            self._yaml("pagando", "Ya Pagó S.A.", activo=True), encoding="utf-8")
+        with mock.patch.object(sincronizar.config, "DIR_CONFIG",
+                               self.curado.parent), \
+             mock.patch.object(sincronizar, "leer", return_value=[]):
+            sincronizar.aplicar(self.con)
+            self.con.commit()
+            sincronizar.aplicar(self.con)   # la corrida siguiente
+            self.con.commit()
+        fila = db.fila(self.con, "SELECT * FROM clientes WHERE clave = 'pagando'")
+        self.assertEqual(fila["activo"], 1)
+
+    def test_con_archivo_explicito_la_bandeja_no_se_mezcla(self):
+        # `--archivo` se usa para aplicar una configuración de prueba. Si además
+        # arrastrara la bandeja, una prueba local crearía en la base a los
+        # clientes reales que mandaron el formulario.
+        from unittest import mock
+
+        from pulserival import db, sincronizar
+
+        otro = self.curado.parent / "solo-prueba.yaml"
+        otro.write_text(self._yaml("de-prueba", "Cliente De Prueba"), encoding="utf-8")
+        (self.dir_altas / "2026-01-01-real.yaml").write_text(
+            self._yaml("real", "Cliente Real"), encoding="utf-8")
+        with mock.patch.object(sincronizar.config, "DIR_CONFIG", self.curado.parent):
+            sincronizar.aplicar(self.con, otro)
+        self.con.commit()
+        claves = {f["clave"] for f in db.filas(self.con, "SELECT clave FROM clientes")}
+        self.assertIn("de-prueba", claves)
+        self.assertNotIn("real", claves)
