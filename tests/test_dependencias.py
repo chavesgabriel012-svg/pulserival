@@ -65,7 +65,42 @@ class TestDependencias(unittest.TestCase):
             "En una máquina limpia (el servidor del cron) la corrida va a fallar.",
         )
 
-    def test_solo_las_tres_librerias_esperadas(self):
+    # Las tres con las que corre el pipeline: recolectar, generar, enviar.
+    # Es lo que tiene que funcionar el lunes a las 5 a.m.
+    DEL_PIPELINE = {"pyyaml", "jinja2", "requests"}
+    # Las de la capa web, que es opcional: si la web se cae, el reporte sale
+    # igual. Van aparte justamente para que esa frontera sea visible.
+    DE_LA_WEB = {"flask", "gunicorn"}
+
+    def test_no_se_agregan_librerias_sin_decidirlo(self):
         """Si algún día se agrega una dependencia, este test falla a propósito:
         te obliga a decidir conscientemente si vale la pena mantenerla."""
-        self.assertEqual(declarados(), {"pyyaml", "jinja2", "requests"})
+        self.assertEqual(declarados(), self.DEL_PIPELINE | self.DE_LA_WEB)
+
+    def test_el_pipeline_no_depende_de_la_web(self):
+        """El reporte del lunes no puede necesitar Flask instalado.
+
+        Si un import de Flask se cuela en el pipeline, el cron se cae en una
+        máquina que solo instaló lo básico. Por eso la capa web importa del
+        pipeline y nunca al revés.
+        """
+        import ast
+        from pathlib import Path
+
+        raiz = Path(__file__).resolve().parent.parent / "pulserival"
+        culpables = []
+        for archivo in raiz.rglob("*.py"):
+            if "web" in archivo.relative_to(raiz).parts:
+                continue
+            arbol = ast.parse(archivo.read_text(encoding="utf-8"))
+            for nodo in ast.walk(arbol):
+                if isinstance(nodo, ast.Import):
+                    nombres = [a.name.split(".")[0] for a in nodo.names]
+                elif isinstance(nodo, ast.ImportFrom):
+                    nombres = [(nodo.module or "").split(".")[0]]
+                else:
+                    continue
+                if {n.lower() for n in nombres} & self.DE_LA_WEB:
+                    culpables.append(str(archivo.relative_to(raiz)))
+        self.assertEqual(sorted(set(culpables)), [],
+                         "el pipeline no puede importar la capa web")

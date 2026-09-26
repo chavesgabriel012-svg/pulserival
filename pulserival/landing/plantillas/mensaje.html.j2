@@ -1,0 +1,7 @@
+{% extends "_base.html.j2" %}
+{% block titulo %}{{ titulo_pagina }} — {{ marca }}{% endblock %}
+{% block contenido %}
+  <h1>{{ titulo_pagina }}</h1>
+  <p>{{ mensaje }}</p>
+  {% if volver %}<p><a class="btn" href="/">Volver</a></p>{% endif %}
+{% endblock %}

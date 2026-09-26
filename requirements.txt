@@ -1,5 +1,13 @@
 # PulseRival - dependencias mínimas a propósito.
-# Tres librerías externas, nada más:
+#
+# Eran tres. Ahora son cinco, y las dos nuevas son solo para la capa web
+# (landing + alta + cobro): el pipeline —recolectar, generar, enviar— sigue
+# corriendo con las tres de siempre. Si algún día se cae la web, el reporte
+# del lunes sale igual.
 PyYAML>=6.0        # leer los archivos de configuración de config/
-Jinja2>=3.1        # plantillas del email y de los prompts
+Jinja2>=3.1        # plantillas del email, de los prompts y de la web
 requests>=2.31     # llamadas HTTP a los scrapers, la IA y el envío de correo
+
+# --- solo para el servidor web ---
+Flask>=3.0         # landing, formulario de alta y checkout
+gunicorn>=21.2     # servidor de producción (el de Flask no aguanta tráfico real)

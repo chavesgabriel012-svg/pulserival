@@ -141,7 +141,7 @@
     <h2>{{ formulario.titulo }}</h2>
     <p style="max-width:62ch;color:#3a3a3a;margin-top:0;">{{ formulario.nota }}</p>
 
-    <form id="alta" novalidate>
+    <form id="alta" novalidate{% if modo_servidor %} method="post" action="{{ accion_alta }}"{% endif %}>
       <div class="campo">
         <label for="empresa">Nombre de su empresa</label>
         <input id="empresa" name="empresa" required>
@@ -209,8 +209,12 @@
       </div>
 
       <div class="nota">
+        {% if modo_servidor %}
+        Al enviar le mostramos un resumen para confirmar antes de activar nada.
+        {% else %}
         Al enviar se abre WhatsApp con sus datos ya ordenados. Nada se guarda en
         esta página.
+        {% endif %}
       </div>
     </form>
   </section>
@@ -226,6 +230,7 @@
   </div>
 </footer>
 
+{% if not modo_servidor %}
 <script>
 // Sin servidor: el formulario arma un mensaje ordenado y lo manda por
 // WhatsApp, que es donde se cierran las ventas. Si no hay número
@@ -276,5 +281,6 @@
   });
 })();
 </script>
+{% endif %}
 </body>
 </html>

@@ -1,0 +1,17 @@
+{% extends "_base.html.j2" %}
+{% block titulo %}Listo — {{ marca }}{% endblock %}
+{% block contenido %}
+  {% if simulado %}
+  <div class="aviso"><strong>Cobro simulado</strong><br>
+    No se cobró nada. La cuenta quedó activa para probar el flujo.</div>
+  {% endif %}
+  <h1>Listo, {{ cliente["nombre_empresa"] }}</h1>
+  <p>
+    Su cuenta quedó activa. El primer reporte sale en la próxima corrida y le
+    llega a <strong>{{ cliente["contacto_email"] }}</strong>.
+  </p>
+  <div class="nota">
+    Cada reporte pasa por revisión humana antes de salir. Si algún competidor
+    no está pautando en este momento, se lo decimos en vez de rellenar.
+  </div>
+{% endblock %}

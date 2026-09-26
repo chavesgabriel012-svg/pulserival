@@ -1,0 +1,78 @@
+{% extends "_base.html.j2" %}
+{% block titulo %}Confirmar — {{ marca }}{% endblock %}
+{% block contenido %}
+
+{% if simulado %}
+<div class="aviso">
+  <strong>Cobro simulado</strong><br>
+  Esta pantalla todavía no cobra. Confirmar acá activa la cuenta sin mover
+  plata: sirve para probar el flujo completo antes de conectar la pasarela.
+</div>
+{% endif %}
+
+<h1>{{ cliente["nombre_empresa"] }}</h1>
+<p>Revise que esté todo bien antes de confirmar.</p>
+
+<h2>Su plan</h2>
+<table>
+  <tr><th>Plan</th><td>{{ plan.nombre or cliente["plan"] }}</td></tr>
+  <tr><th>Precio</th><td>
+    {% if precio %}${{ precio }} por mes{% elif precio == 0 %}Sin costo{% else %}A convenir{% endif %}
+  </td></tr>
+  <tr><th>Cadencia</th><td>
+    {% if cliente["cadencia_dias"] %}Cada {{ cliente["cadencia_dias"] }} días
+    {% else %}{{ cliente["periodicidad"] }}{% endif %}
+  </td></tr>
+  <tr><th>Reporte a</th><td>{{ cliente["contacto_email"] }}</td></tr>
+</table>
+
+<h2>Competidores que vamos a seguir</h2>
+<table>
+  {% for c in competidores %}
+  <tr>
+    <th>{{ c["nombre"] }}</th>
+    <td>
+      {% if c["meta_pagina_url"] %}{{ c["meta_pagina_url"] }}<br>{% endif %}
+      {% if c["meta_consulta"] and not c["meta_pagina_url"] %}Búsqueda: {{ c["meta_consulta"] }}<br>{% endif %}
+      {% if c["google_dominio"] %}<span class="pill">{{ c["google_dominio"] }}</span>{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% if verificaciones %}
+<h2>Verificación</h2>
+<table>
+  {% for v in verificaciones %}
+  <tr>
+    <th>{{ v.competidor }} · {{ v.plataforma }}</th>
+    <td>
+      {% if v.error %}No se pudo verificar ahora
+      {% elif v.encontrados %}{{ v.encontrados }} anuncios activos
+      {% else %}Sin anuncios activos en este momento{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+<div class="nota">
+  Un competidor sin anuncios activos no va a aparecer en su reporte hasta que
+  vuelva a pautar. Si alguno le sorprende, escríbanos antes de confirmar.
+</div>
+{% endif %}
+
+<h2>Confirmar</h2>
+{% if simulado %}
+<form method="post" action="/checkout/{{ cliente['id'] }}/confirmar">
+  <button class="btn" type="submit">Confirmar (simulado)</button>
+</form>
+{% elif enlace_pago %}
+<p><a class="btn" href="{{ enlace_pago }}">Ir a pagar</a></p>
+<div class="nota">
+  El pago se procesa en la pasarela. Su cuenta se activa cuando el pago se
+  confirma.
+</div>
+{% else %}
+<div class="nota">Falta configurar el enlace de pago de este plan.</div>
+{% endif %}
+
+{% endblock %}

@@ -575,6 +575,29 @@ def cmd_landing(args) -> int:
     return 0
 
 
+def cmd_servidor(args) -> int:
+    """Levanta la web (landing + alta + cobro simulado) para probarla local.
+
+    En producción no se usa este comando: ahí lo levanta gunicorn, que es lo
+    que aguanta varias peticiones a la vez. Este es el servidor de desarrollo
+    de Flask y lo dice él mismo al arrancar.
+    """
+    try:
+        from .web import crear_app
+    except ImportError:
+        return error("Falta Flask. Instalalo con: pip install -r requirements.txt")
+
+    from .web.app import cobro_simulado
+
+    if cobro_simulado():
+        aviso("COBRO SIMULADO: confirmar en el checkout activa la cuenta sin "
+              "cobrar nada. Para cambiarlo: PULSERIVAL_COBRO=real")
+    ok(f"Servidor en http://{args.host}:{args.puerto}")
+    print(f"    Base de datos: {config.ruta_db()}")
+    crear_app().run(host=args.host, port=args.puerto, debug=args.debug)
+    return 0
+
+
 def cmd_presupuesto(args) -> int:
     """Proyecta el gasto mensual de scrapers con los clientes ya cargados."""
     with db.sesion() as con:
@@ -801,6 +824,12 @@ def construir_parser() -> argparse.ArgumentParser:
     sub.add_parser("diagnostico",
                    help="probar los proveedores de IA y ver cuál responde").set_defaults(
         func=cmd_diagnostico)
+
+    sv = sub.add_parser("servidor", help="levantar la web para probarla local")
+    sv.add_argument("--host", default="127.0.0.1")
+    sv.add_argument("--puerto", type=int, default=5000)
+    sv.add_argument("--debug", action="store_true")
+    sv.set_defaults(func=cmd_servidor)
 
     lp = sub.add_parser("landing", help="generar la landing estática (planes + alta)")
     lp.add_argument("--destino", help="dónde escribir el index.html")
