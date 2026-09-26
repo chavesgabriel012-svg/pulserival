@@ -106,6 +106,7 @@ cambiar de modelo o arreglar un campo de un scraper no requiere tocar código.
 | [05 · Qué necesito de vos](docs/05-que-necesito-de-vos.md) | la lista concreta antes de la primera corrida real |
 | [06 · Operación semanal](docs/06-operacion-semanal.md) | tu rutina de 20 minutos y qué hacer cuando algo falla |
 | [07 · Presupuesto](docs/07-presupuesto.md) | qué se paga y qué no, con precios verificados, y el dominio |
+| [08 · Cobro y lanzamiento](docs/08-cobro-y-lanzamiento.md) | los planes, cómo se cobra hoy y qué falta probar con una transacción real |
 
 ## Pruebas
 

@@ -146,7 +146,7 @@ python3 -m pulserival.cli reporte registrar --id 1 \
 
 Etiquetas disponibles: `tono`, `dato_incorrecto`, `dato_faltante`, `recorte`,
 `reordenamiento`, `recomendacion_debil`, `jerga`, `contexto_cliente`,
-`formato`, `otro`.
+`formato`, `sin_cambios`, `otro`.
 
 Esa etiqueta de dos palabras es lo que dentro de dos meses te dice qué
 arreglar en el prompt. Si te salteás este paso, la Fase 2 no existe.
