@@ -491,3 +491,60 @@ class TestMigracionDePlanes(CasoBase):
         fila = db.fila(self.con, "SELECT * FROM clientes WHERE id = ?", (cid,))
         self.assertEqual(fila["plan"], "custom")
         self.assertEqual(fila["cadencia_dias"], 10)
+
+
+class TestSospechosasEnElBorrador(CasoBase):
+    """Antes: el aviso de "este competidor no devolvió nada" vivía solo en el
+    log de la corrida. El log se lee una vez y se olvida; lo que se lee antes
+    de enviar es el borrador. Artelec devolvía cero anuncios teniendo ~52
+    activos, y el reporte llegó a recomendar aprovechar ese hueco inexistente.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.cli = self.cliente()
+        self.competidor(self.cli, "Artelec")
+
+    def _corrida_con_sospechosa(self, competidor="Artelec"):
+        db.insertar(self.con, "corridas_recoleccion", {
+            "estado": "parcial", "fuente": "demo",
+            "terminada_en": util.ahora_iso(),
+            "resumen_json": db.json_o_nada({
+                "totales": {"nuevos": 0},
+                "sospechosas": [{"competidor": competidor, "plataforma": "meta",
+                                 "motivo": "nunca devolvió un solo anuncio"}],
+            }),
+        })
+        self.con.commit()
+
+    def test_el_aviso_llega_al_borrador_exportado(self):
+        self._corrida_con_sospechosa()
+        rid = db.insertar(self.con, "reportes_generados", {
+            "cliente_id": self.cli, "periodo_inicio": "2026-01-01",
+            "periodo_fin": "2026-01-07", "asunto": "x", "borrador_md": "cuerpo",
+        })
+        self.con.commit()
+        texto = flujo.exportar(self.con, rid).read_text(encoding="utf-8")
+        self.assertIn("REVISAR ANTES DE ENVIAR", texto)
+        self.assertIn("Artelec", texto)
+
+    def test_solo_avisa_de_los_competidores_de_ESE_cliente(self):
+        # Una corrida toca a todos los clientes a la vez: el borrador de uno
+        # no puede mostrar los problemas de los competidores de otro.
+        self._corrida_con_sospechosa(competidor="Competidor De Otro Cliente")
+        rid = db.insertar(self.con, "reportes_generados", {
+            "cliente_id": self.cli, "periodo_inicio": "2026-01-01",
+            "periodo_fin": "2026-01-07", "asunto": "x", "borrador_md": "cuerpo",
+        })
+        self.con.commit()
+        texto = flujo.exportar(self.con, rid).read_text(encoding="utf-8")
+        self.assertNotIn("REVISAR ANTES DE ENVIAR", texto)
+
+    def test_sin_sospechosas_el_encabezado_queda_limpio(self):
+        rid = db.insertar(self.con, "reportes_generados", {
+            "cliente_id": self.cli, "periodo_inicio": "2026-01-01",
+            "periodo_fin": "2026-01-07", "asunto": "x", "borrador_md": "cuerpo",
+        })
+        self.con.commit()
+        texto = flujo.exportar(self.con, rid).read_text(encoding="utf-8")
+        self.assertNotIn("REVISAR ANTES DE ENVIAR", texto)

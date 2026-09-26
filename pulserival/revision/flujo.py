@@ -59,6 +59,22 @@ def exportar(con: sqlite3.Connection, reporte_id: int, carpeta: Path | None = No
         encabezado.append(f"       ✗ {p['tipo']}: {p['detalle']}")
     for a in val.get("avisos", []):
         encabezado.append(f"       ! {a['tipo']}: {a['detalle']}")
+
+    # Los competidores que la recolección marcó como dudosos. Iban solo al
+    # log de la corrida, que se lee una vez y se olvida; esto es lo que se
+    # lee de verdad antes de enviar. Pasó con Artelec: devolvía cero
+    # anuncios teniendo ~52 activos, y el reporte recomendó aprovechar ese
+    # hueco que no existía.
+    from .. import pipeline
+
+    dudosos = pipeline.sospechosas_para_cliente(
+        con, int(rep["cliente_id"]), rep["generado_en"])
+    if dudosos:
+        encabezado += ["", "     REVISAR ANTES DE ENVIAR — datos dudosos:"]
+        for d in dudosos:
+            encabezado.append(
+                f"       ! {d['competidor']} [{d['plataforma']}]: {d['motivo']}")
+
     encabezado += [
         "",
         "     Editá el texto de abajo como quieras. Cuando termines, corré:",

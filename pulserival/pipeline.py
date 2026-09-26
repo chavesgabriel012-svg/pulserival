@@ -206,6 +206,36 @@ def _hubo_movimiento_despues(con: sqlite3.Connection, momento: str | None) -> bo
     return False
 
 
+def sospechosas_para_cliente(
+    con: sqlite3.Connection, cliente_id: int, hasta: str | None = None
+) -> list[dict[str, str]]:
+    """Los competidores de ESE cliente que la última corrida marcó dudosos.
+
+    Existe porque el aviso vivía solo en el log de la corrida, y el log se
+    lee una vez y se olvida. Lo que sí se lee es el borrador. El caso
+    concreto: Artelec devolvía cero anuncios mientras tenía ~52 activos, y
+    el reporte llegó a recomendar aprovechar ese hueco inexistente.
+
+    `hasta` acota a la corrida que alimentó un reporte determinado: se le
+    pasa su `generado_en` para no mostrar avisos de una corrida posterior.
+    """
+    nombres = {dict(c)["nombre"] for c in db.competidores_de(con, cliente_id)}
+    if not nombres:
+        return []
+    sql = ("SELECT resumen_json FROM corridas_recoleccion "
+           "WHERE terminada_en IS NOT NULL")
+    params: tuple = ()
+    if hasta:
+        sql += " AND terminada_en <= ?"
+        params = (hasta,)
+    fila = db.fila(con, sql + " ORDER BY terminada_en DESC LIMIT 1", params)
+    if not fila:
+        return []
+    resumen = db.leer_json(fila["resumen_json"], {}) or {}
+    return [s for s in (resumen.get("sospechosas") or [])
+            if s.get("competidor") in nombres]
+
+
 def ciclo_completo(
     con: sqlite3.Connection,
     cliente_id: int | None = None,
