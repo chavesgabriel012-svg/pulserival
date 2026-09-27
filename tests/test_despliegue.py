@@ -87,7 +87,8 @@ class TestFly(unittest.TestCase):
     def test_hay_disco_montado(self):
         self.assertTrue(self.cfg["mounts"]["destination"])
         # Y todo lo que tiene que sobrevivir a un deploy apunta ahí.
-        for variable in ("PULSERIVAL_DB", "PULSERIVAL_BORRADORES", "PULSERIVAL_SALIDA"):
+        for variable in ("PULSERIVAL_DB", "PULSERIVAL_DATOS",
+                         "PULSERIVAL_BORRADORES", "PULSERIVAL_SALIDA"):
             self.assertTrue(
                 self.cfg["env"][variable].startswith(self.cfg["mounts"]["destination"]),
                 f"{variable} no apunta al disco")

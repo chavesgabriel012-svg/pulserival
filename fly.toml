@@ -15,6 +15,7 @@ primary_region = "mia"        # Miami: lo más cerca de Costa Rica
   # También al disco: en salida/ queda la copia de cada correo enviado, que es
   # el registro de lo que el cliente recibió. En la imagen se perdería en cada
   # deploy.
+  PULSERIVAL_DATOS = "/datos/trabajo"
   PULSERIVAL_BORRADORES = "/datos/borradores"
   PULSERIVAL_SALIDA = "/datos/salida"
   # El cron vive dentro de este proceso. Ver pulserival/web/planificador.py

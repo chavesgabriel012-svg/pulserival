@@ -99,6 +99,7 @@ el archivo acá hay que ponerlas a mano:
 
 ```
 PULSERIVAL_DB=/datos/pulserival.db
+PULSERIVAL_DATOS=/datos/trabajo
 PULSERIVAL_BORRADORES=/datos/borradores
 PULSERIVAL_SALIDA=/datos/salida
 PULSERIVAL_PLANIFICADOR=1
