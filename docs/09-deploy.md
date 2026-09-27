@@ -33,14 +33,15 @@ el cron. Una pieza, no tres.
 | Cron | sí, del propio hosting | no |
 | Base de datos | una, en disco | ninguna |
 
-**Recomendación: Fly.io, ~$2,10/mes.** Los pasos concretos están en
-[11 · Fly.io](11-fly.md), con la comparación contra Railway y por qué ninguno
-de los dos sirve gratis para esto. Vercel queda como opción solo si algún día
-se quiere la landing separada; hoy no aporta nada y cuesta diez veces más.
+**Un servidor con disco: Railway ($5/mes) o Fly.io (~$2,10/mes).** La
+comparación y los pasos concretos de cada uno están en
+[11 · Servidor](11-servidor.md). Fly es más barato; Railway es más fácil de
+operar y trae respaldos automáticos del disco. Vercel queda como opción solo
+si algún día se quiere la landing separada.
 
 ## Publicar
 
-La guía paso a paso es [11 · Fly.io](11-fly.md). Lo de acá abajo es lo
+La guía paso a paso es [11 · Servidor](11-servidor.md). Lo de acá abajo es lo
 común a cualquier servidor con disco.
 
 ### 1. Crear el servicio
@@ -105,7 +106,7 @@ Por eso el cron vive dentro del proceso web, en
 `pulserival/web/planificador.py`, y se enciende con `PULSERIVAL_PLANIFICADOR=1`.
 No es un cron: mira cuándo fue la última recolección y corre si ya pasó la
 cadencia, así que una corrida atrasada por un reinicio se recupera en vez de
-perderse. El detalle está en [11 · Fly.io](11-fly.md).
+perderse. El detalle está en [11 · Servidor](11-servidor.md).
 
 La primera corrida **no** se dispara sola, a propósito: es lo que impide que un
 deploy gaste plata de scraper por su cuenta.

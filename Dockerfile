@@ -28,6 +28,10 @@ EXPOSE 8080
 #
 # --timeout 120 porque previsualizar un correo con muchos anuncios puede
 # tardar; el ciclo no pasa por acá, corre en su propio hilo.
-CMD ["gunicorn", "pulserival.web.app:wsgi()", \
-     "--bind", "0.0.0.0:8080", "--workers", "1", "--timeout", "120", \
-     "--access-logfile", "-", "--error-logfile", "-"]
+#
+# El puerto sale de PORT si está (Railway lo inyecta) y si no del 8080 (Fly lo
+# toma del fly.toml). Tiene que ser forma shell: la forma de lista no expande
+# variables y gunicorn recibiría el texto "$PORT".
+CMD ["sh", "-c", "exec gunicorn 'pulserival.web.app:wsgi()' \
+  --bind 0.0.0.0:${PORT:-8080} --workers 1 --timeout 120 \
+  --access-logfile - --error-logfile -"]
