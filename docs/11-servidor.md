@@ -197,6 +197,50 @@ Qué mirar, en orden de gravedad:
 salud de Railway marca el deploy como fallido. Es a propósito: mejor que quede
 a la vista que descubrirlo por un alta perdida.
 
+### 5.5 Preparar `railway ssh` (una sola vez)
+
+Todo lo que sigue se corre **desde la terminal de su máquina**; `railway ssh --`
+es lo que hace que el comando se ejecute adentro del contenedor.
+
+Primero, el CLI:
+
+```bash
+brew install railway                          # Mac con Homebrew
+bash <(curl -fsSL railway.com/install.sh)     # Mac o Linux sin Homebrew
+npm i -g @railway/cli                         # Windows, o cualquiera con Node
+```
+
+```bash
+railway login
+railway link          # elegir proyecto, entorno y servicio
+```
+
+`railway ssh` necesita una llave SSH registrada, y si no la hay falla con
+"No SSH keys found in your SSH agent or ~/.ssh/":
+
+```bash
+ssh-keygen -t ed25519      # Enter tres veces: ruta por defecto, sin contraseña
+railway ssh keys add       # elegir id_ed25519.pub de la lista
+```
+
+Si después dice **"No registered SSH keys found"** teniendo la llave puesta, es
+un problema conocido del CLI: la registra como llave personal y el servicio
+puede estar pidiendo una de workspace.
+
+```bash
+railway ssh keys remove
+railway ssh keys add --workspace
+```
+
+Comprobar que llega antes de tocar nada:
+
+```bash
+railway ssh -- ls -la /datos
+```
+
+Tiene que listar el contenido del disco. Si esto falla, nada de lo que sigue
+va a funcionar.
+
 ### 6. Traer la base que ya existe
 
 Una sola vez, para no perder el historial:
