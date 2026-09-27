@@ -8,9 +8,11 @@ ocurrió: exactamente el problema que el arreglo venía a resolver.
 from __future__ import annotations
 
 import sqlite3
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
-from . import db, util
+from . import config, db, util
 from .fuentes.base import AnuncioCrudo
 
 
@@ -54,3 +56,48 @@ def recalcular_huellas(con: sqlite3.Connection, aplicar: bool = True) -> dict[st
 
     return {"revisados": len(filas), "huellas_actualizadas": cambiadas,
             "duplicados_fusionados": duplicadas, "aplicado": aplicar}
+
+
+def respaldar(ruta_db: Path | None = None, destino: Path | None = None,
+              conservar: int = 7) -> dict[str, Any]:
+    """Una copia consistente de la base, sin detener el servidor.
+
+    Usa la API de respaldo de SQLite y no `cp`: copiar el archivo mientras hay
+    alguien escribiendo puede dejar una copia rota que además parece sana, y no
+    se descubre hasta que hace falta restaurarla. `Connection.backup()` toma una
+    instantánea coherente aunque el servidor esté trabajando.
+
+    Existe porque los respaldos automáticos del volumen en Railway son solo del
+    plan Pro. **Esto NO reemplaza un respaldo fuera del servidor**: vive en el
+    mismo disco, así que cubre una corrupción, una migración mala o un borrado
+    por error, pero no que se pierda el disco. Para eso hay que bajarse una
+    copia (ver docs/11-servidor.md).
+    """
+    origen = Path(ruta_db) if ruta_db else config.ruta_db()
+    if not origen.exists():
+        raise FileNotFoundError(f"No existe la base {origen}")
+    carpeta = Path(destino) if destino else (config.DIR_DATOS / "respaldos")
+    carpeta.mkdir(parents=True, exist_ok=True)
+
+    marca = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    archivo = carpeta / f"pulserival-{marca}.db"
+    con_origen = sqlite3.connect(origen)
+    try:
+        con_destino = sqlite3.connect(archivo)
+        try:
+            con_origen.backup(con_destino)
+        finally:
+            con_destino.close()
+    finally:
+        con_origen.close()
+
+    # Rotación: se borran los más viejos. El nombre lleva la fecha en formato
+    # ordenable, así que alfabético y cronológico son lo mismo.
+    previos = sorted(carpeta.glob("pulserival-*.db"))
+    borrados = []
+    for viejo in previos[:-conservar] if conservar > 0 else []:
+        viejo.unlink()
+        borrados.append(viejo.name)
+
+    return {"archivo": str(archivo), "bytes": archivo.stat().st_size,
+            "conservados": len(previos) - len(borrados), "borrados": borrados}

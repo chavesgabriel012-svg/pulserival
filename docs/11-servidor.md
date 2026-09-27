@@ -9,7 +9,7 @@ Verificado el 2026-09-27; estos precios cambian seguido, conviene confirmarlos.
 | Cuota fija | $5/mes, con $5 de uso incluido | ninguna |
 | Máquina | dentro de los $5 | $1,94/mes (shared-cpu-1x, 256 MB) |
 | Disco | **5 GB incluidos** | $0,15 por GB al mes |
-| Respaldos del disco | **manuales y automáticos, integrados** | a mano (`sqlite3 .backup`) |
+| Respaldos del disco | integrados, pero **solo en el plan Pro** ($20/mes) | a mano |
 | Deploy | con `git push`, sin instalar nada | `fly deploy` con flyctl |
 | Postgres, cuando SQLite no alcance | un clic, en el mismo proyecto | hay que operarlo |
 | Costo hoy | $5/mes | ~$2,10/mes |
@@ -17,10 +17,11 @@ Verificado el 2026-09-27; estos precios cambian seguido, conviene confirmarlos.
 **Fly es más barato. Railway es más fácil de operar.** Con un solo fundador no
 técnico manteniendo esto, los $3 de diferencia pesan menos que:
 
-1. **Los respaldos automáticos del disco.** En Fly el respaldo de la base es un
-   comando que alguien tiene que acordarse de correr. Una base corrupta sin
-   respaldo se lleva el historial de anuncios, que es lo que permite decir
-   "esto es nuevo".
+1. **Los respaldos integrados del disco** — con una advertencia grande: la
+   interfaz de Railway dice que "Creating backups and enabling point-in-time
+   recovery (PITR) are only available for customers on the Pro plan". En Hobby
+   y en la prueba **no están**. En ese caso el respaldo lo hace
+   `cli respaldo` (más abajo), igual que habría que hacer en Fly.
 2. **El camino a Postgres.** El día que SQLite no alcance —más clientes, el
    panel y el ciclo escribiendo a la vez— el paso siguiente es Postgres. En
    Railway es un clic dentro del mismo proyecto.
@@ -307,8 +308,65 @@ automático. Desde esa corrida toma el control: cada 7 días, a partir de las
 
 ### 8. Los respaldos
 
-**Settings → Volumes → Backups.** Es la razón principal para elegir Railway:
-active los automáticos ahora, no cuando haga falta.
+**Settings → pestaña Backups.** Si el plan es Pro, ahí se activan los
+automáticos (Daily: cada 24 h, se guardan 6 días · Weekly: cada 7 días, 27 días
+· Monthly: cada 30 días, 89 días). Conviene Daily y Weekly a la vez: uno cubre
+un error de operación, el otro cubre darse cuenta tarde.
+
+**En Hobby y en la prueba esa pestaña no deja crear nada**: dice que es solo
+del plan Pro. Sin eso, el respaldo lo hace el propio sistema.
+
+#### El respaldo que funciona en cualquier plan
+
+El planificador **respalda antes de cada ciclo**, automáticamente. Es el momento
+en que la base más cambia —anuncios nuevos, reportes, estados— y por lo tanto
+el momento en que más vale poder volver atrás. Se guardan las últimas 7 copias
+en `<PULSERIVAL_DATOS>/respaldos/`, y si el respaldo falla el ciclo sigue: dejar
+sin reporte al cliente por un respaldo es peor que no tenerlo.
+
+A mano, cuando se quiera:
+
+```bash
+railway ssh -- python -m pulserival.cli respaldo
+railway ssh -- ls -la /datos/trabajo/respaldos
+```
+
+Usa la API de respaldo de SQLite, no `cp`: copiar el archivo mientras alguien
+escribe puede dejar una copia rota **que además parece sana**, y eso no se
+descubre hasta el día que hace falta restaurarla.
+
+Para restaurar una:
+
+```bash
+railway ssh
+  cp /datos/trabajo/respaldos/pulserival-AAAAMMDD-HHMMSS.db /datos/nueva.db
+  mv /datos/nueva.db /datos/pulserival.db
+  exit
+railway redeploy
+```
+
+#### Lo que esto NO cubre
+
+Esas copias viven **en el mismo disco que la base**. Cubren una corrupción, una
+migración mala o un borrado por error. No cubren que se pierda el disco.
+
+Para eso hace falta una copia afuera, y es un comando:
+
+```bash
+scp ATAJO:/datos/pulserival.db respaldo-$(date +%F).db
+```
+
+Vale la pena hacerlo después de cada corrida que deje reportes que importen,
+hasta que el plan incluya respaldos de verdad.
+
+#### Una advertencia sobre la rama `datos`
+
+El repositorio es **público** y la rama `datos` tiene la base adentro. Hoy no
+hay problema: los únicos correos son `.invalid` y el cliente es una
+demostración. **Deja de estar bien en cuanto entre un cliente real**, porque ahí
+van su correo, su contexto de negocio y sus competidores. Antes de ese
+momento: o el repositorio pasa a privado, o la rama `datos` se borra y el
+respaldo pasa a ser solo el `scp` de arriba.
 
 ### 9. Apagar el cron de GitHub Actions
 
