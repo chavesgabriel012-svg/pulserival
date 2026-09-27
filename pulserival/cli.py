@@ -627,10 +627,12 @@ def cmd_landing(args) -> int:
     from .landing import construir
     from .landing import pendientes
 
-    destino = construir(Path(args.destino) if args.destino else None)
-    ok(f"Landing generada: {destino}")
-    print(f"    Ábrala en el navegador para revisarla, o súbala tal cual a "
-          f"cualquier hosting de archivos.")
+    paginas = construir(Path(args.destino) if args.destino else None)
+    ok(f"Landing generada: {len(paginas)} páginas")
+    for pagina in paginas:
+        print(f"    {pagina}")
+    print("    Ábralas en el navegador para revisarlas, o súbalas tal cual a "
+          "cualquier hosting de archivos.")
     faltantes = pendientes()
     for f in faltantes:
         aviso(f)

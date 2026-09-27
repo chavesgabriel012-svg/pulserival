@@ -43,12 +43,29 @@ class TestLandingServida(CasoWeb):
         r = self.cliente_web.get("/")
         self.assertEqual(r.status_code, 200)
 
+    def test_la_portada_no_lleva_formulario(self):
+        # El formulario se mudó a /aplicar: la portada explica, la otra toma
+        # los datos.
+        texto = self.cliente_web.get("/").get_data(as_text=True)
+        self.assertNotIn("<form", texto)
+        self.assertIn("/aplicar", texto)
+
+    def test_la_pagina_de_aplicar_carga_con_el_plan_de_la_url(self):
+        r = self.cliente_web.get("/aplicar?plan=semanal")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn('value="semanal" selected', r.get_data(as_text=True))
+
+    def test_un_plan_inexistente_en_la_url_no_rompe(self):
+        r = self.cliente_web.get("/aplicar?plan=inventado")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("<form", r.get_data(as_text=True))
+
     def test_en_modo_servidor_el_formulario_no_usa_whatsapp(self):
         # La misma plantilla sirve para los dos modos. Si el formulario
         # siguiera armando el mensaje de WhatsApp, el alta no llegaría nunca
         # a la base y nadie se daría cuenta hasta revisar por qué no hay
         # clientes nuevos.
-        h = self.cliente_web.get("/").get_data(as_text=True)
+        h = self.cliente_web.get("/aplicar").get_data(as_text=True)
         self.assertIn('action="/alta"', h)
         self.assertNotIn("wa.me", h)
 
@@ -88,9 +105,25 @@ class TestAlta(CasoWeb):
         self.assertEqual(r.status_code, 400)
         self.assertEqual(db.filas(self.con, "SELECT * FROM clientes"), [])
 
-    def test_rechaza_sin_competidores(self):
+    def test_un_alta_sin_competidores_se_acepta(self):
+        # Cambió a propósito. La página ofrece deducir los competidores cuando
+        # el cliente no los indica, así que el alta entra sin ninguno. Lo que
+        # NO se puede es activarla así: eso lo prueba el test de abajo.
         r = self.alta(comp1="", fb1="", web1="")
-        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.status_code, 302)
+        fila = db.fila(self.con, "SELECT * FROM clientes ORDER BY id DESC LIMIT 1")
+        self.assertEqual(db.competidores_de(self.con, int(fila["id"])), [])
+
+    def test_un_cliente_sin_competidores_NO_se_puede_activar(self):
+        # Activarlo generaría un reporte vacío en la corrida siguiente, con su
+        # costo de IA, y el cliente recibiría un correo que no dice nada.
+        from pulserival import altas
+
+        self.alta(comp1="", fb1="", web1="")
+        fila = db.fila(self.con, "SELECT * FROM clientes ORDER BY id DESC LIMIT 1")
+        with self.assertRaises(altas.AltaInvalida) as e:
+            altas.activar(self.con, int(fila["id"]))
+        self.assertIn("competidores", str(e.exception))
 
     def test_rechaza_un_correo_invalido(self):
         r = self.alta(email="no-es-un-correo")

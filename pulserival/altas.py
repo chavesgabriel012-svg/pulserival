@@ -138,8 +138,10 @@ def preparar(
         raise AltaInvalida(
             f"El plan '{plan}' no existe. Disponibles: {', '.join(planes.PLANES_VALIDOS)}")
 
-    if not competidores:
-        raise AltaInvalida("Hace falta al menos un competidor para poder reportar")
+    # Cero competidores es válido a propósito: en la página se ofrece
+    # deducirlos nosotros a partir de la industria y la zona. Lo que NO se
+    # puede es activar un cliente sin competidores —lo impide `activar()`—,
+    # porque el ciclo le generaría un reporte vacío y cobrado.
     if len(competidores) > MAX_COMPETIDORES:
         raise AltaInvalida(
             f"Son {len(competidores)} competidores y el máximo es {MAX_COMPETIDORES}")
@@ -227,6 +229,14 @@ def activar(con: sqlite3.Connection, cliente_id: int,
     fila = db.fila(con, "SELECT * FROM clientes WHERE id = ?", (cliente_id,))
     if not fila:
         raise AltaInvalida(f"No existe el cliente {cliente_id}")
+    # Un cliente sin competidores no se activa. El alta puede llegar sin
+    # ninguno —se ofrece deducirlos— pero activarlo así le generaría un
+    # reporte vacío en la corrida siguiente, con su costo de IA, y el cliente
+    # recibiría un correo que no dice nada.
+    if not db.competidores_de(con, cliente_id):
+        raise AltaInvalida(
+            f"El cliente {cliente_id} no tiene competidores cargados. Agrégueselos "
+            "antes de activarlo: sin competidores el reporte sale vacío.")
     cambios: dict[str, Any] = {"estado_suscripcion": "activa", "activo": 1}
     if referencia:
         cambios["pago_referencia"] = _texto(referencia)

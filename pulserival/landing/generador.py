@@ -14,7 +14,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from jinja2 import Environment
+from jinja2 import Environment, FileSystemLoader
 
 from .. import config
 
@@ -34,15 +34,35 @@ def contexto() -> dict[str, Any]:
     return datos
 
 
-def construir(destino: Path | None = None) -> Path:
-    entorno = Environment(autoescape=True)
-    plantilla = entorno.from_string(
-        (PLANTILLAS / "index.html.j2").read_text(encoding="utf-8"))
-    html = plantilla.render(**contexto())
-    destino = destino or (config.DIR_SALIDA / "landing" / "index.html")
-    destino.parent.mkdir(parents=True, exist_ok=True)
-    destino.write_text(html, encoding="utf-8")
-    return destino
+# Las páginas públicas y el archivo estático de cada una. El formulario dejó
+# de vivir en la portada: ahora tiene su propia página, a la que se llega desde
+# los botones de cada plan, y es donde más adelante va a ir el cobro.
+PAGINAS = (("index.html.j2", "index.html"), ("aplicar.html.j2", "aplicar.html"))
+
+
+def entorno() -> Environment:
+    """Jinja con cargador de archivos: las dos páginas comparten una base."""
+    return Environment(loader=FileSystemLoader(str(PLANTILLAS)), autoescape=True)
+
+
+def render(plantilla: str, datos: dict[str, Any]) -> str:
+    return entorno().get_template(plantilla).render(**datos)
+
+
+def construir(destino: Path | None = None) -> list[Path]:
+    """Escribe las páginas estáticas. Devuelve las rutas, en orden."""
+    carpeta = Path(destino) if destino else (config.DIR_SALIDA / "landing")
+    carpeta.mkdir(parents=True, exist_ok=True)
+    base = contexto()
+    # En estático los enlaces son archivos, no rutas del servidor: la página
+    # tiene que funcionar abierta con doble clic desde una carpeta.
+    base.update({"inicio_url": "index.html", "aplicar_url": "aplicar.html"})
+    escritas = []
+    for plantilla, archivo in PAGINAS:
+        ruta = carpeta / archivo
+        ruta.write_text(render(plantilla, base), encoding="utf-8")
+        escritas.append(ruta)
+    return escritas
 
 
 def pendientes() -> list[str]:

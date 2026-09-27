@@ -59,7 +59,7 @@ plataformas:
         - "Desde cuándo corre cada uno y cuántos días lleva"
         - "Cuántas variaciones y en qué regiones aparece"
         - "El enlace a la ficha pública de cada anuncio"
-      advertencia: >-
+      nota: >-
         Google no publica el texto de todos los anuncios. Ahí leemos actividad,
         no mensajes, y el reporte lo dice cuando es el caso.
 
@@ -107,15 +107,6 @@ argumentos:
       El borrador lo arma el sistema; la versión que usted recibe la aprueba
       una persona. Es más lento y es a propósito.
 
-# ── Los límites, dichos de frente ────────────────────────────────────
-limites:
-  titulo: "Lo que este reporte no hace"
-  lista:
-    - "No dice cuánto invierte su competencia. Las plataformas no lo publican."
-    - "No mide alcance, impresiones ni clics de los anuncios comerciales. Tampoco se publican."
-    - "No accede a las cuentas publicitarias de nadie: todo sale de bibliotecas públicas."
-    - "No reemplaza a su agencia ni a su equipo. Les da con qué trabajar."
-
 # Lo que el cliente tiene que mandarnos para arrancar. Es el mismo contenido
 # de docs/05-que-necesito-de-vos.md, en versión formulario.
 formulario:
@@ -123,3 +114,29 @@ formulario:
   nota: >-
     Entre más nos cuente del negocio, mejor sale el reporte. El contexto que
     solo usted sabe es lo que separa un reporte correcto de uno útil.
+
+# ── La página de aplicación (/aplicar) ───────────────────────
+# El formulario salió de la portada y tiene su propia página, a la que se
+# llega desde los botones de cada plan. Más adelante, ahí mismo se cobra.
+aplicar:
+  titulo: "Empecemos con su reporte"
+  nota: >-
+    Nos toma dos minutos. Entre más nos cuente del negocio, mejor sale el
+    reporte: el contexto que solo usted sabe es lo que separa un reporte
+    correcto de uno útil.
+  competidores:
+    titulo: "Sus competidores"
+    opcional: >-
+      Este bloque es opcional. Si prefiere, lo deja en blanco y los
+      averiguamos nosotros.
+    explicacion: >-
+      Si no nos los indica, investigamos su industria y su zona y deducimos
+      quiénes son. Lo hacemos bien, pero no le prometemos acertar: nadie
+      conoce a su competencia como usted. Si hay alguien que le preocupa en
+      particular, dígalo acá y lo cubrimos seguro.
+    ayuda: >-
+      De cada uno sirve su página de Facebook, su dominio, o los dos. Con uno
+      solo alcanza: se cubre esa plataforma y se le avisa de la otra.
+  cierre: >-
+    Al enviar le mostramos un resumen para confirmar. No se activa nada ni se
+    cobra nada hasta que usted lo confirme.
