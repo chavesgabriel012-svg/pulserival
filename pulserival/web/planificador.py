@@ -203,6 +203,19 @@ class Planificador:
             limite = int(config.env("PULSERIVAL_CICLO_LIMITE") or 40)
         except ValueError:
             limite = 40
+        # Un respaldo ANTES de cada ciclo. Es el momento en que la base más
+        # cambia —anuncios nuevos, reportes, estados— y por lo tanto el momento
+        # en que más vale poder volver atrás. Si falla no se frena el ciclo:
+        # dejar sin reporte al cliente por un respaldo es peor que no tenerlo.
+        try:
+            from .. import mantenimiento
+
+            r = mantenimiento.respaldar(conservar=7)
+            registro.info("Respaldo previo al ciclo: %s (%s bytes)",
+                          r["archivo"], r["bytes"])
+        except Exception as e:
+            registro.warning("No se pudo respaldar antes del ciclo: %s", e)
+
         con = self._conectar()
         try:
             resultado = pipeline.ciclo_completo(con, modo=modo, limite=limite)

@@ -13,6 +13,7 @@ Todo se opera desde acá. Los comandos están en español y hacen una sola cosa:
   reporte lista                ver el estado de los reportes
   aplicar-config               cargar clientes y competidores desde config/clientes.yaml
   altas                        ver las solicitudes que llegaron por la landing
+  respaldo                     copia consistente de la base, con rotación
   servidor                     levantar la web: landing, alta y panel de revisión
   prueba-scraper               llamar al scraper real una vez y ver qué devuelve
   ciclo                        recolectar + generar + exportar (lo que corre el cron)
@@ -402,6 +403,29 @@ def cmd_aplicar_config(args) -> int:
         return error(str(e))
     ok("Configuración aplicada")
     print("  " + sincronizar.formatear(resumen).replace("\n", "\n  "))
+    return 0
+
+
+def cmd_respaldo(args) -> int:
+    """Copia consistente de la base, con rotación de las viejas.
+
+    Existe porque los respaldos automáticos del volumen en Railway son del plan
+    Pro. No reemplaza un respaldo fuera del servidor: vive en el mismo disco.
+    """
+    from . import mantenimiento
+
+    try:
+        r = mantenimiento.respaldar(conservar=args.conservar, destino=(
+            Path(args.destino) if args.destino else None))
+    except (FileNotFoundError, OSError) as e:
+        return error(str(e))
+    ok(f"Respaldo: {r['archivo']}")
+    print(f"    {r['bytes']:,} bytes · se conservan {r['conservados']}")
+    if r["borrados"]:
+        print(f"    borrados por rotación: {', '.join(r['borrados'])}")
+    print("\n  Ojo: está en el mismo disco que la base. Cubre una corrupción o un")
+    print("  borrado por error, NO que se pierda el disco. Para eso, bajate una copia:")
+    print("      scp ATAJO:/datos/pulserival.db respaldo-local.db")
     return 0
 
 
@@ -896,6 +920,12 @@ def construir_parser() -> argparse.ArgumentParser:
                        help="crear/actualizar clientes y competidores desde config/clientes.yaml")
     a.add_argument("--archivo", help="otro archivo YAML (por defecto config/clientes.yaml)")
     a.set_defaults(func=cmd_aplicar_config)
+
+    rs = sub.add_parser("respaldo", help="copia consistente de la base, con rotación")
+    rs.add_argument("--conservar", type=int, default=7,
+                    help="cuántas copias mantener (0 = no borrar ninguna)")
+    rs.add_argument("--destino", help="otra carpeta (por defecto datos/respaldos)")
+    rs.set_defaults(func=cmd_respaldo)
 
     al = sub.add_parser("altas",
                         help="ver las solicitudes que llegaron por el formulario de la landing")
