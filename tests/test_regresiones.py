@@ -722,3 +722,37 @@ class TestPlanificadorNoGastaSolo(CasoBase):
             resultado = p.tic()
         ciclo.assert_not_called()
         self.assertFalse(resultado["corrio"])
+
+
+class TestLandingEstatica(unittest.TestCase):
+    def test_la_pagina_estatica_lee_el_plan_de_la_url(self):
+        # Los botones de cada plan de la portada llevan a
+        # `aplicar.html?plan=semanal`. En la versión estática no hay servidor
+        # que lea esa consulta, y nada la leía del lado del navegador: la
+        # persona elegía Semanal, caía en el formulario con "Prueba gratis"
+        # puesto y enviaba otro plan sin enterarse. Con servidor no se veía,
+        # porque ahí la ruta /aplicar sí la lee.
+        from pulserival.landing import generador
+
+        html = generador.render("aplicar.html.j2", {
+            **generador.contexto(),
+            "inicio_url": "index.html", "aplicar_url": "aplicar.html",
+        })
+        self.assertIn("window.location.search", html)
+        self.assertIn("'plan'", html)
+
+    def test_un_destino_terminado_en_html_no_crea_una_carpeta_con_ese_nombre(self):
+        # Cuando la landing era una sola página, `--destino` era la ruta del
+        # index.html. Al pasar a varias páginas el destino pasó a ser la
+        # carpeta, y el comando de siempre (`--destino salida/index.html`)
+        # creaba una carpeta llamada `index.html` con el index adentro.
+        import tempfile
+        from pathlib import Path
+
+        from pulserival.landing import generador
+
+        with tempfile.TemporaryDirectory() as tmp:
+            escritas = generador.construir(Path(tmp) / "index.html")
+            self.assertTrue((Path(tmp) / "index.html").is_file())
+            self.assertFalse((Path(tmp) / "index.html").is_dir())
+            self.assertIn(Path(tmp) / "aplicar.html", escritas)

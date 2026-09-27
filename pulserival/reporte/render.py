@@ -16,7 +16,11 @@ from jinja2 import Environment
 from .. import util
 
 PLANTILLAS = Path(__file__).parent / "plantillas"
-LOGO = PLANTILLAS / "activos" / "logo.png"
+# El logo del correo vive con el resto de la identidad de marca, no en
+# las plantillas del reporte: es el mismo archivo para todo el producto.
+from .. import marca as _marca
+
+LOGO = _marca.ACTIVOS / "logo-correo.png"
 
 NEGRITA = re.compile(r"\*\*(.+?)\*\*")
 ITALICA = re.compile(r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)")
@@ -40,7 +44,7 @@ def _inline(texto: str) -> str:
     def guardar(m: re.Match) -> str:
         etiqueta, url = m.group(1), m.group(2)
         apartados.append(
-            f'<a href="{url}" style="color:#000000;text-decoration:underline">{etiqueta}</a>'
+            f'<a href="{url}" style="color:#141312;text-decoration:underline">{etiqueta}</a>'
         )
         return f"\x00{len(apartados) - 1}\x00"
 
@@ -48,7 +52,7 @@ def _inline(texto: str) -> str:
     t = NEGRITA.sub(r"<strong>\1</strong>", t)
     t = CURSIVA_.sub(r"<em>\1</em>", t)
     t = ITALICA.sub(r"<em>\1</em>", t)
-    t = REF.sub(r'<span style="color:#8a8a8a;font-size:11px">[\1]</span>', t)
+    t = REF.sub(r'<span style="color:#8A857D;font-size:11px">[\1]</span>', t)
     for i, enlace in enumerate(apartados):
         t = t.replace(f"\x00{i}\x00", enlace)
     return t
@@ -73,32 +77,32 @@ def markdown_a_html(md: str) -> str:
         if cruda.startswith("### "):
             cerrar_lista()
             salida.append(
-                '<h3 style="margin:22px 0 6px;font-size:15px;color:#000000;font-weight:600">'
+                '<h3 style="margin:22px 0 6px;font-size:15px;color:#141312;font-weight:600">'
                 f"{_inline(cruda[4:])}</h3>"
             )
         elif cruda.startswith("## "):
             cerrar_lista()
             salida.append(
-                '<h2 style="margin:30px 0 10px;font-size:16px;color:#000000;font-weight:600;'
+                '<h2 style="margin:30px 0 10px;font-size:16px;color:#141312;font-weight:600;'
                 'text-transform:uppercase;letter-spacing:.8px;'
-                'border-bottom:2px solid #000000;padding-bottom:7px">'
+                'border-bottom:2px solid #141312;padding-bottom:7px">'
                 f"{_inline(cruda[3:])}</h2>"
             )
         elif cruda.startswith("# "):
             cerrar_lista()
-            salida.append(f'<h1 style="font-size:19px;margin:0 0 10px;color:#000000">{_inline(cruda[2:])}</h1>')
+            salida.append(f'<h1 style="font-size:19px;margin:0 0 10px;color:#141312">{_inline(cruda[2:])}</h1>')
         elif cruda.lstrip().startswith(("- ", "* ")):
             if not en_lista:
                 salida.append('<ul style="margin:8px 0 8px 18px;padding:0">')
                 en_lista = True
             salida.append(
-                '<li style="margin:7px 0;line-height:1.6;color:#2b2b2b">'
+                '<li style="margin:7px 0;line-height:1.6;color:#1E1D1B">'
                 f"{_inline(cruda.lstrip()[2:])}</li>"
             )
         else:
             cerrar_lista()
             salida.append(
-                '<p style="margin:11px 0;line-height:1.65;color:#2b2b2b">'
+                '<p style="margin:11px 0;line-height:1.65;color:#1E1D1B">'
                 f"{_inline(cruda)}</p>"
             )
     cerrar_lista()
@@ -127,11 +131,14 @@ _logo_cache: str | None = None
 def logo_data_uri() -> str:
     """El wordmark de PulseRival, embebido como data URI.
 
-    Va incrustado (no como URL externa) porque el proyecto no tiene ni
-    necesita un servidor de assets: es un PNG de ~8 KB, blanco sobre
-    transparente, así que se ve bien en el header negro del correo sin
-    depender de que el cliente de correo cargue imágenes remotas ni de
-    mantener un hosting aparte solo para un logo.
+    Va incrustado (no como URL externa) porque muchos clientes de correo
+    bloquean las imágenes remotas por defecto, y un encabezado sin logo es lo
+    primero que se ve. Es la versión negativa —papel y naranja sobre fondo
+    oscuro— porque la cabecera del correo es tinta.
+
+    El tamaño importa: el correo tiene un tope duro de 102 KB antes de que
+    Gmail lo recorte, así que cada KB del logo es un KB menos de anuncios
+    listados en el anexo.
 
     Se lee una sola vez por proceso: el archivo no cambia entre reportes.
     """

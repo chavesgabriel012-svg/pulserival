@@ -355,5 +355,29 @@ class TestGasto(CasoPanel):
         self.assertEqual(self.web.get("/panel/gasto").status_code, 200)
 
 
+class TestIdentidad(CasoPanel):
+    """El panel es la tercera cara del producto y usa la misma paleta.
+
+    No lo ve el cliente, pero es lo que uno mira todas las semanas: si se le
+    cuela un hexadecimal que nadie decidio, la identidad deja de ser una sola
+    y nadie se entera. La regla es la misma que en la web y en el correo.
+    """
+
+    def test_todas_las_pantallas_usan_solo_la_paleta_de_marca(self):
+        from pulserival import marca
+
+        self.entrar()
+        for ruta in ("/panel/", f"/panel/reporte/{self.rid}", "/panel/gasto"):
+            with self.subTest(ruta=ruta):
+                html = self.web.get(ruta).get_data(as_text=True)
+                self.assertEqual(marca.fuera_de_paleta(html), [])
+
+    def test_la_pantalla_de_entrar_tambien(self):
+        from pulserival import marca
+
+        html = self.web.get("/panel/entrar").get_data(as_text=True)
+        self.assertEqual(marca.fuera_de_paleta(html), [])
+
+
 if __name__ == "__main__":
     unittest.main()

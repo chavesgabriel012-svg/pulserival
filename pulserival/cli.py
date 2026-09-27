@@ -906,7 +906,9 @@ def construir_parser() -> argparse.ArgumentParser:
     sv.set_defaults(func=cmd_servidor)
 
     lp = sub.add_parser("landing", help="generar la landing estática (planes + alta)")
-    lp.add_argument("--destino", help="dónde escribir el index.html")
+    lp.add_argument("--destino",
+                    help="carpeta donde escribir las páginas y los activos "
+                         "de marca (por defecto salida/landing)")
     lp.set_defaults(func=cmd_landing)
 
     sub.add_parser("modelos",

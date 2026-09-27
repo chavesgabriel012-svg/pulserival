@@ -113,17 +113,25 @@ class TestEstructuraDelReporte(unittest.TestCase):
         r.update(extra)
         return r
 
-    def test_no_hay_color_en_el_reporte(self):
-        """El reporte es en blanco y negro. Cualquier color que se cuele
-        rompe la identidad y se nota en la impresión."""
-        import re
+    def test_el_reporte_usa_solo_la_paleta_de_marca(self):
+        """Cambió a propósito: antes la regla era "todo gris".
+
+        La identidad de marca trae el naranja Pulso, y en el reporte tiene un
+        trabajo concreto —marcar lo nuevo—, así que prohibir el color dejó de
+        tener sentido. Lo que sigue teniéndolo es prohibir un color que nadie
+        decidió: un hexadecimal suelto en una plantilla rompe la identidad y
+        no lo nota nadie hasta que el cliente abre el correo.
+        """
+        from pulserival import marca
 
         html = render.email_html(self.reporte())
-        colores = set(re.findall(r"#[0-9a-fA-F]{6}", html))
-        for color in colores:
-            r, g, b = (int(color[i:i + 2], 16) for i in (1, 3, 5))
-            self.assertEqual({r, g, b}, {r},
-                             f"{color} no es un gris: el reporte va en blanco y negro")
+        self.assertEqual(marca.fuera_de_paleta(html), [])
+
+    def test_lo_nuevo_se_distingue_por_simbolo_y_no_solo_por_color(self):
+        # La entrega de marca es explícita: distinguir por símbolo además de
+        # por color, para quien no separa el naranja del gris.
+        html = render.email_html(self.reporte())
+        self.assertIn("+", html)
 
     def test_no_hay_emojis_en_el_reporte(self):
         from pulserival import util
