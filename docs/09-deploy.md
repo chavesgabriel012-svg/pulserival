@@ -1,98 +1,185 @@
 # 09 · Dónde y cómo se publica
 
-## La pregunta corta: ¿Vercel?
+## La decisión, y cómo cambió dos veces
 
-**La landing sola, sí. Todo lo demás, no.** Dos razones, las dos verificadas:
+Vale la pena dejar escrito el razonamiento, porque la conclusión se dio vuelta
+cuando cambió lo que el producto tenía que hacer.
 
-1. **SQLite no persiste en Vercel.** Las funciones son efímeras: el único
-   directorio escribible es `/tmp` y se borra entre invocaciones. Cada
-   instancia tiene su propio sistema de archivos, así que dos peticiones
-   seguidas pueden ver bases distintas. Un alta se guardaría y desaparecería.
-2. **El plan Hobby prohíbe el uso comercial.** Vercel define uso comercial
-   como cualquier despliegue del que alguien obtenga beneficio económico, e
-   incluye explícitamente "procesar pagos". Cobrar suscripciones entra de
-   lleno: serían **$20/mes** del plan Pro.
+**Primera versión: "Vercel no, porque SQLite no persiste."** Correcto sobre
+SQLite, equivocado sobre Vercel. El servidor Flask corre en Vercel sin cambiar
+de framework; lo que no corre ahí es una base en disco.
 
-Ese segundo punto da vuelta la comparación: Vercel deja de ser el barato.
+**Segunda versión: "Vercel sí, depositando el alta como YAML en el
+repositorio."** Funcionaba, porque un formulario de alta **solo escribe una
+vez** y no necesita leer nada. Eso quedó implementado y sigue estando
+(`PULSERIVAL_DEPOSITO=github`).
 
-| | Railway | Vercel Pro | Fly.io |
-|---|---|---|---|
-| Costo base | ~$5/mes | $20/mes | ~$5/mes |
-| Disco persistente | sí (~$0.15/GB) | no | sí |
-| SQLite funciona | sí | **no** | sí |
-| Uso comercial en el plan base | sí | requiere Pro | sí |
+**Tercera y actual: un servidor con disco.** El panel de revisión cambió la
+premisa. El panel lee el borrador, lo edita, lo aprueba o lo descarta: es
+lectura y escritura en vivo sobre **la misma base que escribe el cron**. Con la
+base dentro de la corrida de GitHub Actions y versionada en la rama `datos`, lo
+que usted apruebe en el panel lo pisaría la corrida del lunes siguiente. Dos
+bases divergiendo en silencio.
 
-**Recomendación: Railway.** Un solo servicio que sirve la web y guarda la
-base en un disco persistente.
+Y si ya hay un servidor con disco, ese mismo servidor sirve la landing y corre
+el cron. Una pieza, no tres.
 
-Si de todas formas quiere usar Vercel, la combinación que funciona es:
-landing estática en Vercel (`cli landing` genera el HTML) y el backend en
-otro lado. Son dos lugares que mantener en vez de uno; no lo recomiendo
-mientras el volumen sea bajo.
+| | Servidor con disco | Vercel Pro |
+|---|---|---|
+| Costo | ~$5/mes | $20/mes |
+| Landing | sí | sí |
+| Formulario de alta | sí, directo a la base | sí, depositando YAML |
+| **Panel de revisión** | **sí** | **no: necesita disco** |
+| Cron | sí, del propio hosting | no |
+| Base de datos | una, en disco | ninguna |
 
-## Lo que hay que configurar
+**Un servidor con disco: Railway ($5/mes) o Fly.io (~$2,10/mes).** La
+comparación y los pasos concretos de cada uno están en
+[11 · Servidor](11-servidor.md). Fly es más barato; Railway es más fácil de
+operar y trae respaldos automáticos del disco. Vercel queda como opción solo
+si algún día se quiere la landing separada.
 
-Variables de entorno en el servicio:
+## Publicar
 
-```
-PULSERIVAL_DB=/datos/pulserival.db     # dentro del disco persistente
-PULSERIVAL_COBRO=simulado              # 'real' cuando haya pasarela
-PULSERIVAL_VERIFICAR_ALTA=0            # 1 para verificar al dar de alta
-APIFY_TOKEN=...
-GEMINI_API_KEY=...
-GROQ_API_KEY=...
-RESEND_API_KEY=...                     # o SMTP_*
-```
+La guía paso a paso es [11 · Servidor](11-servidor.md). Lo de acá abajo es lo
+común a cualquier servidor con disco.
 
-El `Procfile` ya está:
+### 1. Crear el servicio
+
+Apuntando a este repositorio. El `Procfile` ya está (Fly usa el `Dockerfile`):
 
 ```
 web: gunicorn 'pulserival.web.app:wsgi()' --bind 0.0.0.0:$PORT --workers 1 --timeout 120
 ```
 
-**`--workers 1` es a propósito.** SQLite aguanta muchos lectores pero un solo
-escritor. Con este volumen un proceso sobra, y evita que dos escrituras
-simultáneas se peleen por el archivo. Cuando haga falta más, el paso
-siguiente es Postgres, no más workers.
+**`--workers 1` es a propósito.** SQLite aguanta muchos lectores y un solo
+escritor. Con este volumen un proceso sobra, y evita que dos escrituras se
+peleen por el archivo. Cuando haga falta más, el paso siguiente es Postgres, no
+más workers.
+
+### 2. Un disco persistente
+
+Montado donde apunte `PULSERIVAL_DB`. Sin disco, la base se crea vacía en cada
+reinicio y se pierde todo: los clientes, los anuncios detectados —que son lo que
+permite decir "esto es nuevo"— y los reportes.
+
+### 3. Variables de entorno
+
+```
+PULSERIVAL_DB=/datos/pulserival.db     # dentro del disco persistente
+PULSERIVAL_PANEL_CLAVE=...             # sin esto el panel no se sirve
+PULSERIVAL_SECRET=...                  # firma la cookie de sesión del panel
+PULSERIVAL_HTTPS=1                     # la cookie solo viaja por HTTPS
+PULSERIVAL_COBRO=simulado              # 'real' cuando haya pasarela
+PULSERIVAL_VERIFICAR_ALTA=0            # 1 para verificar al dar de alta (gasta)
+
+APIFY_TOKEN=...                        # sin esto no hay datos reales
+GEMINI_API_KEY=...                     # sin esto no hay análisis
+GROQ_API_KEY=...                       # respaldo
+RESEND_API_KEY=...                     # o SMTP_*, solo para enviar
+```
+
+Detalle que se paga caro si se olvida: **sin claves de IA el borrador lo escribe
+el respaldo del código**, y el control de calidad lo rechaza con
+`sin_interpretacion`. El pipeline no se cae, pero no hay análisis.
+
+### 4. Traer la base que ya existe
+
+Una sola vez, para no arrancar de cero y perder el historial de anuncios:
+
+```bash
+git fetch origin datos
+git show datos:datos/pulserival.db > pulserival.db
+# y subirlo al disco del servicio
+```
+
+Las migraciones son aditivas y corren solas al arrancar: una base vieja se
+actualiza sin perder nada.
+
+### 5. El cron
+
+**No puede ser una tarea programada del hosting.** Tanto en Fly como en Railway
+un disco se monta en un solo contenedor, y el cron de Railway además corre como
+un servicio aparte. Un ciclo en otro contenedor escribiría en otra base.
+
+Por eso el cron vive dentro del proceso web, en
+`pulserival/web/planificador.py`, y se enciende con `PULSERIVAL_PLANIFICADOR=1`.
+No es un cron: mira cuándo fue la última recolección y corre si ya pasó la
+cadencia, así que una corrida atrasada por un reinicio se recupera en vez de
+perderse. El detalle está en [11 · Servidor](11-servidor.md).
+
+La primera corrida **no** se dispara sola, a propósito: es lo que impide que un
+deploy gaste plata de scraper por su cuenta.
+
+### 6. Apagar el cron de GitHub Actions
+
+**Este paso no es opcional.** Con los dos corriendo, hay dos bases distintas y
+lo que usted apruebe en el panel lo pisa la corrida de Actions.
+
+No hace falta editar el workflow. En GitHub:
+**Settings → Secrets and variables → Actions → Variables**, y crear:
+
+```
+PULSERIVAL_CRON_EN_SERVIDOR = 1
+```
+
+El job se saltea solo. El disparo a mano desde la pestaña Actions sigue
+funcionando, para poder correr una prueba desde ahí. Volver atrás es cambiar el
+`1` por un `0`.
+
+### 7. Comprobar
+
+```
+GET /salud
+→ {"ok": true, "deposito": "sqlite", "cobro": "simulado",
+   "panel": "habilitado", "sesiones": "persistentes", "clientes": N}
+```
+
+`"panel": "sin PULSERIVAL_PANEL_CLAVE"` significa que el panel está apagado.
+`"sesiones": "efímeras"` significa que falta `PULSERIVAL_SECRET` y que va a
+tener que entrar de nuevo en cada reinicio.
+
+Después: entre a `/panel/`, abra un reporte, y previsualice el correo antes de
+aprobar nada.
 
 ## Probarlo local antes de publicar
 
 ```bash
-python3 -m pulserival.cli servidor
+PULSERIVAL_PANEL_CLAVE=probando python3 -m pulserival.cli servidor
 ```
 
-Levanta en `http://127.0.0.1:5000`. Avisa que el cobro está simulado.
+Levanta la landing en `http://127.0.0.1:5000` y el panel en
+`http://127.0.0.1:5000/panel/`. Avisa si el panel quedó apagado y si el cobro
+está simulado. Para tener reportes que revisar sin gastar nada:
 
-## El cron, después de publicar
-
-Hoy corre en GitHub Actions contra la base versionada en la rama `datos`.
-Cuando la base se mude al disco del servidor, **las dos no pueden convivir**:
-serían dos bases distintas divergiendo en silencio, y el cliente que se dio
-de alta por la web no existiría para el cron.
-
-Al migrar hay que hacer las dos cosas, no una:
-
-1. Copiar la base actual (rama `datos`) al disco persistente, una sola vez.
-2. Apagar el `schedule:` de `.github/workflows/recoleccion.yml` y correr el
-   ciclo desde el servidor.
-
-Para el paso 2 la opción más simple es la tarea programada del propio
-hosting (Railway: "Cron Schedule" en el servicio) corriendo exactamente el
-mismo comando de siempre:
-
-```
-python -m pulserival.cli ciclo --modo auto --limite 50
+```bash
+python3 -m pulserival.cli ciclo --modo demo
 ```
 
-No hay lógica nueva: es el mismo `pipeline.ciclo_completo()` que corre hoy.
+## La otra opción: la landing en Vercel
 
-## Qué NO está hecho todavía
+Sigue implementada y documentada por si algún día hace falta. Con
+`PULSERIVAL_DEPOSITO=github` el alta se deposita como YAML en el repositorio y
+el cron la carga con `aplicar-config`. Lo que **no** funciona ahí es el panel:
+las funciones de Vercel no tienen disco persistente en ningún plan, ni en Pro.
+
+Los archivos están: `wsgi.py`, `vercel.json`, `.vercelignore`. Y una advertencia
+que conviene recordar: el plan Hobby prohíbe el uso comercial, y la definición de
+Vercel incluye "publicitar la venta de un producto o servicio", así que una
+landing que ofrece una suscripción necesita Pro **aunque no se cobre nada
+todavía**.
+
+## Qué NO está hecho
 
 - **El webhook de la pasarela.** Hoy el cobro es simulado. Con
-  `PULSERIVAL_COBRO=real`, el checkout manda al enlace de pago y la
-  confirmación por navegador queda bloqueada (403), pero todavía no existe
-  el endpoint que recibe la notificación de la pasarela y activa solo. Hasta
-  que exista, se activa a mano: `cli clientes activar --id N --referencia ...`
-- **El panel de administración.** La revisión y el envío siguen por CLI.
-- Ver `docs/08-cobro-y-lanzamiento.md` para lo que falta probar con una
-  transacción real.
+  `PULSERIVAL_COBRO=real` el checkout manda al enlace de pago y la confirmación
+  por navegador queda bloqueada (403), pero todavía no existe el endpoint que
+  recibe la notificación y activa solo. Hasta que exista se activa a mano:
+  `cli clientes activar --id N --referencia "<comprobante>"`.
+  Ver `docs/08-cobro-y-lanzamiento.md` para qué falta probar con una transacción
+  real.
+- **El panel no administra clientes ni dispara el ciclo.** Eso sigue por CLI, a
+  propósito: un botón que gasta plata de Apify es un botón que se aprieta sin
+  pensar.
+- **No hay usuarios en el panel, hay una contraseña.** Con una persona operando
+  alcanza. Ver `docs/10-panel.md`.

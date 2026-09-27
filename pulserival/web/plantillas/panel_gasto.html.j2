@@ -1,0 +1,64 @@
+{% extends "_panel.html.j2" %}
+{% block titulo %}Gasto · {{ marca }}{% endblock %}
+{% block contenido %}
+  <h1>Gasto</h1>
+  <p class="sub">Lo que costó producir los reportes. Son dos cosas distintas: traer los
+    anuncios (se paga por anuncio) y escribir el análisis (se paga por token).</p>
+
+  <table style="margin-top:26px;max-width:520px;">
+    <tr><th>Concepto</th><th class="num">Acumulado</th></tr>
+    <tr><td>Recolección de anuncios</td><td class="num">${{ '%.4f' % total_fuentes }}</td></tr>
+    <tr><td>Análisis con IA</td><td class="num">${{ '%.4f' % total_ia }}</td></tr>
+    <tr><td><strong>Total</strong></td><td class="num"><strong>${{ '%.4f' % total }}</strong></td></tr>
+  </table>
+  <div class="nota">
+    El tope por corrida configurado es <strong>${{ '%.2f' % tope }}</strong>
+    (<code>config/fuentes.yaml</code>). Cuando una corrida lo alcanza, se detiene sola:
+    es el seguro contra una cuenta inesperada, no un presupuesto mensual.
+  </div>
+
+  <h2>Por cliente</h2>
+  {% if por_cliente %}
+  <table>
+    <tr><th>Cliente</th><th class="num">Reportes</th><th class="num">Costo de IA</th></tr>
+    {% for f in por_cliente %}
+    <tr><td>{{ f.cliente }}</td><td class="num">{{ f.reportes }}</td>
+        <td class="num">${{ '%.4f' % (f.costo_usd or 0) }}</td></tr>
+    {% endfor %}
+  </table>
+  <p class="sub" style="margin-top:10px;">La recolección no se puede repartir por cliente:
+    una corrida trae los anuncios de todos juntos.</p>
+  {% else %}<p class="vacio">Todavía no hay reportes generados.</p>{% endif %}
+
+  <h2>IA, por tarea y modelo</h2>
+  {% if ia %}
+  <table>
+    <tr><th>Tarea</th><th>Proveedor</th><th>Modelo</th><th class="num">Llamadas</th>
+        <th class="num">Entrada</th><th class="num">Salida</th><th class="num">Costo</th>
+        <th class="num">Fallos</th></tr>
+    {% for f in ia %}
+    <tr><td>{{ f.tarea }}</td><td>{{ f.proveedor }}</td><td>{{ f.modelo }}</td>
+        <td class="num">{{ f.llamadas }}</td><td class="num">{{ f.entrada or 0 }}</td>
+        <td class="num">{{ f.salida or 0 }}</td>
+        <td class="num">${{ '%.4f' % (f.costo_usd or 0) }}</td>
+        <td class="num">{{ f.fallos or 0 }}</td></tr>
+    {% endfor %}
+  </table>
+  <p class="sub" style="margin-top:10px;">Los fallos importan: una llamada que falla y cae
+    al modelo siguiente se cobra igual. Muchos fallos en un modelo quieren decir que hay
+    que revisarlo en <code>config/modelos.yaml</code>.</p>
+  {% else %}<p class="vacio">Todavía no se llamó a ninguna IA.</p>{% endif %}
+
+  <h2>Últimas corridas</h2>
+  {% if corridas %}
+  <table>
+    <tr><th>#</th><th>Cuándo</th><th>Estado</th><th>Fuente</th><th>Disparada por</th>
+        <th class="num">Costo</th></tr>
+    {% for f in corridas %}
+    <tr><td>{{ f.id }}</td><td>{{ f.cuando }}</td><td>{{ f.estado }}</td>
+        <td>{{ f.fuente or '—' }}</td><td>{{ f.disparada_por or '—' }}</td>
+        <td class="num">${{ '%.4f' % (f.costo_usd or 0) }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="vacio">Todavía no hubo corridas.</p>{% endif %}
+{% endblock %}

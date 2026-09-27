@@ -161,6 +161,31 @@ def registrar_final(
             "cambios": not sin_cambios, "diff": diff}
 
 
+def descartar(con: sqlite3.Connection, reporte_id: int, motivo: str) -> dict[str, Any]:
+    """Rechaza un reporte: no se manda y queda registrado por qué.
+
+    Pide el motivo y no lo hace opcional a propósito. Un reporte descartado sin
+    explicación es una señal perdida: es la forma más directa que hay de saber
+    qué produce borradores inservibles, y sin el motivo dentro de seis meses
+    solo queda un estado que no dice nada.
+    """
+    motivo = (motivo or "").strip()
+    if not motivo:
+        raise ValueError("Para descartar un reporte hace falta el motivo")
+    rep = db.fila(con, "SELECT * FROM reportes_generados WHERE id = ?", (reporte_id,))
+    if not rep:
+        raise ValueError(f"No existe el reporte {reporte_id}")
+    if rep["estado"] == "enviado":
+        # Lo que salió ya salió: marcarlo descartado después falsearía el
+        # historial y desarmaría el seguro contra enviarlo dos veces.
+        raise RuntimeError(
+            f"El reporte {reporte_id} ya se envió el {rep['enviado_en']}. No se puede "
+            "descartar algo que el cliente ya recibió.")
+    db.actualizar(con, "reportes_generados", reporte_id,
+                  {"estado": "descartado", "motivo_descarte": motivo})
+    return {"reporte_id": reporte_id, "estado": "descartado", "motivo": motivo}
+
+
 def _buscar_borrador(reporte_id: int) -> Path:
     candidatos = sorted(config.DIR_BORRADORES.glob(f"*-r{reporte_id}.md"))
     if not candidatos:

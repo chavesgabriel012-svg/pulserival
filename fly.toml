@@ -1,0 +1,65 @@
+# Configuración de Fly.io. Se despliega con: fly deploy
+#
+# Una sola máquina, a propósito. En Fly un volumen se monta en UNA máquina
+# ("there's a one-to-one mapping between Machines and volumes"), y acá el panel
+# y el ciclo escriben en la misma base SQLite. Dos máquinas serían dos bases
+# distintas divergiendo en silencio.
+
+app = "pulserival"
+primary_region = "mia"        # Miami: lo más cerca de Costa Rica
+
+[build]
+
+[env]
+  PULSERIVAL_DB = "/datos/pulserival.db"
+  # También al disco: en salida/ queda la copia de cada correo enviado, que es
+  # el registro de lo que el cliente recibió. En la imagen se perdería en cada
+  # deploy.
+  PULSERIVAL_BORRADORES = "/datos/borradores"
+  PULSERIVAL_SALIDA = "/datos/salida"
+  # El cron vive dentro de este proceso. Ver pulserival/web/planificador.py
+  PULSERIVAL_PLANIFICADOR = "1"
+  PULSERIVAL_CICLO_CADA_DIAS = "7"
+  PULSERIVAL_CICLO_HORA_UTC = "11"     # 5:00 a.m. en Costa Rica
+  PULSERIVAL_CICLO_MODO = "auto"
+  PULSERIVAL_CICLO_LIMITE = "40"
+  # La cookie del panel solo viaja por HTTPS. Fly da HTTPS siempre.
+  PULSERIVAL_HTTPS = "1"
+  PULSERIVAL_COBRO = "simulado"
+  PULSERIVAL_VERIFICAR_ALTA = "0"
+
+# El disco. Sin esto la base se borra en cada deploy y se pierde el historial
+# de anuncios, que es lo único que permite decir "esto es nuevo".
+[mounts]
+  source = "pulserival_datos"
+  destination = "/datos"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # La máquina NO se apaga sola: el planificador corre adentro y una máquina
+  # dormida no despierta por un horario, solo por una petición. Apagarla
+  # ahorraría alrededor de $1,80 al mes y a cambio no habría reportes.
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.http_options.response.headers]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "same-origin"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+
+# Fly reinicia la máquina si /salud deja de responder. Ojo: /salud devuelve 500
+# cuando falta configurar algo (por ejemplo la contraseña del panel), así que
+# un deploy sin los secretos puestos se va a reiniciar en bucle. Es a
+# propósito: mejor que quede a la vista que descubrirlo por un alta perdida.
+[[http_service.checks]]
+  grace_period = "20s"
+  interval = "60s"
+  method = "GET"
+  path = "/salud"
+  timeout = "10s"

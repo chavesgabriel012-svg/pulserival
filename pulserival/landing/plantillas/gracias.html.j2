@@ -1,15 +1,38 @@
 {% extends "_base.html.j2" %}
 {% block titulo %}Listo — {{ marca }}{% endblock %}
 {% block contenido %}
-  {% if simulado %}
-  <div class="aviso"><strong>Cobro simulado</strong><br>
-    No se cobró nada. La cuenta quedó activa para probar el flujo.</div>
+  {# Dos finales distintos, y la diferencia importa: con base de datos la
+     suscripción ya quedó activa (el checkout simulado la activó); sin base el
+     alta es una solicitud que alguien tiene que revisar y activar a mano.
+     Decirle "su cuenta quedó activa" a quien está en el segundo caso sería
+     una mentira que se descubre cuando no le llega el reporte. #}
+  {% set nombre = cliente["nombre_empresa"] if cliente else empresa %}
+  {% set correo = cliente["contacto_email"] if cliente else email %}
+  {% if cliente %}
+    {% if simulado %}
+    <div class="aviso"><strong>Cobro simulado</strong><br>
+      No se cobró nada. La cuenta quedó activa para probar el flujo.</div>
+    {% endif %}
+    <h1>Listo, {{ nombre }}</h1>
+    <p>
+      Su cuenta quedó activa. El primer reporte sale en la próxima corrida y le
+      llega a <strong>{{ correo }}</strong>.
+    </p>
+  {% else %}
+    <h1>Recibimos su solicitud, {{ nombre }}</h1>
+    <p>
+      Quedó registrada{% if alta and alta.competidores %} con
+      {{ alta.competidores }} competidor{{ 'es' if alta.competidores != 1 }}{% endif %}.
+      Le escribimos a <strong>{{ correo }}</strong> para confirmar los datos y
+      coordinar el pago{% if plan and plan.precio_usd %}
+      de ${{ '%g' % plan.precio_usd }} al mes{% endif %}.
+    </p>
+    <p>
+      Todavía no está activa: revisamos a mano que los competidores que cargó
+      sean los correctos antes de la primera corrida. Así el primer reporte sale
+      bien, no rápido.
+    </p>
   {% endif %}
-  <h1>Listo, {{ cliente["nombre_empresa"] }}</h1>
-  <p>
-    Su cuenta quedó activa. El primer reporte sale en la próxima corrida y le
-    llega a <strong>{{ cliente["contacto_email"] }}</strong>.
-  </p>
   <div class="nota">
     Cada reporte pasa por revisión humana antes de salir. Si algún competidor
     no está pautando en este momento, se lo decimos en vez de rellenar.

@@ -1,4 +1,13 @@
-"""Aplica config/clientes.yaml a la base de datos.
+"""Aplica la configuración de clientes a la base de datos.
+
+Lee de dos lugares, en este orden:
+  1. config/clientes.yaml, el archivo curado a mano;
+  2. config/altas/*.yaml, uno por alta que llegó del formulario de la landing
+     cuando el servidor web corre sin base propia (ver pulserival/web/deposito.py).
+
+Si una clave aparece en los dos, gana la de clientes.yaml y la del alta se
+saltea con un aviso: el archivo curado es la verdad, y una bandeja de entrada
+pública no puede cambiar un cliente que ya existe.
 
 La base de datos no se versiona (tiene datos que cambian en cada corrida),
 pero la lista de clientes y competidores sí debería: es configuración, no
@@ -43,7 +52,10 @@ def leer(ruta: Path | None = None) -> list[dict[str, Any]]:
     ruta = Path(ruta) if ruta else (config.DIR_CONFIG / "clientes.yaml")
     if not ruta.exists():
         raise ConfigInvalida(f"No existe {ruta}")
-    datos = yaml.safe_load(ruta.read_text(encoding="utf-8")) or {}
+    return validar(yaml.safe_load(ruta.read_text(encoding="utf-8")) or {})
+
+
+def validar(datos: dict[str, Any]) -> list[dict[str, Any]]:
     clientes = datos.get("clientes") or []
     if not isinstance(clientes, list):
         raise ConfigInvalida("La clave 'clientes' tiene que ser una lista")
@@ -82,11 +94,58 @@ def leer(ruta: Path | None = None) -> list[dict[str, Any]]:
     return clientes
 
 
-def aplicar(con: sqlite3.Connection, ruta: Path | None = None) -> dict[str, Any]:
+def leer_altas(directorio: Path | None = None) -> tuple[list[dict[str, Any]], list[str]]:
+    """Las altas que llegaron del formulario, cada una en su archivo.
+
+    Un archivo malo NO tira la corrida: se saltea y se avisa. Es una bandeja de
+    entrada escrita por un proceso web con datos que cargó un desconocido; que
+    una de esas entradas pueda dejar sin reporte a los clientes que sí pagaron
+    sería el peor de los dos errores posibles.
+    """
+    directorio = Path(directorio) if directorio else (config.DIR_CONFIG / "altas")
+    if not directorio.is_dir():
+        return [], []
+    clientes: list[dict[str, Any]] = []
+    avisos: list[str] = []
+    # Orden alfabético para que sea determinista: los nombres empiezan con la
+    # fecha, así que la primera solicitud gana los empates de clave.
+    for ruta in sorted(directorio.glob("*.yaml")):
+        try:
+            entradas = validar(yaml.safe_load(ruta.read_text(encoding="utf-8")) or {})
+        except (ConfigInvalida, yaml.YAMLError) as e:
+            avisos.append(f"{ruta.name} se salteó: {e}")
+            continue
+        clientes.extend(entradas)
+    return clientes, avisos
+
+
+def leer_todo(ruta: Path | None = None,
+              directorio: Path | None = None) -> tuple[list[dict[str, Any]], list[str]]:
+    """clientes.yaml más las altas, sin claves repetidas."""
     clientes = leer(ruta)
+    vistas = {c["clave"] for c in clientes}
+    altas, avisos = leer_altas(directorio)
+    for entrada in altas:
+        if entrada["clave"] in vistas:
+            avisos.append(
+                f"el alta '{entrada['clave']}' se salteó: esa clave ya está en "
+                "clientes.yaml (o en un alta anterior)")
+            continue
+        vistas.add(entrada["clave"])
+        clientes.append(entrada)
+    return clientes, avisos
+
+
+def aplicar(con: sqlite3.Connection, ruta: Path | None = None) -> dict[str, Any]:
+    # Con --archivo se usa SOLO ese archivo: es la forma de aplicar una
+    # configuración de prueba sin que se le mezcle la bandeja de altas.
+    if ruta:
+        clientes, avisos = leer(ruta), []
+    else:
+        clientes, avisos = leer_todo()
     resumen = {"creados": [], "actualizados": [], "desactivados": [],
                "competidores_creados": [], "competidores_actualizados": [],
-               "competidores_desactivados": []}
+               "competidores_desactivados": [], "avisos": avisos}
 
     claves_en_archivo = set()
     for entrada in clientes:
@@ -191,4 +250,9 @@ def formatear(resumen: dict[str, Any]) -> str:
     }
     lineas = [f"{etiqueta}: {', '.join(resumen[campo])}"
               for campo, etiqueta in etiquetas.items() if resumen[campo]]
-    return "\n".join(lineas) or "Sin cambios: la base ya coincide con el archivo."
+    if not lineas:
+        lineas = ["Sin cambios: la base ya coincide con el archivo."]
+    # Los avisos van al final y con marca, porque piden que alguien los mire.
+    for aviso in resumen.get("avisos") or []:
+        lineas.append(f"AVISO · {aviso}")
+    return "\n".join(lineas)

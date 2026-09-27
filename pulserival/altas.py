@@ -109,8 +109,7 @@ def verificar_competidor(competidor: dict[str, Any], plataforma: str = "meta",
     return {"plataforma": plataforma, "encontrados": len(anuncios), "error": None}
 
 
-def crear(
-    con: sqlite3.Connection,
+def preparar(
     empresa: str,
     email: str,
     competidores: list[dict[str, Any]],
@@ -120,16 +119,14 @@ def crear(
     industria: str | None = None,
     notas: str | None = None,
     estado: str | None = None,
-    cadencia_dias: int | None = None,
-    precio: float | None = None,
-    pago_proveedor: str | None = None,
-    pago_referencia: str | None = None,
 ) -> dict[str, Any]:
-    """Crea el cliente y sus competidores. No verifica ni cobra: solo guarda.
+    """Valida y normaliza un alta, sin guardarla en ningún lado.
 
-    El estado por defecto NO es 'activa': un alta que llega de un formulario
-    público no puede empezar a gastar scraper antes de que alguien confirme
-    que pagó.
+    Está separado de `crear()` porque el alta no siempre termina en la base:
+    cuando el servidor web corre en un hosting sin disco (ver
+    `pulserival/web/deposito.py`), el alta se guarda como YAML en el
+    repositorio. Las dos rutas tienen que validar exactamente lo mismo, y la
+    única forma de garantizarlo es que sea el mismo código.
     """
     empresa = _texto(empresa)
     if not empresa:
@@ -152,24 +149,65 @@ def crear(
     if estado not in planes.ESTADOS_VALIDOS:
         raise AltaInvalida(f"Estado de suscripción inválido: {estado}")
 
+    return {
+        "empresa": empresa,
+        "email": email,
+        "contacto": _texto(contacto) or None,
+        "whatsapp": _texto(whatsapp) or None,
+        "industria": _texto(industria) or None,
+        "notas": _texto(notas) or None,
+        "plan": plan,
+        "estado": estado,
+        "periodicidad": datos_plan.get("periodicidad") or "semanal",
+        "precio_usd": datos_plan.get("precio_usd"),
+        "competidores": limpios,
+    }
+
+
+def crear(
+    con: sqlite3.Connection,
+    empresa: str,
+    email: str,
+    competidores: list[dict[str, Any]],
+    plan: str = "semanal",
+    contacto: str | None = None,
+    whatsapp: str | None = None,
+    industria: str | None = None,
+    notas: str | None = None,
+    estado: str | None = None,
+    cadencia_dias: int | None = None,
+    precio: float | None = None,
+    pago_proveedor: str | None = None,
+    pago_referencia: str | None = None,
+) -> dict[str, Any]:
+    """Crea el cliente y sus competidores. No verifica ni cobra: solo guarda.
+
+    El estado por defecto NO es 'activa': un alta que llega de un formulario
+    público no puede empezar a gastar scraper antes de que alguien confirme
+    que pagó.
+    """
+    listo = preparar(empresa, email, competidores, plan=plan, contacto=contacto,
+                     whatsapp=whatsapp, industria=industria, notas=notas, estado=estado)
+    limpios = listo["competidores"]
+
     ya_usadas = {
         f["clave"] for f in db.filas(con, "SELECT clave FROM clientes WHERE clave IS NOT NULL")
     }
     cliente_id = db.insertar(con, "clientes", {
-        "clave": clave_desde(empresa, ya_usadas),
-        "nombre_empresa": empresa,
-        "contacto_nombre": _texto(contacto) or None,
-        "contacto_email": email,
-        "contacto_whatsapp": _texto(whatsapp) or None,
-        "periodicidad": datos_plan.get("periodicidad") or "semanal",
-        "plan": plan,
-        "estado_suscripcion": estado,
+        "clave": clave_desde(listo["empresa"], ya_usadas),
+        "nombre_empresa": listo["empresa"],
+        "contacto_nombre": listo["contacto"],
+        "contacto_email": listo["email"],
+        "contacto_whatsapp": listo["whatsapp"],
+        "periodicidad": listo["periodicidad"],
+        "plan": listo["plan"],
+        "estado_suscripcion": listo["estado"],
         "cadencia_dias": cadencia_dias,
         "precio_mensual_usd": precio,
         "pago_proveedor": pago_proveedor,
         "pago_referencia": pago_referencia,
-        "industria": _texto(industria) or None,
-        "notas": _texto(notas) or None,
+        "industria": listo["industria"],
+        "notas": listo["notas"],
     })
     for orden, comp in enumerate(limpios, start=1):
         db.insertar(con, "competidores_seguidos", {
@@ -177,7 +215,8 @@ def crear(
             "clave": clave_desde(comp["nombre"]),
             **comp,
         })
-    return {"cliente_id": cliente_id, "competidores": len(limpios), "estado": estado}
+    return {"cliente_id": cliente_id, "competidores": len(limpios),
+            "estado": listo["estado"]}
 
 
 def activar(con: sqlite3.Connection, cliente_id: int,

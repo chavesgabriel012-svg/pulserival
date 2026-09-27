@@ -127,6 +127,7 @@ CREATE TABLE IF NOT EXISTS reportes_generados (
     version_prompt    TEXT,
     costo_usd         REAL    DEFAULT 0,
     validacion_json   TEXT,                       -- resultado del control de calidad
+    motivo_descarte   TEXT,                       -- por qué se rechazó, en tus palabras
     UNIQUE (cliente_id, periodo_inicio, periodo_fin)
 );
 CREATE INDEX IF NOT EXISTS idx_reportes_cliente ON reportes_generados(cliente_id);

@@ -1,0 +1,11 @@
+# Lo que no tiene que ir al paquete de la función. No es solo tamaño: la base
+# de datos y los borradores tienen datos de clientes, y en Vercel el proceso
+# web no los necesita para nada (el alta va a un YAML en el repositorio).
+datos/
+borradores/
+salida/
+tests/
+docs/
+scripts/
+*.db
+.env

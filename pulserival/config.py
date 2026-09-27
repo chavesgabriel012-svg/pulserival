@@ -15,8 +15,23 @@ import yaml
 RAIZ = Path(__file__).resolve().parent.parent
 DIR_CONFIG = RAIZ / "config"
 DIR_DATOS = RAIZ / "datos"
-DIR_BORRADORES = RAIZ / "borradores"
-DIR_SALIDA = RAIZ / "salida"
+
+
+def _dir(variable: str, defecto: Path) -> Path:
+    """Una carpeta que se puede mover con una variable de entorno.
+
+    Hace falta en un servidor con disco montado: el contenedor se reemplaza en
+    cada deploy, así que todo lo que quede en la imagen se pierde. Y no es solo
+    comodidad — en salida/ queda la copia de cada correo que SE ENVIÓ, que es
+    el registro de lo que el cliente recibió. Eso tiene que vivir en el disco,
+    no en el contenedor.
+    """
+    valor = os.environ.get(variable)
+    return Path(valor) if valor else defecto
+
+
+DIR_BORRADORES = _dir("PULSERIVAL_BORRADORES", RAIZ / "borradores")
+DIR_SALIDA = _dir("PULSERIVAL_SALIDA", RAIZ / "salida")
 
 
 _ENV_CARGADOS: set[Path] = set()

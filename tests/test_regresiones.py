@@ -548,3 +548,177 @@ class TestSospechosasEnElBorrador(CasoBase):
         self.con.commit()
         texto = flujo.exportar(self.con, rid).read_text(encoding="utf-8")
         self.assertNotIn("REVISAR ANTES DE ENVIAR", texto)
+
+
+class TestBandejaDeAltasYSincronizar(CasoBase):
+    """Dos formas en que la bandeja de altas podía romper al cliente que paga.
+
+    La bandeja (config/altas/*.yaml) la escribe el servidor web cuando corre sin
+    base propia. `aplicar-config` la lee además de clientes.yaml, y ese cruce
+    tiene dos bordes que hay que dejar clavados.
+    """
+
+    def setUp(self):
+        super().setUp()
+        from pathlib import Path
+
+        self.dir_altas = Path(self.tmp.name) / "altas"
+        self.dir_altas.mkdir()
+        self.curado = Path(self.tmp.name) / "clientes.yaml"
+
+    def _yaml(self, clave, empresa, activo=False):
+        import yaml
+
+        return yaml.safe_dump({"clientes": [{
+            "clave": clave, "empresa": empresa,
+            "contacto_email": f"{clave}@ejemplo.test", "activo": activo,
+            "competidores": [{"nombre": "EPA", "google_dominio": "epa.cr"}],
+        }]}, allow_unicode=True)
+
+    def test_un_alta_activada_no_se_desactiva_sola_en_la_corrida_siguiente(self):
+        # `aplicar()` desactiva a todo cliente activo que no esté en el archivo.
+        # Si el barrido mirara solo clientes.yaml, el cliente que se activó
+        # dejando su YAML en la bandeja se desactivaría en la corrida siguiente
+        # y dejaría de recibir reportes habiendo pagado.
+        from unittest import mock
+
+        from pulserival import db, sincronizar
+
+        self.curado.write_text("clientes: []\n", encoding="utf-8")
+        (self.dir_altas / "2026-01-01-pagando.yaml").write_text(
+            self._yaml("pagando", "Ya Pagó S.A.", activo=True), encoding="utf-8")
+        with mock.patch.object(sincronizar.config, "DIR_CONFIG",
+                               self.curado.parent), \
+             mock.patch.object(sincronizar, "leer", return_value=[]):
+            sincronizar.aplicar(self.con)
+            self.con.commit()
+            sincronizar.aplicar(self.con)   # la corrida siguiente
+            self.con.commit()
+        fila = db.fila(self.con, "SELECT * FROM clientes WHERE clave = 'pagando'")
+        self.assertEqual(fila["activo"], 1)
+
+    def test_con_archivo_explicito_la_bandeja_no_se_mezcla(self):
+        # `--archivo` se usa para aplicar una configuración de prueba. Si además
+        # arrastrara la bandeja, una prueba local crearía en la base a los
+        # clientes reales que mandaron el formulario.
+        from unittest import mock
+
+        from pulserival import db, sincronizar
+
+        otro = self.curado.parent / "solo-prueba.yaml"
+        otro.write_text(self._yaml("de-prueba", "Cliente De Prueba"), encoding="utf-8")
+        (self.dir_altas / "2026-01-01-real.yaml").write_text(
+            self._yaml("real", "Cliente Real"), encoding="utf-8")
+        with mock.patch.object(sincronizar.config, "DIR_CONFIG", self.curado.parent):
+            sincronizar.aplicar(self.con, otro)
+        self.con.commit()
+        claves = {f["clave"] for f in db.filas(self.con, "SELECT clave FROM clientes")}
+        self.assertIn("de-prueba", claves)
+        self.assertNotIn("real", claves)
+
+
+class TestPanelDeRevision(CasoBase):
+    """Bugs que el panel expuso la primera vez que se abrió un reporte real."""
+
+    def setUp(self):
+        super().setUp()
+        import os
+
+        os.environ["PULSERIVAL_PANEL_CLAVE"] = "clave"
+        os.environ["PULSERIVAL_SECRET"] = "secreto"
+        self.addCleanup(lambda: os.environ.pop("PULSERIVAL_PANEL_CLAVE", None))
+        self.addCleanup(lambda: os.environ.pop("PULSERIVAL_SECRET", None))
+        from pulserival.web.app import crear_app
+
+        self.app = crear_app(str(self.ruta))
+        self.app.config["TESTING"] = True
+        self.web = self.app.test_client()
+        self.cid = self.cliente(clave="gym")
+
+    def _reporte(self, datos_json: dict) -> int:
+        rid = db.insertar(self.con, "reportes_generados", {
+            "cliente_id": self.cid, "periodo_inicio": "2026-01-01",
+            "periodo_fin": "2026-01-07", "asunto": "x",
+            "borrador_md": "## Resumen\n\nTexto [A1].",
+            "datos_json": db.json_o_nada(datos_json),
+        })
+        self.con.commit()
+        return rid
+
+    def _entrar(self) -> None:
+        import re
+
+        pag = self.web.get("/panel/entrar").get_data(as_text=True)
+        tok = re.search(r'name="csrf" value="([^"]+)"', pag).group(1)
+        self.web.post("/panel/entrar", data={"csrf": tok, "clave": "clave"})
+
+    def test_el_panel_muestra_los_anuncios_aunque_datos_json_no_traiga_el_agrupado(self):
+        # El panel leía datos.get("por_competidor"), y esa clave NO se guarda:
+        # `datos_json` tiene la lista plana y el agrupado se deriva. Resultado:
+        # todos los reportes decían "la corrida no trajo anuncios" teniéndolos.
+        rid = self._reporte({
+            "conteo": {"nuevo": 1},
+            "anuncios": [{
+                "anuncio_id": 1, "referencia": "A1", "competidor": "Tienda Monge",
+                "plataforma": "meta", "prioridad": 1, "clasificacion": "nuevo",
+                "titulo": "Cero intereses", "variantes": 1,
+                "url_anuncio": "https://example.test/a1",
+            }],
+        })
+        self._entrar()
+        texto = self.web.get(f"/panel/reporte/{rid}").get_data(as_text=True)
+        self.assertIn("Tienda Monge", texto)
+        self.assertNotIn("no trajo anuncios", texto)
+
+    def test_el_enlace_para_verificar_el_anuncio_aparece(self):
+        # La plantilla del panel usaba `a.url` y el campo se llama
+        # `url_anuncio`. Sin ese enlace se pierde lo único que hace verificable
+        # el reporte: ir del texto a la ficha pública del anuncio.
+        rid = self._reporte({"anuncios": [{
+            "anuncio_id": 1, "referencia": "A1", "competidor": "Tienda Monge",
+            "plataforma": "meta", "prioridad": 1, "clasificacion": "nuevo",
+            "titulo": "Cero intereses", "variantes": 1,
+            "url_anuncio": "https://example.test/ficha-a1",
+        }]})
+        self._entrar()
+        texto = self.web.get(f"/panel/reporte/{rid}").get_data(as_text=True)
+        self.assertIn("https://example.test/ficha-a1", texto)
+
+    def test_previsualizar_un_reporte_viejo_no_se_cae(self):
+        # `piezas` se agregó a los grupos DESPUÉS de que `por_competidor` ya se
+        # guardaba en datos_json. La plantilla del correo comparaba
+        # `g.piezas > g.total`, y con un reporte de antes de ese cambio eso
+        # reventaba. No se notaba porque nada volvía a renderizar reportes
+        # viejos; el panel sí, cada vez que se abre uno.
+        rid = self._reporte({
+            "anuncios": [],
+            "por_competidor": [{"competidor": "Tienda Monge", "total": 2,
+                                "meta": [{"referencia": "A1", "titulo": "Cero intereses",
+                                          "clasificacion": "nuevo"}], "google": []}],
+        })
+        self._entrar()
+        r = self.web.get(f"/panel/reporte/{rid}/correo")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("Tienda Monge", r.get_data(as_text=True))
+
+
+class TestPlanificadorNoGastaSolo(CasoBase):
+    def test_un_arranque_con_la_base_vacia_no_dispara_el_ciclo(self):
+        # Se vio levantando el servidor con gunicorn contra un disco vacío:
+        # /salud ya reportaba una corrida terminada segundos después de
+        # arrancar. El planificador leía "no hay ninguna corrida" como "le
+        # toca" y llamaba al ciclo, que recolecta y cobra por anuncio. En un
+        # servidor con clientes cargados, cada deploy habría sido una corrida
+        # de Apify que nadie pidió.
+        from unittest import mock
+
+        from pulserival.web import planificador
+
+        def conectar():
+            return db.conectar(self.ruta)
+
+        p = planificador.Planificador(conectar)
+        with mock.patch("pulserival.pipeline.ciclo_completo") as ciclo:
+            resultado = p.tic()
+        ciclo.assert_not_called()
+        self.assertFalse(resultado["corrio"])

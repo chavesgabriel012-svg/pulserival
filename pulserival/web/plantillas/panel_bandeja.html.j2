@@ -1,0 +1,55 @@
+{% extends "_panel.html.j2" %}
+{% block titulo %}Bandeja · {{ marca }}{% endblock %}
+{% block contenido %}
+  <h1>Reportes esperando su decisión</h1>
+  <p class="sub">El cron genera el borrador. Nada le llega al cliente hasta que usted lo apruebe.</p>
+
+  {% if not pendientes %}
+    <p class="vacio">No hay nada pendiente. Cuando corra el ciclo, los borradores aparecen acá.</p>
+  {% else %}
+  <table style="margin-top:26px;">
+    <tr>
+      <th>Cliente</th><th>Periodo</th><th class="num">Movimientos</th>
+      <th>Control de calidad</th><th>Estado</th><th></th>
+    </tr>
+    {% for r in pendientes %}
+    <tr>
+      <td><strong>{{ r.cliente }}</strong><br><span class="sub">{{ r.email }}</span></td>
+      <td>{{ r.periodo }}<br><span class="sub">generado {{ r.generado_en }}</span></td>
+      <td class="num">{{ r.movimientos }}</td>
+      <td>
+        {# El control de calidad no bloquea: usted decide. Pero lo que encontró
+           tiene que estar a la vista antes de abrir el reporte. #}
+        {% if r.aprobado %}<span class="marca">Aprobado</span>
+        {% else %}<span class="marca lleno">Revisar</span>{% endif %}
+        {% if r.problemas %}<br><span class="sub">{{ r.problemas }}
+          problema{{ 's' if r.problemas != 1 }}</span>{% endif %}
+        {% if r.avisos %}<br><span class="sub">{{ r.avisos }} aviso{{ 's' if r.avisos != 1 }}</span>{% endif %}
+        {% if r.palabras %}<br><span class="sub">{{ r.palabras }} palabras · cobertura {{ r.cobertura }}</span>{% endif %}
+      </td>
+      <td>{{ r.estado }}{% if r.editado %}<br><span class="sub">ya editado</span>{% endif %}</td>
+      <td><a class="btn chico" href="{{ url_for('panel.ver', rid=r.id) }}">Abrir</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+
+  {% if historial %}
+  <h2>Ya decididos</h2>
+  <table>
+    <tr><th>Cliente</th><th>Periodo</th><th>Qué pasó</th><th class="num">Costo</th></tr>
+    {% for r in historial %}
+    <tr>
+      <td>{{ r.cliente }}</td>
+      <td>{{ r.periodo }}</td>
+      <td>
+        {% if r.estado == 'enviado' %}Enviado {{ r.enviado_en }}
+        {% else %}Descartado{% if r.motivo_descarte %}<br><span class="sub">{{ r.motivo_descarte }}</span>{% endif %}
+        {% endif %}
+      </td>
+      <td class="num">${{ '%.4f' % r.costo_usd }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+{% endblock %}
