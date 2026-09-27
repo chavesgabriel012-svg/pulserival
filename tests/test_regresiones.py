@@ -700,3 +700,25 @@ class TestPanelDeRevision(CasoBase):
         r = self.web.get(f"/panel/reporte/{rid}/correo")
         self.assertEqual(r.status_code, 200)
         self.assertIn("Tienda Monge", r.get_data(as_text=True))
+
+
+class TestPlanificadorNoGastaSolo(CasoBase):
+    def test_un_arranque_con_la_base_vacia_no_dispara_el_ciclo(self):
+        # Se vio levantando el servidor con gunicorn contra un disco vacío:
+        # /salud ya reportaba una corrida terminada segundos después de
+        # arrancar. El planificador leía "no hay ninguna corrida" como "le
+        # toca" y llamaba al ciclo, que recolecta y cobra por anuncio. En un
+        # servidor con clientes cargados, cada deploy habría sido una corrida
+        # de Apify que nadie pidió.
+        from unittest import mock
+
+        from pulserival.web import planificador
+
+        def conectar():
+            return db.conectar(self.ruta)
+
+        p = planificador.Planificador(conectar)
+        with mock.patch("pulserival.pipeline.ciclo_completo") as ciclo:
+            resultado = p.tic()
+        ciclo.assert_not_called()
+        self.assertFalse(resultado["corrio"])

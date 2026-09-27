@@ -133,3 +133,5 @@ buscadores que no las indexen.
   dispositivo más que cambiando `PULSERIVAL_SECRET`.
 - **El tope de intentos está en memoria del proceso.** Con un solo proceso
   (`--workers 1`, que es la configuración) funciona.
+- **El panel no muestra el estado del cron.** Por ahora se ve en `/salud`, que
+  dice cuándo fue la última corrida y por qué la siguiente todavía no salió.

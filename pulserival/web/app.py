@@ -26,6 +26,7 @@ import secrets
 import sqlite3
 import time
 from datetime import timedelta
+from pathlib import Path
 from typing import Any
 
 from flask import Flask, abort, redirect, render_template, request, url_for
@@ -34,6 +35,7 @@ from jinja2 import ChoiceLoader, FileSystemLoader
 from .. import altas, config, db, planes
 from ..landing import generador
 from . import deposito as deposito_mod
+from . import planificador as plan_mod
 from .panel import PLANTILLAS as PLANTILLAS_PANEL
 from .panel import panel as plano_panel
 
@@ -81,6 +83,24 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
     # El panel abre su propia conexión por petición, igual que las rutas de acá.
     app.config["CONECTAR"] = conectar
     app.register_blueprint(plano_panel)
+
+    # Crear el esquema si falta y correr las migraciones. En un servidor nuevo
+    # el disco arranca vacío, y sin esto la primera petición se encuentra con
+    # una base sin tablas. Es idempotente (todo es CREATE TABLE IF NOT EXISTS
+    # y columnas aditivas), así que también sirve de migración en cada deploy.
+    if deposito.nombre == "sqlite":
+        db.inicializar(Path(app.config["RUTA_DB"]))
+
+    # El cron vive en este mismo proceso: en Fly y en Railway el disco se monta
+    # en un solo contenedor, así que un ciclo en otro contenedor escribiría en
+    # otra base. Apagado por defecto para que los tests y la máquina local no
+    # se pongan a correr ciclos solos; en el servidor se enciende con
+    # PULSERIVAL_PLANIFICADOR=1.
+    app.config["PLANIFICADOR"] = None
+    if plan_mod.habilitado():
+        planificador = plan_mod.Planificador(conectar)
+        planificador.arrancar()
+        app.config["PLANIFICADOR"] = planificador
 
     # ── landing ──────────────────────────────────────────────────────
     @app.get("/")
@@ -232,6 +252,7 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
             con = conectar()
             try:
                 estado["clientes"] = db.fila(con, "SELECT COUNT(*) AS n FROM clientes")["n"]
+                estado.update(plan_mod.estado(con))
             except sqlite3.Error as e:
                 return {**estado, "ok": False, "error": str(e)}, 500
             finally:

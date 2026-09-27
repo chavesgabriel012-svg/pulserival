@@ -33,15 +33,19 @@ el cron. Una pieza, no tres.
 | Cron | sí, del propio hosting | no |
 | Base de datos | una, en disco | ninguna |
 
-**Recomendación: un servidor con disco.** Railway o Fly.io, alrededor de $5 al
-mes. Vercel queda como la opción si algún día se quiere la landing separada,
-pero hoy no aporta nada y cuesta cuatro veces más.
+**Recomendación: Fly.io, ~$2,10/mes.** Los pasos concretos están en
+[11 · Fly.io](11-fly.md), con la comparación contra Railway y por qué ninguno
+de los dos sirve gratis para esto. Vercel queda como opción solo si algún día
+se quiere la landing separada; hoy no aporta nada y cuesta diez veces más.
 
 ## Publicar
 
+La guía paso a paso es [11 · Fly.io](11-fly.md). Lo de acá abajo es lo
+común a cualquier servidor con disco.
+
 ### 1. Crear el servicio
 
-Railway o Fly.io, apuntando a este repositorio. El `Procfile` ya está:
+Apuntando a este repositorio. El `Procfile` ya está (Fly usa el `Dockerfile`):
 
 ```
 web: gunicorn 'pulserival.web.app:wsgi()' --bind 0.0.0.0:$PORT --workers 1 --timeout 120
@@ -91,17 +95,20 @@ git show datos:datos/pulserival.db > pulserival.db
 Las migraciones son aditivas y corren solas al arrancar: una base vieja se
 actualiza sin perder nada.
 
-### 5. El cron en el servidor
+### 5. El cron
 
-Una tarea programada del hosting (Railway: "Cron Schedule") con el mismo comando
-de siempre:
+**No puede ser una tarea programada del hosting.** Tanto en Fly como en Railway
+un disco se monta en un solo contenedor, y el cron de Railway además corre como
+un servicio aparte. Un ciclo en otro contenedor escribiría en otra base.
 
-```
-python -m pulserival.cli ciclo --modo auto --limite 50
-```
+Por eso el cron vive dentro del proceso web, en
+`pulserival/web/planificador.py`, y se enciende con `PULSERIVAL_PLANIFICADOR=1`.
+No es un cron: mira cuándo fue la última recolección y corre si ya pasó la
+cadencia, así que una corrida atrasada por un reinicio se recupera en vez de
+perderse. El detalle está en [11 · Fly.io](11-fly.md).
 
-No hay lógica nueva: es el mismo `pipeline.ciclo_completo()` que corre hoy en
-Actions.
+La primera corrida **no** se dispara sola, a propósito: es lo que impide que un
+deploy gaste plata de scraper por su cuenta.
 
 ### 6. Apagar el cron de GitHub Actions
 

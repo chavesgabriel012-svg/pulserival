@@ -1,0 +1,13 @@
+# Lo que no tiene que entrar a la imagen. La base y los borradores tienen datos
+# de clientes y en el servidor viven en el disco montado, no en la imagen.
+datos/
+borradores/
+salida/
+tests/
+docs/
+.git/
+.github/
+__pycache__/
+*.pyc
+.env
+*.db
