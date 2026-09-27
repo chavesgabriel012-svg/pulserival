@@ -14,7 +14,6 @@ import yaml
 
 RAIZ = Path(__file__).resolve().parent.parent
 DIR_CONFIG = RAIZ / "config"
-DIR_DATOS = RAIZ / "datos"
 
 
 def _dir(variable: str, defecto: Path) -> Path:
@@ -22,14 +21,21 @@ def _dir(variable: str, defecto: Path) -> Path:
 
     Hace falta en un servidor con disco montado: el contenedor se reemplaza en
     cada deploy, así que todo lo que quede en la imagen se pierde. Y no es solo
-    comodidad — en salida/ queda la copia de cada correo que SE ENVIÓ, que es
-    el registro de lo que el cliente recibió. Eso tiene que vivir en el disco,
-    no en el contenedor.
+    comodidad:
+
+      - en salida/ queda la copia de cada correo que SE ENVIÓ, que es el
+        registro de lo que el cliente recibió;
+      - en datos/crudo/ queda la respuesta tal cual la devolvió el scraper, que
+        es con lo que se comprueba si un dato del reporte salió mal por el
+        scraper o por nosotros.
+
+    Las dos cosas tienen que vivir en el disco, no en el contenedor.
     """
     valor = os.environ.get(variable)
     return Path(valor) if valor else defecto
 
 
+DIR_DATOS = _dir("PULSERIVAL_DATOS", RAIZ / "datos")
 DIR_BORRADORES = _dir("PULSERIVAL_BORRADORES", RAIZ / "borradores")
 DIR_SALIDA = _dir("PULSERIVAL_SALIDA", RAIZ / "salida")
 

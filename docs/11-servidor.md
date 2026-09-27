@@ -99,6 +99,7 @@ el archivo acá hay que ponerlas a mano:
 
 ```
 PULSERIVAL_DB=/datos/pulserival.db
+PULSERIVAL_DATOS=/datos/trabajo
 PULSERIVAL_BORRADORES=/datos/borradores
 PULSERIVAL_SALIDA=/datos/salida
 PULSERIVAL_PLANIFICADOR=1
@@ -197,16 +198,91 @@ Qué mirar, en orden de gravedad:
 salud de Railway marca el deploy como fallido. Es a propósito: mejor que quede
 a la vista que descubrirlo por un alta perdida.
 
+### 5.5 Preparar `railway ssh` (una sola vez)
+
+Todo lo que sigue se corre **desde la terminal de su máquina**; `railway ssh --`
+es lo que hace que el comando se ejecute adentro del contenedor.
+
+Primero, el CLI:
+
+```bash
+brew install railway                          # Mac con Homebrew
+bash <(curl -fsSL railway.com/install.sh)     # Mac o Linux sin Homebrew
+npm i -g @railway/cli                         # Windows, o cualquiera con Node
+```
+
+```bash
+railway login
+railway link          # elegir proyecto, entorno y servicio
+```
+
+`railway ssh` necesita una llave SSH registrada, y si no la hay falla con
+"No SSH keys found in your SSH agent or ~/.ssh/":
+
+```bash
+ssh-keygen -t ed25519      # Enter tres veces: ruta por defecto, sin contraseña
+railway ssh keys add       # elegir id_ed25519.pub de la lista
+```
+
+Si después dice **"No registered SSH keys found"** teniendo la llave puesta, es
+un problema conocido del CLI: la registra como llave personal y el servicio
+puede estar pidiendo una de workspace.
+
+```bash
+railway ssh keys remove
+railway ssh keys add --workspace
+```
+
+Comprobar que llega antes de tocar nada:
+
+```bash
+railway ssh -- ls -la /datos
+```
+
+Tiene que listar el contenido del disco. Si esto falla, nada de lo que sigue
+va a funcionar.
+
 ### 6. Traer la base que ya existe
 
 Una sola vez, para no perder el historial:
 
+Se sube con `scp`, que viene incluido en Windows, macOS y Linux. **No con
+`railway ssh ... < archivo`**: PowerShell no soporta `<` para redirigir un
+archivo, y pasar binario por una tubería de PowerShell lo corrompe.
+
+Primero hay que tener el archivo. Con el repositorio clonado:
+
 ```bash
 git fetch origin datos
-git show datos:datos/pulserival.db > /tmp/pulserival.db
-railway link            # elegir el proyecto
-railway run --service <servicio> bash -c "cat > /datos/pulserival.db" < /tmp/pulserival.db
+git show origin/datos:datos/pulserival.db > pulserival.db
 ```
+
+Sin el repositorio clonado, se baja de GitHub: rama `datos`, archivo
+`datos/pulserival.db`, botón **Download raw file**. Comprobar el tamaño: si
+pesa unos pocos KB, se bajó la página en vez del archivo.
+
+```bash
+railway ssh config     # escribe un atajo en ~/.ssh/config e imprime su nombre
+scp pulserival.db ATAJO:/datos/nueva.db
+railway ssh -- ls -la /datos      # nueva.db tiene que pesar lo mismo que el original
+```
+
+Se sube con otro nombre a propósito: el servidor tiene la base abierta, y
+sobrescribirla en caliente puede dejarla corrupta. Recién con el tamaño
+confirmado:
+
+```bash
+railway ssh -- mv /datos/nueva.db /datos/pulserival.db
+railway redeploy
+```
+
+Las migraciones corren solas al arrancar, así que una base vieja se actualiza
+sin perder nada.
+
+**`railway ssh`, no `railway run`.** `railway run` ejecuta el comando **en su
+máquina** con las variables del servicio inyectadas: escribiría en un `/datos`
+de su computadora y la base del servidor quedaría intacta, sin que nada avise.
+`railway ssh` es el que entra al contenedor.
 
 Si arranca sin esto no pasa nada malo: el esquema se crea solo y las
 migraciones son aditivas.
@@ -214,10 +290,14 @@ migraciones son aditivas.
 ### 7. Cargar los clientes y la primera corrida
 
 ```bash
-railway run python -m pulserival.cli aplicar-config
-railway run python -m pulserival.cli prueba-scraper --consulta "Tienda Monge"
-railway run python -m pulserival.cli ciclo --modo auto --limite 40
+railway ssh -- python -m pulserival.cli aplicar-config
+railway ssh -- python -m pulserival.cli clientes lista
+railway ssh -- python -m pulserival.cli prueba-scraper --consulta "Tienda Monge"
+railway ssh -- python -m pulserival.cli ciclo --modo auto --limite 40
 ```
+
+El `prueba-scraper` antes del ciclo cuesta centavos y confirma que
+`APIFY_TOKEN` funciona de verdad, antes de disparar la corrida completa.
 
 **El planificador no dispara la primera corrida solo.** Es la única forma de
 que un deploy no pueda gastar plata por su cuenta, y además es el orden
@@ -241,11 +321,17 @@ En GitHub: **Settings → Secrets and variables → Actions → Variables**, cre
 ## Operar en Railway
 
 ```bash
-railway logs                                        # incluye el planificador
-railway run python -m pulserival.cli costos
-railway run python -m pulserival.cli clientes lista
-railway run python -m pulserival.cli ciclo --modo auto     # forzar una corrida
+railway logs                                             # incluye el planificador
+railway ssh -- python -m pulserival.cli costos
+railway ssh -- python -m pulserival.cli clientes lista
+railway ssh -- python -m pulserival.cli reporte lista
+railway ssh -- python -m pulserival.cli ciclo --modo auto   # forzar una corrida
 ```
+
+Siempre `railway ssh --`, nunca `railway run`: el segundo corre en su máquina
+con las variables del servicio inyectadas, así que apuntaría a un `/datos` que
+en su computadora no es la base del servidor. El comando no falla, y esa es la
+parte peligrosa.
 
 El panel está en `https://<su-app>.up.railway.app/panel/` y el gasto en
 `/panel/gasto`.
