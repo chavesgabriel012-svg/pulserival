@@ -3,77 +3,200 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ marca }} — Inteligencia publicitaria de su competencia</title>
+<title>{{ marca }} — Los anuncios de su competencia en Meta y Google</title>
 <meta name="description" content="{{ subtitulo }}">
+<meta property="og:title" content="{{ marca }} — Los anuncios de su competencia en Meta y Google">
+<meta property="og:description" content="{{ subtitulo }}">
+<meta property="og:type" content="website">
 <style>
-  :root { --negro:#000; --gris:#6b6b6b; --linea:#d4d4d4; --suave:#f4f4f4; }
-  * { box-sizing: border-box; }
-  body {
-    margin:0; background:#fff; color:#1b1b1b;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
-    line-height:1.6; -webkit-font-smoothing:antialiased;
+  /* Blanco y negro, sin excepciones. Lo que da jerarquía acá es el tamaño
+     del texto, el aire y las líneas: no hay color al que recurrir, así que
+     cada regla tiene que ganarse el lugar. */
+  :root {
+    --negro:#000; --tinta:#161616; --gris:#5f5f5f; --tenue:#8a8a8a;
+    --linea:#e2e2e2; --linea-fuerte:#c9c9c9; --suave:#f6f6f6;
   }
-  .env { max-width:980px; margin:0 auto; padding:0 24px; }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    margin:0; background:#fff; color:var(--tinta);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+    line-height:1.62; -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  .env { max-width:1060px; margin:0 auto; padding:0 28px; }
+  .angosto { max-width:68ch; }
   a { color:var(--negro); }
-  header { background:var(--negro); padding:18px 0; }
-  header img { display:block; height:24px; width:auto; }
-  .hero { padding:72px 0 56px; border-bottom:1px solid var(--linea); }
-  .hero h1 { font-size:40px; line-height:1.18; margin:0 0 20px; letter-spacing:-.4px; }
-  .hero p { font-size:18px; color:#3a3a3a; max-width:62ch; margin:0 0 28px; }
+
+  /* -- encabezado -- */
+  header { background:var(--negro); position:sticky; top:0; z-index:10; }
+  header .env { display:flex; align-items:center; gap:32px; height:60px; }
+  header img { display:block; height:19px; width:auto; }
+  header nav { margin-left:auto; display:flex; gap:26px; align-items:center; }
+  header nav a {
+    color:#fff; text-decoration:none; font-size:13px; letter-spacing:.3px;
+    opacity:.75; transition:opacity .15s;
+  }
+  header nav a:hover { opacity:1; }
+  header nav a.cta {
+    opacity:1; border:1px solid #fff; padding:7px 16px; font-weight:600;
+  }
+  header nav a.cta:hover { background:#fff; color:var(--negro); }
+  @media (max-width:700px) { header nav a.oculto { display:none; } }
+
+  /* -- portada -- */
+  .hero { padding:96px 0 72px; }
+  .hero .etiqueta {
+    font-size:12px; text-transform:uppercase; letter-spacing:2px;
+    color:var(--gris); margin:0 0 22px;
+  }
+  .hero h1 {
+    font-size:52px; line-height:1.08; margin:0 0 24px;
+    letter-spacing:-1.4px; font-weight:600; max-width:26ch;
+  }
+  .hero .bajada { font-size:19px; color:#333; max-width:60ch; margin:0 0 32px; }
+  .acciones { display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
+  .promesa { font-size:14px; color:var(--gris); margin:20px 0 0; }
+
   .btn {
     display:inline-block; background:var(--negro); color:#fff; text-decoration:none;
-    padding:14px 26px; font-weight:600; font-size:15px; border:2px solid var(--negro);
+    padding:14px 28px; font-weight:600; font-size:15px; border:1.5px solid var(--negro);
+    transition:background .15s, color .15s; cursor:pointer; font-family:inherit;
   }
   .btn:hover { background:#fff; color:var(--negro); }
   .btn.alt { background:#fff; color:var(--negro); }
   .btn.alt:hover { background:var(--negro); color:#fff; }
-  section { padding:56px 0; border-bottom:1px solid var(--linea); }
-  h2 { font-size:13px; text-transform:uppercase; letter-spacing:1.4px; margin:0 0 28px;
-       padding-bottom:8px; border-bottom:2px solid var(--negro); display:inline-block; }
-  .cols { display:grid; grid-template-columns:repeat(3,1fr); gap:32px; }
-  .cols h3 { font-size:17px; margin:0 0 8px; }
-  .cols p { margin:0; color:#3a3a3a; font-size:15px; }
-  .planes { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; align-items:start; }
-  .plan { border:1px solid var(--linea); padding:24px 20px; display:flex;
-          flex-direction:column; min-height:100%; }
-  .plan.destacado { border:2px solid var(--negro); }
-  .plan .nombre { font-size:12px; text-transform:uppercase; letter-spacing:1.2px;
-                  color:var(--gris); margin-bottom:10px; }
-  .plan .precio { font-size:34px; font-weight:600; line-height:1; margin-bottom:4px; }
-  .plan .precio span { font-size:14px; font-weight:400; color:var(--gris); }
-  .plan .resumen { font-size:14px; color:#3a3a3a; margin:12px 0 16px; }
-  .plan ul { list-style:none; padding:0; margin:0 0 22px; font-size:14px; }
-  .plan li { padding:6px 0 6px 16px; position:relative; border-top:1px solid #ededed; }
-  .plan li:before { content:"—"; position:absolute; left:0; color:var(--gris); }
+
+  /* -- secciones -- */
+  section { padding:76px 0; border-top:1px solid var(--linea); }
+  .rotulo {
+    font-size:12px; text-transform:uppercase; letter-spacing:2px;
+    color:var(--gris); margin:0 0 14px;
+  }
+  h2 { font-size:30px; line-height:1.2; margin:0 0 18px; letter-spacing:-.6px;
+       font-weight:600; max-width:24ch; }
+  .entrada { font-size:17px; color:#3d3d3d; max-width:62ch; margin:0 0 44px; }
+
+  /* -- las dos plataformas -- */
+  .fuentes { display:grid; grid-template-columns:1fr 1fr; gap:0;
+             border:1px solid var(--linea-fuerte); }
+  .fuente { padding:32px 30px; }
+  .fuente + .fuente { border-left:1px solid var(--linea-fuerte); }
+  .fuente .nombre { font-size:24px; font-weight:600; letter-spacing:-.4px; margin:0; }
+  .fuente .donde { font-size:14px; color:var(--gris); margin:2px 0 4px; }
+  .fuente .biblioteca {
+    font-size:12px; text-transform:uppercase; letter-spacing:1.2px;
+    color:var(--tenue); margin:0 0 20px; padding-bottom:18px;
+    border-bottom:1px solid var(--linea);
+  }
+  .fuente ul { list-style:none; padding:0; margin:0; }
+  .fuente li {
+    font-size:15px; padding:9px 0 9px 22px; position:relative; color:#333;
+  }
+  .fuente li:before {
+    content:""; position:absolute; left:0; top:17px;
+    width:10px; height:1.5px; background:var(--negro);
+  }
+  .fuente .advertencia {
+    margin:20px 0 0; padding:14px 16px; background:var(--suave);
+    font-size:14px; color:#3d3d3d; border-left:2px solid var(--negro);
+  }
+
+  /* -- pasos numerados -- */
+  .pasos { display:grid; grid-template-columns:repeat(4,1fr); gap:28px; }
+  .paso .n {
+    font-size:13px; font-weight:600; letter-spacing:1px; color:var(--tenue);
+    padding-bottom:12px; margin-bottom:16px; border-bottom:2px solid var(--negro);
+  }
+  .paso h3 { font-size:18px; margin:0 0 8px; font-weight:600; letter-spacing:-.2px; }
+  .paso p { margin:0; font-size:15px; color:#3d3d3d; }
+
+  /* -- ventajas -- */
+  .ventajas { display:grid; grid-template-columns:1fr 1fr; gap:40px 48px; }
+  .ventaja h3 { font-size:19px; margin:0 0 8px; font-weight:600; letter-spacing:-.2px; }
+  .ventaja p { margin:0; font-size:15px; color:#3d3d3d; }
+
+  /* -- límites -- */
+  .limites { background:var(--negro); color:#fff; }
+  .limites .rotulo { color:#909090; }
+  .limites h2 { color:#fff; }
+  .limites ul { list-style:none; padding:0; margin:0;
+                display:grid; grid-template-columns:1fr 1fr; gap:0 44px; }
+  .limites li {
+    font-size:16px; padding:18px 0; color:#d8d8d8;
+    border-top:1px solid #2c2c2c;
+  }
+  .limites .cierre { margin:36px 0 0; font-size:15px; color:#909090; max-width:62ch; }
+
+  /* -- planes -- */
+  .planes { display:grid; grid-template-columns:repeat(4,1fr); gap:0;
+            border:1px solid var(--linea-fuerte); }
+  .plan { padding:28px 24px; display:flex; flex-direction:column; }
+  .plan + .plan { border-left:1px solid var(--linea-fuerte); }
+  .plan.destacado { background:var(--negro); color:#fff; }
+  .plan.destacado .nombre, .plan.destacado .precio span,
+  .plan.destacado .resumen { color:#b4b4b4; }
+  .plan.destacado li { color:#e0e0e0; border-top-color:#2c2c2c; }
+  .plan.destacado .btn { background:#fff; color:var(--negro); border-color:#fff; }
+  .plan.destacado .btn:hover { background:var(--negro); color:#fff; }
+  .plan .nombre { font-size:12px; text-transform:uppercase; letter-spacing:1.4px;
+                  color:var(--gris); margin-bottom:14px; }
+  .plan .precio { font-size:38px; font-weight:600; line-height:1; letter-spacing:-1.2px; }
+  .plan .precio span { font-size:14px; font-weight:400; color:var(--gris);
+                       letter-spacing:0; }
+  .plan .resumen { font-size:14px; color:#3d3d3d; margin:14px 0 18px; }
+  .plan ul { list-style:none; padding:0; margin:0 0 24px; }
+  .plan li { font-size:14px; padding:9px 0; border-top:1px solid var(--linea); }
   .plan .pie { margin-top:auto; }
   .plan .btn { width:100%; text-align:center; padding:11px 8px; font-size:14px; }
-  form { display:grid; gap:18px; max-width:640px; }
-  .campo label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
-  .campo .ayuda { font-size:13px; color:var(--gris); font-weight:400; margin-bottom:6px; }
+
+  /* -- formulario -- */
+  form { display:grid; gap:20px; max-width:680px; }
+  .campo label { display:block; font-size:14px; font-weight:600; margin-bottom:6px; }
+  .campo .ayuda { font-size:13px; color:var(--gris); font-weight:400; margin-bottom:8px; }
   input, textarea, select {
-    width:100%; padding:11px 12px; border:1px solid var(--linea); font-size:15px;
-    font-family:inherit; background:#fff; color:#1b1b1b;
+    width:100%; padding:12px 13px; border:1px solid var(--linea-fuerte); font-size:15px;
+    font-family:inherit; background:#fff; color:var(--tinta);
   }
-  input:focus, textarea:focus, select:focus { outline:2px solid var(--negro); border-color:var(--negro); }
-  textarea { min-height:96px; resize:vertical; }
-  fieldset { border:1px solid var(--linea); padding:18px; margin:0; }
-  legend { font-size:13px; font-weight:600; padding:0 8px; }
-  .competidor { display:grid; gap:10px; margin-bottom:14px; padding-bottom:14px;
-                border-bottom:1px solid #ededed; }
+  input::placeholder { color:#aaa; }
+  input:focus, textarea:focus, select:focus {
+    outline:none; border-color:var(--negro); box-shadow:inset 0 0 0 1px var(--negro);
+  }
+  textarea { min-height:104px; resize:vertical; line-height:1.6; }
+  fieldset { border:1px solid var(--linea-fuerte); padding:22px; margin:0; }
+  legend { font-size:13px; font-weight:600; padding:0 8px; text-transform:uppercase;
+           letter-spacing:1.2px; }
+  .competidor { display:grid; gap:10px; margin-bottom:16px; padding-bottom:16px;
+                border-bottom:1px solid var(--linea); }
   .competidor:last-child { border-bottom:0; margin-bottom:0; padding-bottom:0; }
-  .fila { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .nota { background:var(--suave); padding:16px 18px; font-size:14px; color:#3a3a3a;
-          border-left:3px solid var(--negro); }
-  footer { background:var(--negro); color:#b0b0b0; padding:28px 0; font-size:13px; }
+  .fila { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .nota { background:var(--suave); padding:16px 18px; font-size:14px; color:#3d3d3d;
+          border-left:2px solid var(--negro); }
+
+  footer { background:var(--negro); color:#909090; padding:44px 0 52px; font-size:14px; }
   footer a { color:#fff; }
-  @media (max-width:860px) {
-    .planes { grid-template-columns:repeat(2,1fr); }
-    .cols { grid-template-columns:1fr; gap:24px; }
-    .hero h1 { font-size:30px; }
-    .hero { padding:48px 0 40px; }
+  footer .marca { color:#fff; font-weight:600; letter-spacing:.3px; margin-bottom:14px; }
+  footer p { margin:0 0 10px; max-width:74ch; line-height:1.7; }
+
+  @media (max-width:900px) {
+    .pasos { grid-template-columns:1fr 1fr; gap:32px; }
+    .planes { grid-template-columns:1fr 1fr; }
+    .plan:nth-child(3) { border-left:0; }
+    .plan:nth-child(n+3) { border-top:1px solid var(--linea-fuerte); }
+    .hero h1 { font-size:38px; letter-spacing:-.9px; }
+    .hero { padding:64px 0 52px; }
+    section { padding:56px 0; }
+    h2 { font-size:25px; }
   }
-  @media (max-width:520px) {
-    .planes, .fila { grid-template-columns:1fr; }
+  @media (max-width:640px) {
+    .fuentes, .ventajas, .limites ul { grid-template-columns:1fr; }
+    .fuente + .fuente { border-left:0; border-top:1px solid var(--linea-fuerte); }
+    .pasos, .planes, .fila { grid-template-columns:1fr; }
+    .plan + .plan { border-left:0; border-top:1px solid var(--linea-fuerte); }
+    .plan:nth-child(3) { border-left:0; }
+    .hero h1 { font-size:31px; letter-spacing:-.6px; }
+    .hero .bajada { font-size:17px; }
+    .env { padding:0 20px; }
   }
 </style>
 </head>
@@ -82,32 +205,107 @@
 <header>
   <div class="env">
     {% if logo_data_uri %}<img src="{{ logo_data_uri }}" alt="{{ marca }}">
-    {% else %}<span style="color:#fff;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;">{{ marca }}</span>{% endif %}
+    {% else %}<span style="color:#fff;font-weight:600;letter-spacing:1.2px;">{{ marca }}</span>{% endif %}
+    <nav>
+      <a class="oculto" href="#fuentes">Qué revisamos</a>
+      <a class="oculto" href="#como">Cómo funciona</a>
+      <a href="#planes">Planes</a>
+      <a class="cta" href="#empezar">Empezar</a>
+    </nav>
   </div>
 </header>
 
 <div class="env">
-
   <div class="hero">
+    <p class="etiqueta">Inteligencia publicitaria · Costa Rica</p>
     <h1>{{ titulo }}</h1>
-    <p>{{ subtitulo }}</p>
-    <a class="btn" href="#planes">Ver los planes</a>
+    <p class="bajada">{{ subtitulo }}</p>
+    <div class="acciones">
+      <a class="btn" href="#empezar">Pedir el primer reporte</a>
+      <a class="btn alt" href="#como">Ver cómo funciona</a>
+    </div>
+    {% if promesa_corta %}<p class="promesa">{{ promesa_corta }}</p>{% endif %}
   </div>
+</div>
 
-  <section>
-    <h2>Por qué sirve</h2>
-    <div class="cols">
+{% if plataformas %}
+<section id="fuentes">
+  <div class="env">
+    <p class="rotulo">Las fuentes</p>
+    <h2>{{ plataformas.titulo }}</h2>
+    {% if plataformas.nota %}<p class="entrada">{{ plataformas.nota }}</p>{% endif %}
+    <div class="fuentes">
+      {% for f in plataformas.fuentes %}
+      <div class="fuente">
+        <p class="nombre">{{ f.nombre }}</p>
+        <p class="donde">{{ f.donde }}</p>
+        <p class="biblioteca">{{ f.biblioteca }}</p>
+        <ul>{% for i in f.lee %}<li>{{ i }}</li>{% endfor %}</ul>
+        {% if f.advertencia %}<p class="advertencia">{{ f.advertencia }}</p>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if pasos %}
+<section id="como">
+  <div class="env">
+    <p class="rotulo">El proceso</p>
+    <h2>{{ pasos.titulo }}</h2>
+    <div class="pasos">
+      {% for p in pasos.lista %}
+      <div class="paso">
+        <div class="n">{{ "%02d"|format(loop.index) }}</div>
+        <h3>{{ p.nombre }}</h3>
+        <p>{{ p.texto }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section id="porque">
+  <div class="env">
+    <p class="rotulo">Por qué sirve</p>
+    <h2>Los datos son públicos. El trabajo de mirarlos, no.</h2>
+    <div class="ventajas">
       {% for a in argumentos %}
-      <div>
+      <div class="ventaja">
         <h3>{{ a.titulo }}</h3>
         <p>{{ a.texto }}</p>
       </div>
       {% endfor %}
     </div>
-  </section>
+  </div>
+</section>
 
-  <section id="planes">
-    <h2>Planes</h2>
+{% if limites %}
+<section class="limites">
+  <div class="env">
+    <p class="rotulo">Sin letra chica</p>
+    <h2>{{ limites.titulo }}</h2>
+    <ul>{% for l in limites.lista %}<li>{{ l }}</li>{% endfor %}</ul>
+    <p class="cierre">
+      Se lo decimos antes de que pague, no después. Un proveedor que le promete
+      la inversión de su competencia le está estimando un número que nadie
+      publica.
+    </p>
+  </div>
+</section>
+{% endif %}
+
+<section id="planes">
+  <div class="env">
+    <p class="rotulo">Planes</p>
+    <h2>Elija la frecuencia que su categoría necesita</h2>
+    <p class="entrada">
+      En categorías donde el precio se mueve todas las semanas, un reporte
+      mensual llega tarde. En otras, semanal es ruido. Puede cambiar de plan
+      cuando quiera.
+    </p>
     <div class="planes">
       {% for p in planes %}
       <div class="plan{% if p.clave == 'semanal' %} destacado{% endif %}">
@@ -115,14 +313,12 @@
         {% if p.precio_usd is none %}
           <div class="precio">A convenir</div>
         {% elif p.precio_usd == 0 %}
-          <div class="precio">Gratis</div>
+          <div class="precio">Sin costo</div>
         {% else %}
           <div class="precio">${{ p.precio_usd }}<span> / mes</span></div>
         {% endif %}
         <div class="resumen">{{ p.resumen }}</div>
-        <ul>
-          {% for i in p.incluye %}<li>{{ i }}</li>{% endfor %}
-        </ul>
+        <ul>{% for i in p.incluye %}<li>{{ i }}</li>{% endfor %}</ul>
         <div class="pie">
           {% if p.enlace_pago %}
           <a class="btn" href="{{ p.enlace_pago }}">
@@ -135,11 +331,14 @@
       </div>
       {% endfor %}
     </div>
-  </section>
+  </div>
+</section>
 
-  <section id="empezar">
+<section id="empezar">
+  <div class="env">
+    <p class="rotulo">Empezar</p>
     <h2>{{ formulario.titulo }}</h2>
-    <p style="max-width:62ch;color:#3a3a3a;margin-top:0;">{{ formulario.nota }}</p>
+    <p class="entrada">{{ formulario.nota }}</p>
 
     <form id="alta" novalidate{% if modo_servidor %} method="post" action="{{ accion_alta }}"{% endif %}>
       <div class="campo">
@@ -185,10 +384,10 @@
 
       <fieldset>
         <legend>Sus competidores</legend>
-        <div class="ayuda" style="font-size:13px;color:var(--gris);margin-bottom:14px;">
+        <div class="ayuda" style="margin-bottom:18px;">
           De cada uno necesitamos su página de Facebook (o cómo aparece en la
           biblioteca de anuncios) y su dominio. Con uno solo de los dos también
-          se puede: se cubre esa plataforma y se avisa de la otra.
+          se puede: se cubre esa plataforma y se le avisa de la otra.
         </div>
         {% for n in [1, 2, 3] %}
         <div class="competidor">
@@ -204,29 +403,32 @@
         {% endfor %}
       </fieldset>
 
-      <div>
-        <button class="btn" type="submit">Enviar</button>
-      </div>
+      <div><button class="btn" type="submit">Enviar solicitud</button></div>
 
       <div class="nota">
         {% if modo_servidor %}
-        Al enviar le mostramos un resumen para confirmar antes de activar nada.
+        Al enviar le mostramos un resumen para confirmar. No se activa nada ni se
+        cobra nada hasta que usted lo confirme.
         {% else %}
         Al enviar se abre WhatsApp con sus datos ya ordenados. Nada se guarda en
         esta página.
         {% endif %}
       </div>
     </form>
-  </section>
-
-</div>
+  </div>
+</section>
 
 <footer>
   <div class="env">
-    {{ marca }}{% if dominio %} · {{ dominio }}{% endif %}<br>
-    Fuentes: Biblioteca de Anuncios de Meta y Centro de Transparencia de Anuncios
-    de Google, ambas públicas. Las plataformas no publican inversión, alcance ni
-    clics de los anuncios comerciales, de modo que los reportes no los incluyen.
+    <div class="marca">{{ marca }}{% if dominio %} · {{ dominio }}{% endif %}</div>
+    <p>
+      Fuentes: Biblioteca de Anuncios de Meta y Centro de Transparencia de
+      Anuncios de Google, ambas públicas y abiertas a cualquiera.
+    </p>
+    <p>
+      Las plataformas no publican inversión, alcance ni clics de los anuncios
+      comerciales, de modo que los reportes no los incluyen ni los estiman.
+    </p>
   </div>
 </footer>
 

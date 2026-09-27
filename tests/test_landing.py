@@ -102,3 +102,74 @@ class TestLanding(unittest.TestCase):
                                    {"clave": "semanal", "precio_usd": 100,
                                     "enlace_pago": "https://pagos.ejemplo/x"}]}):
             self.assertEqual(construir_mod.pendientes(), [])
+
+
+class TestContenidoNuevo(TestLanding):
+    """Las secciones que explican el producto.
+
+    Están en config/landing.yaml y la plantilla las dibuja solo si existen.
+    Eso las hace fáciles de perder en un cambio de configuración, y son
+    justamente lo que responde "¿qué me están vendiendo?".
+    """
+
+    SECCIONES = {
+        "plataformas": {
+            "titulo": "Las dos bibliotecas",
+            "nota": "Son públicas.",
+            "fuentes": [
+                {"nombre": "Meta", "donde": "Facebook e Instagram",
+                 "biblioteca": "Biblioteca de Anuncios de Meta",
+                 "lee": ["El texto completo del anuncio"]},
+                {"nombre": "Google", "donde": "Búsqueda, YouTube y Display",
+                 "biblioteca": "Centro de Transparencia",
+                 "lee": ["Cuántos anuncios tiene activos"],
+                 "advertencia": "Google no publica el texto de todos los anuncios."},
+            ],
+        },
+        "pasos": {"titulo": "Cómo se arma", "lista": [
+            {"nombre": "Recolectamos", "texto": "Leemos las dos bibliotecas."},
+            {"nombre": "Comparamos", "texto": "Contra lo que vimos antes."},
+        ]},
+        "limites": {"titulo": "Lo que no hace", "lista": [
+            "No dice cuánto invierte su competencia."]},
+    }
+
+    def test_nombra_las_dos_plataformas(self):
+        # Es lo primero que alguien quiere saber, y el pedido explícito:
+        # que quede claro que se cubre Meta Y Google.
+        h = self.html(landing=self.SECCIONES)
+        self.assertIn("Meta", h)
+        self.assertIn("Google", h)
+        self.assertIn("Facebook e Instagram", h)
+        self.assertIn("Búsqueda, YouTube y Display", h)
+
+    def test_dice_que_de_Google_no_sale_el_texto(self):
+        # La asimetría es real: el mapeo de config/fuentes.yaml saca el texto
+        # de Meta y de Google saca señales de actividad. Prometer lo mismo de
+        # las dos sería vender algo que el pipeline no entrega.
+        h = self.html(landing=self.SECCIONES)
+        self.assertIn("Google no publica el texto de todos los anuncios", h)
+
+    def test_muestra_los_pasos_numerados(self):
+        h = self.html(landing=self.SECCIONES)
+        self.assertIn("Recolectamos", h)
+        self.assertIn("Comparamos", h)
+        self.assertIn(">01<", h.replace(" ", "").replace("\n", ""))
+
+    def test_dice_lo_que_el_reporte_NO_hace(self):
+        # Esta sección es el argumento de venta, no una disculpa: si alguien
+        # promete la inversión de la competencia, está estimando.
+        h = self.html(landing=self.SECCIONES)
+        self.assertIn("No dice cuánto invierte su competencia", h)
+
+    def test_sin_las_secciones_la_pagina_igual_se_arma(self):
+        # config/landing.yaml lo edita una persona. Borrar una clave sin
+        # querer no puede romper la página entera.
+        h = self.html()
+        self.assertIn("Empecemos", h)
+        self.assertIn("<form", h)
+
+    def test_las_secciones_nuevas_tampoco_traen_simbolos(self):
+        h = self.html(landing=self.SECCIONES)
+        self.assertEqual(
+            [c for c in h if unicodedata.category(c) == "So" or ord(c) > 0x1F000], [])
