@@ -111,7 +111,7 @@
           {% for g in por_competidor %}
           <div style="margin-top:22px;">
             <div style="font-size:14px;font-weight:600;color:#000000;border-bottom:1px solid #000000;padding-bottom:6px;">
-              {{ g.competidor }} — {{ g.total }} anuncio{{ '' if g.total == 1 else 's' }}{% if g.piezas > g.total %} en {{ g.piezas }} piezas{% endif %}
+              {{ g.competidor }} — {{ g.total }} anuncio{{ '' if g.total == 1 else 's' }}{% if (g.piezas or 0) > (g.total or 0) %} en {{ g.piezas }} piezas{% endif %}
             </div>
 
             {% for plataforma, etiqueta in [('meta', 'Meta (Facebook e Instagram)'), ('google', 'Google')] %}

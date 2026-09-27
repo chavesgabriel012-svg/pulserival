@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{% block titulo %}Panel · {{ marca }}{% endblock %}</title>
+<style>
+  /* Mismo lenguaje visual que la landing: blanco y negro, sin color. Acá el
+     ancho es mayor porque hay que leer un reporte al lado de sus problemas. */
+  :root { --negro:#000; --gris:#6b6b6b; --linea:#d4d4d4; --suave:#f5f5f5; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#fff; color:#1b1b1b; line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; }
+  .env { max-width:1180px; margin:0 auto; padding:0 28px; }
+  a { color:var(--negro); }
+  header { background:var(--negro); padding:14px 0; }
+  header .env { display:flex; align-items:center; gap:28px; }
+  header img { display:block; height:20px; width:auto; }
+  header nav { display:flex; gap:22px; margin-left:auto; align-items:center; }
+  header nav a, header nav button { color:#fff; text-decoration:none; font-size:13px;
+    text-transform:uppercase; letter-spacing:1.1px; background:none; border:none;
+    font-family:inherit; cursor:pointer; padding:0; }
+  header nav a:hover, header nav button:hover { text-decoration:underline; }
+  .cuerpo { padding:40px 0 80px; }
+  h1 { font-size:24px; line-height:1.25; margin:0 0 6px; letter-spacing:-.3px; }
+  h2 { font-size:12px; text-transform:uppercase; letter-spacing:1.4px; margin:38px 0 14px;
+       padding-bottom:7px; border-bottom:2px solid var(--negro); display:inline-block; }
+  h3 { font-size:15px; margin:22px 0 8px; }
+  .sub { color:var(--gris); font-size:14px; margin:0 0 4px; }
+  .btn { display:inline-block; background:var(--negro); color:#fff; text-decoration:none;
+    padding:11px 20px; font-weight:600; font-size:14px; border:2px solid var(--negro);
+    cursor:pointer; font-family:inherit; }
+  .btn:hover { background:#fff; color:var(--negro); }
+  .btn.alt { background:#fff; color:var(--negro); }
+  .btn.chico { padding:7px 14px; font-size:13px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  td, th { text-align:left; padding:10px 14px 10px 0; border-bottom:1px solid #ededed;
+           vertical-align:top; }
+  th { color:var(--gris); font-weight:600; font-size:12px; text-transform:uppercase;
+       letter-spacing:.8px; border-bottom:1px solid var(--linea); }
+  td.num, th.num { text-align:right; padding-right:26px; white-space:nowrap;
+                   font-variant-numeric:tabular-nums; }
+  td.num:last-child, th.num:last-child { padding-right:0; }
+  .marca { display:inline-block; border:1px solid var(--negro); padding:1px 7px; font-size:11px;
+    text-transform:uppercase; letter-spacing:.8px; white-space:nowrap; }
+  .marca.lleno { background:var(--negro); color:#fff; }
+  .nota { background:var(--suave); padding:14px 16px; font-size:14px; color:#333;
+          border-left:3px solid var(--negro); margin:18px 0; }
+  .aviso { border:2px solid var(--negro); padding:14px 16px; font-size:14px; margin:0 0 24px; }
+  .aviso strong { text-transform:uppercase; letter-spacing:1px; font-size:11px;
+                  display:block; margin-bottom:5px; }
+  ul.limpia { list-style:none; padding:0; margin:0; }
+  ul.limpia li { padding:7px 0; border-bottom:1px solid #ededed; font-size:14px; }
+  .cols { display:grid; grid-template-columns:1fr 340px; gap:40px; align-items:start; }
+  @media (max-width:900px) { .cols { grid-template-columns:1fr; } }
+  textarea { width:100%; min-height:520px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:13px; line-height:1.65; padding:14px; border:1px solid var(--linea);
+    background:#fff; color:#1b1b1b; }
+  input[type=text], input[type=password], select { width:100%; padding:10px 12px;
+    border:1px solid var(--linea); font-family:inherit; font-size:14px; background:#fff; }
+  label { display:block; font-size:12px; text-transform:uppercase; letter-spacing:.9px;
+    color:var(--gris); margin:16px 0 5px; }
+  .campos { display:grid; gap:0; }
+  iframe { width:100%; height:760px; border:1px solid var(--linea); background:#fff; }
+  .vacio { color:var(--gris); font-size:15px; padding:28px 0; }
+  details summary { cursor:pointer; font-size:13px; text-transform:uppercase;
+    letter-spacing:1px; padding:10px 0; border-bottom:1px solid var(--linea); }
+  .md h1, .md h2, .md h3 { text-transform:none; letter-spacing:0; border:none; display:block; }
+  .md h2 { font-size:19px; margin:26px 0 10px; }
+  .md { font-size:15px; }
+</style>
+</head>
+<body>
+<header><div class="env">
+  {% if logo_data_uri %}<img src="{{ logo_data_uri }}" alt="{{ marca }}">
+  {% else %}<span style="color:#fff;font-weight:600;letter-spacing:1.2px;">{{ marca }}</span>{% endif %}
+  <nav>
+    <a href="{{ url_for('panel.bandeja') }}">Bandeja</a>
+    <a href="{{ url_for('panel.gasto') }}">Gasto</a>
+    {% if csrf %}
+    <form method="post" action="{{ url_for('panel.salir') }}" style="display:inline;">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button type="submit">Salir</button>
+    </form>
+    {% endif %}
+  </nav>
+</div></header>
+<div class="env cuerpo">{% block contenido %}{% endblock %}</div>
+</body>
+</html>

@@ -120,6 +120,23 @@ def enviar_reporte(
     return {"canal": canal, "archivo": str(archivo), "para": para, "enviado": True, **resultado}
 
 
+def previsualizar(con: sqlite3.Connection, reporte_id: int) -> dict[str, Any]:
+    """El correo armado, sin mandarlo y sin escribir nada.
+
+    Existe para el panel: antes de aprobar, hay que poder ver el correo
+    exactamente como le va a llegar al cliente, con el mismo código que lo
+    manda. Un preview armado por otro camino no probaría nada.
+    """
+    rep = _armar(con, reporte_id)
+    return {
+        "html": render.email_html(rep),
+        "texto": render.email_texto(rep),
+        "asunto": rep["asunto"],
+        "para": rep["contacto_email"],
+        "es_borrador": rep["es_borrador"],
+    }
+
+
 def _guardar_copia(rep: dict, html: str, texto: str) -> Path:
     carpeta = config.DIR_SALIDA
     carpeta.mkdir(parents=True, exist_ok=True)

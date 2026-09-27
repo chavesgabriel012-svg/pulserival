@@ -13,6 +13,7 @@ Todo se opera desde acá. Los comandos están en español y hacen una sola cosa:
   reporte lista                ver el estado de los reportes
   aplicar-config               cargar clientes y competidores desde config/clientes.yaml
   altas                        ver las solicitudes que llegaron por la landing
+  servidor                     levantar la web: landing, alta y panel de revisión
   prueba-scraper               llamar al scraper real una vez y ver qué devuelve
   ciclo                        recolectar + generar + exportar (lo que corre el cron)
   feedback agregar             anotar qué preguntó o destacó el cliente
@@ -628,11 +629,18 @@ def cmd_servidor(args) -> int:
         return error("Falta Flask. Instalalo con: pip install -r requirements.txt")
 
     from .web.app import cobro_simulado
+    from .web.panel import clave_configurada
 
     if cobro_simulado():
         aviso("COBRO SIMULADO: confirmar en el checkout activa la cuenta sin "
               "cobrar nada. Para cambiarlo: PULSERIVAL_COBRO=real")
     ok(f"Servidor en http://{args.host}:{args.puerto}")
+    if clave_configurada():
+        print(f"    Panel de revisión: http://{args.host}:{args.puerto}/panel/")
+    else:
+        aviso("El panel de revisión NO está habilitado: falta PULSERIVAL_PANEL_CLAVE. "
+              "Sin contraseña no se sirve, porque muestra datos de clientes y "
+              "puede mandarles correos.")
     print(f"    Base de datos: {config.ruta_db()}")
     crear_app().run(host=args.host, port=args.puerto, debug=args.debug)
     return 0

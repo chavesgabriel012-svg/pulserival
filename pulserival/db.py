@@ -44,6 +44,11 @@ MIGRACIONES = (
     ("clientes", "precio_mensual_usd", "REAL"),
     ("clientes", "pago_proveedor", "TEXT"),
     ("clientes", "pago_referencia", "TEXT"),
+    # Por qué se descartó un reporte. Sin esto, `estado = 'descartado'` no dice
+    # nada dentro de seis meses, y es justamente el dato que explica qué tuvo
+    # de malo el borrador: el insumo de la Fase 2 para los descartes, igual que
+    # el diff lo es para las ediciones.
+    ("reportes_generados", "motivo_descarte", "TEXT"),
 )
 
 # Qué poner en las filas que ya existían cuando se agrega una columna.

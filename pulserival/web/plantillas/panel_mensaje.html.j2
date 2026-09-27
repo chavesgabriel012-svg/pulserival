@@ -1,0 +1,8 @@
+{% extends "_panel.html.j2" %}
+{% block titulo %}{{ titulo_pagina }} · {{ marca }}{% endblock %}
+{% block contenido %}
+  <h1>{{ titulo_pagina }}</h1>
+  <p style="max-width:70ch;">{{ mensaje }}</p>
+  {% if volver %}<p><a class="btn alt" href="{{ volver }}">Volver</a></p>
+  {% else %}<p><a class="btn alt" href="{{ url_for('panel.bandeja') }}">Ir a la bandeja</a></p>{% endif %}
+{% endblock %}

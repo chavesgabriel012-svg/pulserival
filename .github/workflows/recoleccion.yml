@@ -32,6 +32,19 @@ concurrency:
 
 jobs:
   recolectar:
+    # Cuando el ciclo pase a correr en el servidor (con el panel y la base en
+    # disco), esta corrida tiene que dejar de hacer su trabajo: si no, serían
+    # dos bases distintas divergiendo en silencio, y lo que usted apruebe en el
+    # panel lo pisaría la corrida del lunes.
+    #
+    # Se apaga con una variable del repositorio en vez de editando este archivo:
+    # Settings > Secrets and variables > Actions > Variables >
+    # PULSERIVAL_CRON_EN_SERVIDOR = 1. Así se prende y se apaga sin un commit,
+    # y volver atrás es cambiar el 1 por un 0.
+    #
+    # El disparo a mano sigue funcionando igual, para poder correr una prueba
+    # desde acá aunque el servidor ya tenga el cron.
+    if: github.event_name == 'workflow_dispatch' || vars.PULSERIVAL_CRON_EN_SERVIDOR != '1'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:

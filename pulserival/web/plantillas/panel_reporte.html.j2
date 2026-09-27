@@ -1,0 +1,178 @@
+{% extends "_panel.html.j2" %}
+{% block titulo %}{{ r.cliente }} · {{ marca }}{% endblock %}
+{% block contenido %}
+  <h1>{{ r.cliente }}</h1>
+  <p class="sub">
+    {{ r.periodo }} · {{ r.movimientos }} movimiento{{ 's' if r.movimientos != 1 }} ·
+    {{ modelo }} · ${{ '%.4f' % r.costo_usd }} · estado <strong>{{ r.estado }}</strong>
+  </p>
+  <p class="sub">Asunto propuesto: {{ r.asunto }}</p>
+
+  {% if request.args.get('guardado') %}
+  <div class="aviso"><strong>Guardado</strong>
+    Su versión quedó registrada{% if request.args.get('similitud') %}
+    ({{ request.args.get('similitud') }} igual al borrador original){% endif %}.
+    El reporte pasó a <strong>revisado</strong> y ya se puede enviar.</div>
+  {% endif %}
+
+  {# ── Lo que hay que mirar antes de aprobar. Va arriba y no plegado: es lo
+       que evita mandarle al cliente algo que no se sostiene. ── #}
+  {% if validacion.problemas %}
+  <div class="aviso">
+    <strong>El control de calidad no lo aprobó</strong>
+    <ul class="limpia" style="margin-top:8px;">
+      {% for p in validacion.problemas %}
+      <li><strong>{{ p.tipo }}</strong> — {{ p.detalle }}</li>
+      {% endfor %}
+    </ul>
+    <p style="margin:12px 0 0;font-size:13px;">
+      Esto no le impide enviarlo: la decisión es suya. Pero cada punto de acá es algo
+      que el cliente podría notar.</p>
+  </div>
+  {% endif %}
+
+  {% if dudosos %}
+  <div class="aviso">
+    <strong>Datos dudosos en la corrida que alimentó este reporte</strong>
+    <ul class="limpia" style="margin-top:8px;">
+      {% for d in dudosos %}
+      <li><strong>{{ d.competidor }}</strong> ({{ d.plataforma }}) — {{ d.motivo }}</li>
+      {% endfor %}
+    </ul>
+    <p style="margin:12px 0 0;font-size:13px;">
+      Un competidor que devolvió cero anuncios puede no estar pautando, o puede que no lo
+      estemos encontrando. Antes de aprobar: si el reporte dice que hay un hueco ahí,
+      confírmelo a mano. Ya pasó una vez.</p>
+  </div>
+  {% endif %}
+
+  <div class="cols">
+    <div>
+      <h2>Editar</h2>
+      <form method="post" action="{{ url_for('panel.guardar', rid=r.id) }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <textarea name="cuerpo" spellcheck="true">{{ cuerpo_md }}</textarea>
+        <div class="campos">
+          <label for="etiqueta">Qué tipo de cambio hizo</label>
+          <select id="etiqueta" name="etiqueta">
+            <option value="">(que lo deduzca la IA)</option>
+            {% for e in etiquetas %}<option value="{{ e }}">{{ e }}</option>{% endfor %}
+          </select>
+          <label for="razon">Por qué, en una línea</label>
+          <input type="text" id="razon" name="razon"
+                 placeholder="Ej: el resumen daba por hecho algo que el dato no dice">
+        </div>
+        <p class="sub" style="margin:10px 0 0;">
+          Esto no es burocracia: el diff entre el borrador y su versión, con su etiqueta y su
+          razón, es lo que después permite corregir los prompts con evidencia en vez de con
+          intuición. Si deja la etiqueta vacía, la deduce una IA y cuesta una llamada.</p>
+        <p style="margin-top:18px;"><button class="btn" type="submit">Guardar mi versión</button></p>
+      </form>
+
+      <details>
+        <summary>Ver el borrador renderizado</summary>
+        <div class="md">{{ cuerpo_html|safe }}</div>
+      </details>
+
+      <details>
+        <summary>Ver el correo como le llega al cliente</summary>
+        {# En un marco aparte para que los estilos del correo no se mezclen con
+           los del panel, y sin permisos para que no pueda hacer nada. #}
+        <iframe src="{{ url_for('panel.correo', rid=r.id) }}" sandbox
+                title="Previsualización del correo"></iframe>
+      </details>
+
+      {% if r.editado and borrador_md and borrador_md != cuerpo_md %}
+      <details>
+        <summary>Ver el borrador original de la IA</summary>
+        <pre style="white-space:pre-wrap;font-size:13px;background:var(--suave);padding:14px;">{{ borrador_md }}</pre>
+      </details>
+      {% endif %}
+    </div>
+
+    <div>
+      <h2>Aprobar</h2>
+      {% if r.estado == 'enviado' %}
+        <p class="sub">Ya se envió el {{ r.enviado_en }}. No se manda dos veces.</p>
+      {% elif not puede_enviar %}
+        <div class="nota">
+          Para poder enviarlo, guarde su versión primero. Aunque no le cambie nada:
+          guardar es lo que deja constancia de que usted lo revisó, y sin eso el envío
+          está bloqueado a propósito.
+        </div>
+      {% else %}
+        <form method="post" action="{{ url_for('panel.enviar', rid=r.id) }}">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <p style="font-size:14px;">Le va a llegar a <strong>{{ r.email }}</strong>.
+            Esto no se puede deshacer.</p>
+          <label for="confirmacion">Escriba «{{ r.cliente }}» para confirmar</label>
+          <input type="text" id="confirmacion" name="confirmacion" autocomplete="off" required>
+          <p style="margin-top:14px;"><button class="btn" type="submit">Enviar al cliente</button></p>
+        </form>
+        <form method="post" action="{{ url_for('panel.enviar', rid=r.id) }}">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <input type="hidden" name="simular" value="1">
+          <input type="hidden" name="confirmacion" value="{{ r.cliente }}">
+          <p style="margin-top:6px;"><button class="btn alt chico" type="submit">Simular
+            el envío (no manda nada)</button></p>
+        </form>
+      {% endif %}
+
+      {% if r.estado != 'enviado' %}
+      <h2>Descartar</h2>
+      <form method="post" action="{{ url_for('panel.descartar', rid=r.id) }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label for="motivo">Por qué no sirve</label>
+        <input type="text" id="motivo" name="motivo" required
+               placeholder="Ej: la recolección no trajo a Monge">
+        <p class="sub" style="margin:8px 0 0;">El motivo es obligatorio. Es el dato que
+          explica qué produce borradores inservibles.</p>
+        <p style="margin-top:14px;"><button class="btn alt" type="submit">Descartar</button></p>
+      </form>
+      {% endif %}
+
+      <h2>El insumo</h2>
+      {% if validacion.avisos %}
+      <h3>Avisos del control de calidad</h3>
+      <ul class="limpia">
+        {% for a in validacion.avisos %}<li>{{ a.tipo }} — {{ a.detalle }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+
+      <h3>Movimientos</h3>
+      <table>
+        {% for clase in ['nuevo', 'cambiado', 'pausado', 'continua'] %}
+        <tr><td>{{ clase }}</td><td class="num">{{ conteo.get(clase) or 0 }}</td></tr>
+        {% endfor %}
+      </table>
+
+      <h3>Anuncios por competidor</h3>
+      {% if por_competidor %}
+        {% for g in por_competidor %}
+        <details>
+          <summary>{{ g.competidor }} — {{ g.total }}{% if (g.piezas or 0) > (g.total or 0) %}
+            en {{ g.piezas }} piezas{% endif %}</summary>
+          <ul class="limpia">
+            {% for plataforma in ['meta', 'google'] %}
+              {% for a in g.get(plataforma) or [] %}
+              <li>
+                <span class="marca">{{ a.clasificacion }}</span>
+                {{ a.titulo or a.texto or '(sin texto)' }}
+                {% if a.url_anuncio %}<br><a href="{{ a.url_anuncio }}" target="_blank"
+                   rel="noopener" class="sub">verificar en {{ plataforma }}</a>{% endif %}
+              </li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
+        </details>
+        {% endfor %}
+        <p class="sub" style="margin-top:12px;">Cada enlace va a la ficha pública del anuncio.
+          Es lo que permite comprobar cualquier afirmación del reporte en un clic.</p>
+      {% else %}
+        <p class="vacio">La corrida no trajo anuncios para este periodo.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <p style="margin-top:40px;"><a class="btn alt" href="{{ url_for('panel.bandeja') }}">Volver a la bandeja</a></p>
+{% endblock %}

@@ -615,3 +615,88 @@ class TestBandejaDeAltasYSincronizar(CasoBase):
         claves = {f["clave"] for f in db.filas(self.con, "SELECT clave FROM clientes")}
         self.assertIn("de-prueba", claves)
         self.assertNotIn("real", claves)
+
+
+class TestPanelDeRevision(CasoBase):
+    """Bugs que el panel expuso la primera vez que se abrió un reporte real."""
+
+    def setUp(self):
+        super().setUp()
+        import os
+
+        os.environ["PULSERIVAL_PANEL_CLAVE"] = "clave"
+        os.environ["PULSERIVAL_SECRET"] = "secreto"
+        self.addCleanup(lambda: os.environ.pop("PULSERIVAL_PANEL_CLAVE", None))
+        self.addCleanup(lambda: os.environ.pop("PULSERIVAL_SECRET", None))
+        from pulserival.web.app import crear_app
+
+        self.app = crear_app(str(self.ruta))
+        self.app.config["TESTING"] = True
+        self.web = self.app.test_client()
+        self.cid = self.cliente(clave="gym")
+
+    def _reporte(self, datos_json: dict) -> int:
+        rid = db.insertar(self.con, "reportes_generados", {
+            "cliente_id": self.cid, "periodo_inicio": "2026-01-01",
+            "periodo_fin": "2026-01-07", "asunto": "x",
+            "borrador_md": "## Resumen\n\nTexto [A1].",
+            "datos_json": db.json_o_nada(datos_json),
+        })
+        self.con.commit()
+        return rid
+
+    def _entrar(self) -> None:
+        import re
+
+        pag = self.web.get("/panel/entrar").get_data(as_text=True)
+        tok = re.search(r'name="csrf" value="([^"]+)"', pag).group(1)
+        self.web.post("/panel/entrar", data={"csrf": tok, "clave": "clave"})
+
+    def test_el_panel_muestra_los_anuncios_aunque_datos_json_no_traiga_el_agrupado(self):
+        # El panel leía datos.get("por_competidor"), y esa clave NO se guarda:
+        # `datos_json` tiene la lista plana y el agrupado se deriva. Resultado:
+        # todos los reportes decían "la corrida no trajo anuncios" teniéndolos.
+        rid = self._reporte({
+            "conteo": {"nuevo": 1},
+            "anuncios": [{
+                "anuncio_id": 1, "referencia": "A1", "competidor": "Tienda Monge",
+                "plataforma": "meta", "prioridad": 1, "clasificacion": "nuevo",
+                "titulo": "Cero intereses", "variantes": 1,
+                "url_anuncio": "https://example.test/a1",
+            }],
+        })
+        self._entrar()
+        texto = self.web.get(f"/panel/reporte/{rid}").get_data(as_text=True)
+        self.assertIn("Tienda Monge", texto)
+        self.assertNotIn("no trajo anuncios", texto)
+
+    def test_el_enlace_para_verificar_el_anuncio_aparece(self):
+        # La plantilla del panel usaba `a.url` y el campo se llama
+        # `url_anuncio`. Sin ese enlace se pierde lo único que hace verificable
+        # el reporte: ir del texto a la ficha pública del anuncio.
+        rid = self._reporte({"anuncios": [{
+            "anuncio_id": 1, "referencia": "A1", "competidor": "Tienda Monge",
+            "plataforma": "meta", "prioridad": 1, "clasificacion": "nuevo",
+            "titulo": "Cero intereses", "variantes": 1,
+            "url_anuncio": "https://example.test/ficha-a1",
+        }]})
+        self._entrar()
+        texto = self.web.get(f"/panel/reporte/{rid}").get_data(as_text=True)
+        self.assertIn("https://example.test/ficha-a1", texto)
+
+    def test_previsualizar_un_reporte_viejo_no_se_cae(self):
+        # `piezas` se agregó a los grupos DESPUÉS de que `por_competidor` ya se
+        # guardaba en datos_json. La plantilla del correo comparaba
+        # `g.piezas > g.total`, y con un reporte de antes de ese cambio eso
+        # reventaba. No se notaba porque nada volvía a renderizar reportes
+        # viejos; el panel sí, cada vez que se abre uno.
+        rid = self._reporte({
+            "anuncios": [],
+            "por_competidor": [{"competidor": "Tienda Monge", "total": 2,
+                                "meta": [{"referencia": "A1", "titulo": "Cero intereses",
+                                          "clasificacion": "nuevo"}], "google": []}],
+        })
+        self._entrar()
+        r = self.web.get(f"/panel/reporte/{rid}/correo")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("Tienda Monge", r.get_data(as_text=True))

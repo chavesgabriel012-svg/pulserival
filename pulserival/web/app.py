@@ -8,8 +8,9 @@ Sirve tres cosas y nada más:
      pantalla que marca la suscripción como pagada sin mover plata. Está
      marcado como simulación en la interfaz para que nadie lo confunda.
 
-Deliberadamente NO incluye el panel de administración: eso sigue operándose
-por CLI hasta que haga falta.
+Y el panel de revisión, en `panel.py`: la bandeja de reportes pendientes,
+editar, aprobar, enviar o descartar, y el gasto. El panel solo se sirve si hay
+contraseña configurada.
 
 Sobre dónde queda el alta: depende de PULSERIVAL_DEPOSITO, y eso decide qué
 hosting sirve. Con `sqlite` (por defecto) escribe en la base que apunte
@@ -21,15 +22,20 @@ lo que permite correr en un hosting serverless como Vercel. El detalle está en
 from __future__ import annotations
 
 import os
+import secrets
 import sqlite3
 import time
+from datetime import timedelta
 from typing import Any
 
 from flask import Flask, abort, redirect, render_template, request, url_for
+from jinja2 import ChoiceLoader, FileSystemLoader
 
 from .. import altas, config, db, planes
 from ..landing import generador
 from . import deposito as deposito_mod
+from .panel import PLANTILLAS as PLANTILLAS_PANEL
+from .panel import panel as plano_panel
 
 # El cobro real todavía no existe. Mientras esta bandera esté encendida, el
 # checkout es una simulación y lo dice en pantalla.
@@ -41,7 +47,28 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
     # Las plantillas son las mismas que usa la landing estática: una sola
     # copia del HTML para los dos modos.
     app = Flask(__name__, template_folder=str(generador.PLANTILLAS))
+    # Dos carpetas de plantillas: las de la landing se comparten con el
+    # generador estático, las del panel son solo del servidor.
+    app.jinja_loader = ChoiceLoader([
+        FileSystemLoader(str(generador.PLANTILLAS)),
+        FileSystemLoader(str(PLANTILLAS_PANEL)),
+    ])
     app.config["RUTA_DB"] = ruta_db or str(config.ruta_db())
+
+    # La clave firma la cookie de sesión del panel. Si no está configurada se
+    # genera una al azar por proceso: la sesión se cae en cada reinicio, que es
+    # molesto, pero una clave fija escrita en el código dejaría que cualquiera
+    # que lea el repositorio se firme una sesión de administrador.
+    app.secret_key = config.env("PULSERIVAL_SECRET") or secrets.token_urlsafe(32)
+    app.config["SECRETO_EFIMERO"] = not config.env("PULSERIVAL_SECRET")
+    app.permanent_session_lifetime = timedelta(hours=12)
+    app.config.update(
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        # Sin HTTPS la cookie no viaja, y en local no hay HTTPS. Se activa
+        # cuando el servidor está publicado.
+        SESSION_COOKIE_SECURE=(config.env("PULSERIVAL_HTTPS") or "0") == "1",
+    )
 
     def conectar() -> sqlite3.Connection:
         con = sqlite3.connect(app.config["RUTA_DB"])
@@ -51,6 +78,9 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
 
     deposito = deposito or deposito_mod.obtener(conectar)
     app.config["DEPOSITO"] = deposito
+    # El panel abre su propia conexión por petición, igual que las rutas de acá.
+    app.config["CONECTAR"] = conectar
+    app.register_blueprint(plano_panel)
 
     # ── landing ──────────────────────────────────────────────────────
     @app.get("/")
@@ -183,10 +213,14 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
     @app.get("/salud")
     def salud():
         """Para que el hosting sepa si el proceso está vivo."""
+        from .panel import clave_configurada
+
         estado = {
             "ok": True,
             "deposito": deposito.nombre,
             "cobro": "simulado" if cobro_simulado() else "real",
+            "panel": "habilitado" if clave_configurada() else "sin PULSERIVAL_PANEL_CLAVE",
+            "sesiones": "efímeras" if app.config["SECRETO_EFIMERO"] else "persistentes",
         }
         faltan = deposito.pendientes()
         if faltan:

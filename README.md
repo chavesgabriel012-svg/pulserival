@@ -107,7 +107,8 @@ cambiar de modelo o arreglar un campo de un scraper no requiere tocar código.
 | [06 · Operación semanal](docs/06-operacion-semanal.md) | tu rutina de 20 minutos y qué hacer cuando algo falla |
 | [07 · Presupuesto](docs/07-presupuesto.md) | qué se paga y qué no, con precios verificados, y el dominio |
 | [08 · Cobro y lanzamiento](docs/08-cobro-y-lanzamiento.md) | los planes, cómo se cobra hoy y qué falta probar con una transacción real |
-| [09 · Deploy](docs/09-deploy.md) | cómo se publica la web en Vercel, y por qué el alta va a un YAML y no a la base |
+| [09 · Deploy](docs/09-deploy.md) | dónde se publica, por qué un servidor con disco, y cómo se apaga el cron de Actions |
+| [10 · Panel](docs/10-panel.md) | el panel de revisión: bandeja, editar, aprobar, enviar, descartar, gasto |
 
 ## Pruebas
 
