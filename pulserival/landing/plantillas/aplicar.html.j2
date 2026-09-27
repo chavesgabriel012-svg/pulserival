@@ -1,0 +1,247 @@
+{% extends "_publico.html.j2" %}
+{% block titulo %}Empezar — {{ marca }}{% endblock %}
+
+{% block estilos %}
+  .cabeza { padding:72px 0 44px; }
+  .cabeza h1 { font-size:42px; line-height:1.12; margin:0 0 16px; letter-spacing:-1.2px;
+               font-weight:600; max-width:20ch; }
+  .cabeza p { font-size:17.5px; color:#3d3d3d; max-width:62ch; margin:0; }
+  .volver {
+    display:inline-block; font-size:13.5px; color:var(--gris); text-decoration:none;
+    margin-bottom:24px; transition:color .2s var(--curva);
+  }
+  .volver:hover { color:var(--negro); }
+
+  .columnas { display:grid; grid-template-columns:1fr 320px; gap:56px; align-items:start;
+              padding-bottom:96px; }
+  form { display:grid; gap:24px; }
+  .grupo { border:1px solid var(--linea); padding:26px 26px 28px; }
+  .grupo > .titulo {
+    font-size:12px; text-transform:uppercase; letter-spacing:1.8px; font-weight:700;
+    margin:0 0 4px;
+  }
+  .grupo > .titulo .opcional {
+    font-weight:600; letter-spacing:.4px; text-transform:none; font-size:12.5px;
+    color:var(--gris); margin-left:8px;
+  }
+  .grupo > .bajada { font-size:14px; color:var(--gris); margin:0 0 22px; }
+  .grupo > .campo + .campo, .grupo > .campo + .fila,
+  .grupo > .fila + .campo, .grupo > .fila + .fila { margin-top:18px; }
+
+  .competidor { padding:18px 0; border-top:1px solid var(--linea); }
+  .competidor:first-of-type { border-top:0; padding-top:4px; }
+  .competidor .campo + .fila { margin-top:10px; }
+  .fila { align-items:start; }
+
+  /* Resumen del plan elegido, fijo al costado mientras se llena el formulario. */
+  .resumen { border:1.5px solid var(--negro); padding:26px 24px; position:sticky; top:96px; }
+  .resumen .rotulo { margin-bottom:12px; }
+  .resumen .nombre { font-size:24px; font-weight:600; letter-spacing:-.5px; margin:0 0 4px; }
+  .resumen .precio { font-size:32px; font-weight:600; letter-spacing:-1.2px; margin:10px 0 0; }
+  .resumen .precio span { font-size:13.5px; font-weight:400; color:var(--gris);
+                          letter-spacing:0; }
+  .resumen .dato { display:flex; justify-content:space-between; gap:12px; font-size:13.5px;
+                   padding:11px 0; border-bottom:1px solid var(--linea); }
+  .resumen .dato:first-of-type { border-top:1px solid var(--linea); margin-top:18px; }
+  .resumen .dato .clave { color:var(--gris); }
+  .resumen .dato .valor { font-weight:600; text-align:right; }
+  .resumen .cambiar { display:inline-block; font-size:13px; color:var(--gris);
+                      margin-top:16px; }
+  .resumen .cobro { margin-top:20px; padding-top:18px; border-top:1px solid var(--linea);
+                    font-size:13.5px; color:var(--gris); line-height:1.6; }
+
+  @media (max-width:900px) {
+    .columnas { grid-template-columns:1fr; gap:36px; }
+    .resumen { position:static; order:-1; }
+    .cabeza h1 { font-size:32px; }
+    .cabeza { padding:48px 0 32px; }
+  }
+{% endblock %}
+
+{% block navegacion %}
+  <a href="{{ inicio_url }}#planes">Ver los planes</a>
+{% endblock %}
+
+{% block contenido %}
+<div class="env">
+  <div class="cabeza sube">
+    <a class="volver" href="{{ inicio_url }}">&larr; Volver al inicio</a>
+    <h1>{{ aplicar.titulo }}</h1>
+    <p>{{ aplicar.nota }}</p>
+  </div>
+
+  <div class="columnas">
+    <form id="alta" novalidate{% if modo_servidor %} method="post" action="{{ accion_alta }}"{% endif %}>
+
+      <div class="grupo sube">
+        <p class="titulo">Su empresa</p>
+        <p class="bajada">Para saber a quién le estamos reportando.</p>
+        <div class="campo">
+          <label for="empresa">Nombre de la empresa</label>
+          <input id="empresa" name="empresa" required>
+        </div>
+        <div class="fila">
+          <div class="campo">
+            <label for="contacto">Su nombre</label>
+            <input id="contacto" name="contacto" required>
+          </div>
+          <div class="campo">
+            <label for="email">Correo donde quiere recibir el reporte</label>
+            <input id="email" name="email" type="email" required>
+          </div>
+        </div>
+        <div class="fila">
+          <div class="campo">
+            <label for="plan">Plan</label>
+            <select id="plan" name="plan">
+              {% for p in planes %}
+              <option value="{{ p.clave }}"{% if p.clave == plan_elegido %} selected{% endif %}>
+                {{ p.nombre }}{% if p.precio_usd %} — ${{ p.precio_usd }}/mes
+                {%- elif p.precio_usd == 0 %} — sin costo{% endif %}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="campo">
+            <label for="industria">Industria</label>
+            <input id="industria" name="industria" placeholder="En sus palabras">
+          </div>
+        </div>
+      </div>
+
+      <div class="grupo sube">
+        <p class="titulo">Contexto de su negocio</p>
+        <p class="bajada">
+          Tres o cuatro líneas: qué le preocupa, si compite por precio o por
+          servicio, cuántas sedes tiene, su ticket promedio. Esto es lo que más
+          sube la calidad del reporte.
+        </p>
+        <div class="campo">
+          <textarea id="contexto" name="contexto"
+                    placeholder="Ej: tenemos tres sucursales en el GAM, competimos por servicio más que por precio, y nos preocupa que la competencia esté empujando financiamiento a doce meses."></textarea>
+        </div>
+      </div>
+
+      <div class="grupo sube">
+        <p class="titulo">
+          {{ aplicar.competidores.titulo }}<span class="opcional">Opcional</span>
+        </p>
+        <p class="bajada">{{ aplicar.competidores.opcional }}</p>
+        <div class="nota" style="margin-bottom:22px;">
+          {{ aplicar.competidores.explicacion }}
+        </div>
+        <p class="bajada">{{ aplicar.competidores.ayuda }}</p>
+        {% for n in [1, 2, 3] %}
+        <div class="competidor">
+          <div class="campo">
+            <label for="comp{{ n }}">Competidor {{ n }}</label>
+            <input id="comp{{ n }}" name="comp{{ n }}" placeholder="Nombre de la empresa">
+          </div>
+          <div class="fila">
+            <input name="fb{{ n }}" placeholder="facebook.com/sucompetidor">
+            <input name="web{{ n }}" placeholder="sucompetidor.co.cr">
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="sube">
+        <button class="btn" type="submit"><span>Enviar solicitud</span></button>
+      </div>
+
+      <div class="nota sube">
+        {% if modo_servidor %}{{ aplicar.cierre }}
+        {% else %}Al enviar se abre WhatsApp con sus datos ya ordenados. Nada se
+        guarda en esta página.{% endif %}
+      </div>
+    </form>
+
+    {% if resumen_plan %}
+    <aside class="resumen sube">
+      <p class="rotulo">Su plan</p>
+      <p class="nombre">{{ resumen_plan.nombre }}</p>
+      {% if resumen_plan.precio_usd is none %}
+        <p class="precio">A convenir</p>
+      {% elif resumen_plan.precio_usd == 0 %}
+        <p class="precio">Sin costo</p>
+      {% else %}
+        <p class="precio">${{ resumen_plan.precio_usd }}<span> / mes</span></p>
+      {% endif %}
+      <div class="dato">
+        <span class="clave">Frecuencia</span>
+        <span class="valor">{{ resumen_plan.cadencia_texto or '—' }}</span>
+      </div>
+      <div class="dato">
+        <span class="clave">Competidores</span>
+        <span class="valor">
+          {%- if resumen_plan.competidores_max %}Hasta {{ resumen_plan.competidores_max }}
+          {%- else %}Sin tope{% endif -%}
+        </span>
+      </div>
+      <a class="cambiar" href="{{ inicio_url }}#planes">Comparar los planes</a>
+      <p class="cobro">
+        {% if resumen_plan.precio_usd %}El cobro todavía no está conectado. Al
+        enviar la solicitud coordinamos el pago con usted antes de activar nada.
+        {% else %}No se le pide tarjeta ni datos de pago.{% endif %}
+      </p>
+    </aside>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block guion %}
+{% if not modo_servidor %}
+<script>
+// Sin servidor: el formulario arma un mensaje ordenado y lo manda por
+// WhatsApp, que es donde se cierran las ventas. Si no hay número
+// configurado, cae al correo.
+(function () {
+  var WHATSAPP = {{ contacto.whatsapp | default('', true) | tojson }};
+  var EMAIL = {{ contacto.email | default('', true) | tojson }};
+
+  document.getElementById('alta').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var d = new FormData(e.target);
+    var v = function (k) { return (d.get(k) || '').toString().trim(); };
+
+    if (!v('empresa') || !v('email')) {
+      alert('Hacen falta el nombre de la empresa y el correo.');
+      return;
+    }
+
+    var l = [];
+    l.push('Solicitud de reporte — ' + v('empresa'));
+    l.push('');
+    l.push('Plan: ' + v('plan'));
+    l.push('Contacto: ' + v('contacto') + ' · ' + v('email'));
+    if (v('industria')) { l.push('Industria: ' + v('industria')); }
+    if (v('contexto')) { l.push(''); l.push('Contexto: ' + v('contexto')); }
+
+    var comps = [];
+    for (var i = 1; i <= 3; i++) {
+      var nombre = v('comp' + i);
+      if (!nombre) { continue; }
+      var partes = [nombre];
+      if (v('fb' + i)) { partes.push('Facebook: ' + v('fb' + i)); }
+      if (v('web' + i)) { partes.push('Web: ' + v('web' + i)); }
+      comps.push('  ' + partes.join(' | '));
+    }
+    if (comps.length) { l.push(''); l.push('Competidores:'); l = l.concat(comps); }
+    else { l.push(''); l.push('Competidores: los deduce PulseRival.'); }
+
+    var texto = l.join('\n');
+    if (WHATSAPP) {
+      window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(texto), '_blank');
+    } else if (EMAIL) {
+      window.location.href = 'mailto:' + EMAIL +
+        '?subject=' + encodeURIComponent('Solicitud de reporte — ' + v('empresa')) +
+        '&body=' + encodeURIComponent(texto);
+    } else {
+      alert('Falta configurar el contacto en config/landing.yaml');
+    }
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

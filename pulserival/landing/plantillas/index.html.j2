@@ -1,247 +1,176 @@
-<!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ marca }} — Los anuncios de su competencia en Meta y Google</title>
-<meta name="description" content="{{ subtitulo }}">
-<meta property="og:title" content="{{ marca }} — Los anuncios de su competencia en Meta y Google">
-<meta property="og:description" content="{{ subtitulo }}">
-<meta property="og:type" content="website">
-<style>
-  /* Blanco y negro, sin excepciones. Lo que da jerarquía acá es el tamaño
-     del texto, el aire y las líneas: no hay color al que recurrir, así que
-     cada regla tiene que ganarse el lugar. */
-  :root {
-    --negro:#000; --tinta:#161616; --gris:#5f5f5f; --tenue:#8a8a8a;
-    --linea:#e2e2e2; --linea-fuerte:#c9c9c9; --suave:#f6f6f6;
-  }
-  * { box-sizing:border-box; }
-  html { scroll-behavior:smooth; }
-  body {
-    margin:0; background:#fff; color:var(--tinta);
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
-    line-height:1.62; -webkit-font-smoothing:antialiased;
-    text-rendering:optimizeLegibility;
-  }
-  .env { max-width:1060px; margin:0 auto; padding:0 28px; }
-  .angosto { max-width:68ch; }
-  a { color:var(--negro); }
+{% extends "_publico.html.j2" %}
+{% block titulo %}{{ marca }} — Los anuncios de su competencia en Meta y Google{% endblock %}
 
-  /* -- encabezado -- */
-  header { background:var(--negro); position:sticky; top:0; z-index:10; }
-  header .env { display:flex; align-items:center; gap:32px; height:60px; }
-  header img { display:block; height:19px; width:auto; }
-  header nav { margin-left:auto; display:flex; gap:26px; align-items:center; }
-  header nav a {
-    color:#fff; text-decoration:none; font-size:13px; letter-spacing:.3px;
-    opacity:.75; transition:opacity .15s;
-  }
-  header nav a:hover { opacity:1; }
-  header nav a.cta {
-    opacity:1; border:1px solid #fff; padding:7px 16px; font-weight:600;
-  }
-  header nav a.cta:hover { background:#fff; color:var(--negro); }
-  @media (max-width:700px) { header nav a.oculto { display:none; } }
-
-  /* -- portada -- */
-  .hero { padding:96px 0 72px; }
+{% block estilos %}
+  /* -- portada ------------------------------------------------- */
+  .hero { padding:104px 0 88px; }
   .hero .etiqueta {
-    font-size:12px; text-transform:uppercase; letter-spacing:2px;
-    color:var(--gris); margin:0 0 22px;
+    font-size:12px; text-transform:uppercase; letter-spacing:2.4px;
+    color:var(--tenue); margin:0 0 24px; font-weight:600;
   }
   .hero h1 {
-    font-size:52px; line-height:1.08; margin:0 0 24px;
-    letter-spacing:-1.4px; font-weight:600; max-width:26ch;
+    font-size:56px; line-height:1.06; margin:0 0 26px;
+    letter-spacing:-1.8px; font-weight:600; max-width:26ch;
   }
-  .hero .bajada { font-size:19px; color:#333; max-width:60ch; margin:0 0 32px; }
+  .hero .bajada { font-size:19.5px; color:#333; max-width:60ch; margin:0 0 36px; }
   .acciones { display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
-  .promesa { font-size:14px; color:var(--gris); margin:20px 0 0; }
+  .promesa { font-size:14px; color:var(--gris); margin:22px 0 0; }
 
-  .btn {
-    display:inline-block; background:var(--negro); color:#fff; text-decoration:none;
-    padding:14px 28px; font-weight:600; font-size:15px; border:1.5px solid var(--negro);
-    transition:background .15s, color .15s; cursor:pointer; font-family:inherit;
+  /* -- las dos bibliotecas ------------------------------------- */
+  .fuentes { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  .fuente {
+    border:1px solid var(--linea); padding:34px 32px;
+    transition:border-color .3s var(--curva), transform .3s var(--curva);
   }
-  .btn:hover { background:#fff; color:var(--negro); }
-  .btn.alt { background:#fff; color:var(--negro); }
-  .btn.alt:hover { background:var(--negro); color:#fff; }
-
-  /* -- secciones -- */
-  section { padding:76px 0; border-top:1px solid var(--linea); }
-  .rotulo {
-    font-size:12px; text-transform:uppercase; letter-spacing:2px;
-    color:var(--gris); margin:0 0 14px;
-  }
-  h2 { font-size:30px; line-height:1.2; margin:0 0 18px; letter-spacing:-.6px;
-       font-weight:600; max-width:24ch; }
-  .entrada { font-size:17px; color:#3d3d3d; max-width:62ch; margin:0 0 44px; }
-
-  /* -- las dos plataformas -- */
-  .fuentes { display:grid; grid-template-columns:1fr 1fr; gap:0;
-             border:1px solid var(--linea-fuerte); }
-  .fuente { padding:32px 30px; }
-  .fuente + .fuente { border-left:1px solid var(--linea-fuerte); }
-  .fuente .nombre { font-size:24px; font-weight:600; letter-spacing:-.4px; margin:0; }
-  .fuente .donde { font-size:14px; color:var(--gris); margin:2px 0 4px; }
+  .fuente:hover { border-color:var(--negro); transform:translateY(-3px); }
+  .fuente .nombre { font-size:26px; font-weight:600; letter-spacing:-.5px; margin:0; }
+  .fuente .donde { font-size:14.5px; color:var(--gris); margin:3px 0 5px; }
   .fuente .biblioteca {
-    font-size:12px; text-transform:uppercase; letter-spacing:1.2px;
-    color:var(--tenue); margin:0 0 20px; padding-bottom:18px;
-    border-bottom:1px solid var(--linea);
+    font-size:11.5px; text-transform:uppercase; letter-spacing:1.4px;
+    color:var(--tenue); margin:0 0 24px; padding-bottom:20px;
+    border-bottom:1px solid var(--linea); font-weight:600;
   }
   .fuente ul { list-style:none; padding:0; margin:0; }
+  /* La lista usa grid en vez de posición absoluta: el guion queda alineado
+     con la primera línea aunque el texto ocupe dos o tres, que es lo que
+     estaba saliendo descentrado. */
   .fuente li {
-    font-size:15px; padding:9px 0 9px 22px; position:relative; color:#333;
+    display:grid; grid-template-columns:18px 1fr; gap:10px; align-items:start;
+    font-size:15px; padding:10px 0; color:#333;
   }
   .fuente li:before {
-    content:""; position:absolute; left:0; top:17px;
-    width:10px; height:1.5px; background:var(--negro);
+    content:""; width:14px; height:1.5px; background:var(--negro);
+    margin-top:.72em;
   }
-  .fuente .advertencia {
-    margin:20px 0 0; padding:14px 16px; background:var(--suave);
-    font-size:14px; color:#3d3d3d; border-left:2px solid var(--negro);
+  .fuente .pie-nota {
+    margin:22px 0 0; padding-top:18px; border-top:1px solid var(--linea);
+    font-size:14px; color:var(--gris); line-height:1.6;
   }
 
-  /* -- pasos numerados -- */
-  .pasos { display:grid; grid-template-columns:repeat(4,1fr); gap:28px; }
+  /* -- el proceso ---------------------------------------------- */
+  .pasos { display:grid; grid-template-columns:repeat(4,1fr); gap:30px; }
   .paso .n {
-    font-size:13px; font-weight:600; letter-spacing:1px; color:var(--tenue);
-    padding-bottom:12px; margin-bottom:16px; border-bottom:2px solid var(--negro);
+    font-size:13px; font-weight:700; letter-spacing:1.2px; color:var(--tenue);
+    padding-bottom:14px; margin-bottom:18px; position:relative;
   }
-  .paso h3 { font-size:18px; margin:0 0 8px; font-weight:600; letter-spacing:-.2px; }
+  .paso .n:after {
+    content:""; position:absolute; left:0; bottom:0; height:2px; width:100%;
+    background:var(--negro); transform:scaleX(0); transform-origin:left;
+    transition:transform .7s var(--curva);
+  }
+  .js .sube.visto .paso .n:after, .paso.visto .n:after { transform:scaleX(1); }
+  .paso h3 { font-size:18.5px; margin:0 0 9px; font-weight:600; letter-spacing:-.25px; }
   .paso p { margin:0; font-size:15px; color:#3d3d3d; }
 
-  /* -- ventajas -- */
-  .ventajas { display:grid; grid-template-columns:1fr 1fr; gap:40px 48px; }
-  .ventaja h3 { font-size:19px; margin:0 0 8px; font-weight:600; letter-spacing:-.2px; }
+  /* -- ventajas ------------------------------------------------ */
+  .ventajas { display:grid; grid-template-columns:1fr 1fr; gap:44px 52px; }
+  .ventaja h3 { font-size:19.5px; margin:0 0 9px; font-weight:600; letter-spacing:-.25px; }
   .ventaja p { margin:0; font-size:15px; color:#3d3d3d; }
 
-  /* -- límites -- */
-  .limites { background:var(--negro); color:#fff; }
-  .limites .rotulo { color:#909090; }
-  .limites h2 { color:#fff; }
-  .limites ul { list-style:none; padding:0; margin:0;
-                display:grid; grid-template-columns:1fr 1fr; gap:0 44px; }
-  .limites li {
-    font-size:16px; padding:18px 0; color:#d8d8d8;
-    border-top:1px solid #2c2c2c;
+  /* -- planes -------------------------------------------------- */
+  .planes { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; align-items:stretch; }
+  .plan {
+    border:1px solid var(--linea); padding:30px 26px; display:flex; flex-direction:column;
+    transition:border-color .3s var(--curva), transform .3s var(--curva),
+               box-shadow .3s var(--curva); background:#fff;
   }
-  .limites .cierre { margin:36px 0 0; font-size:15px; color:#909090; max-width:62ch; }
-
-  /* -- planes -- */
-  .planes { display:grid; grid-template-columns:repeat(4,1fr); gap:0;
-            border:1px solid var(--linea-fuerte); }
-  .plan { padding:28px 24px; display:flex; flex-direction:column; }
-  .plan + .plan { border-left:1px solid var(--linea-fuerte); }
-  .plan.destacado { background:var(--negro); color:#fff; }
-  .plan.destacado .nombre, .plan.destacado .precio span,
-  .plan.destacado .resumen { color:#b4b4b4; }
-  .plan.destacado li { color:#e0e0e0; border-top-color:#2c2c2c; }
-  .plan.destacado .btn { background:#fff; color:var(--negro); border-color:#fff; }
-  .plan.destacado .btn:hover { background:var(--negro); color:#fff; }
-  .plan .nombre { font-size:12px; text-transform:uppercase; letter-spacing:1.4px;
-                  color:var(--gris); margin-bottom:14px; }
-  .plan .precio { font-size:38px; font-weight:600; line-height:1; letter-spacing:-1.2px; }
-  .plan .precio span { font-size:14px; font-weight:400; color:var(--gris);
-                       letter-spacing:0; }
-  .plan .resumen { font-size:14px; color:#3d3d3d; margin:14px 0 18px; }
-  .plan ul { list-style:none; padding:0; margin:0 0 24px; }
-  .plan li { font-size:14px; padding:9px 0; border-top:1px solid var(--linea); }
+  .plan:hover { border-color:var(--negro); transform:translateY(-4px);
+                box-shadow:0 10px 30px rgba(0,0,0,.09); }
+  .plan.destacado { border:1.5px solid var(--negro); }
+  .plan .insignia {
+    font-size:10.5px; text-transform:uppercase; letter-spacing:1.6px; font-weight:700;
+    background:var(--negro); color:#fff; padding:4px 10px; align-self:flex-start;
+    margin-bottom:14px;
+  }
+  .plan .insignia.vacia { visibility:hidden; }
+  .plan .nombre { font-size:12px; text-transform:uppercase; letter-spacing:1.6px;
+                  color:var(--gris); margin-bottom:12px; font-weight:600; }
+  .plan .precio { font-size:40px; font-weight:600; line-height:1.05;
+                  letter-spacing:-1.6px; }
+  .plan .precio.texto { font-size:29px; letter-spacing:-.9px; }
+  .plan .precio span { font-size:14px; font-weight:400; color:var(--gris); letter-spacing:0; }
+  .plan .quien { font-size:14.5px; color:#333; margin:16px 0 20px; min-height:3em; }
+  .plan .datos { border-top:1px solid var(--linea); margin-bottom:18px; }
+  .plan .dato {
+    display:flex; justify-content:space-between; gap:12px; font-size:13.5px;
+    padding:10px 0; border-bottom:1px solid var(--linea);
+  }
+  .plan .dato .clave { color:var(--gris); }
+  .plan .dato .valor { font-weight:600; text-align:right; }
+  .plan ul { list-style:none; padding:0; margin:0 0 26px; }
+  .plan li {
+    display:grid; grid-template-columns:16px 1fr; gap:9px; align-items:start;
+    font-size:14px; padding:7px 0; color:#3d3d3d;
+  }
+  .plan li:before { content:""; width:12px; height:1.5px; background:#bdbdbd; margin-top:.7em; }
   .plan .pie { margin-top:auto; }
-  .plan .btn { width:100%; text-align:center; padding:11px 8px; font-size:14px; }
+  .plan .btn { width:100%; text-align:center; padding:13px 8px; font-size:14.5px; }
 
-  /* -- formulario -- */
-  form { display:grid; gap:20px; max-width:680px; }
-  .campo label { display:block; font-size:14px; font-weight:600; margin-bottom:6px; }
-  .campo .ayuda { font-size:13px; color:var(--gris); font-weight:400; margin-bottom:8px; }
-  input, textarea, select {
-    width:100%; padding:12px 13px; border:1px solid var(--linea-fuerte); font-size:15px;
-    font-family:inherit; background:#fff; color:var(--tinta);
+  .comparador {
+    margin-top:36px; padding:22px 24px; background:var(--suave);
+    font-size:14.5px; color:#3d3d3d; line-height:1.7;
   }
-  input::placeholder { color:#aaa; }
-  input:focus, textarea:focus, select:focus {
-    outline:none; border-color:var(--negro); box-shadow:inset 0 0 0 1px var(--negro);
-  }
-  textarea { min-height:104px; resize:vertical; line-height:1.6; }
-  fieldset { border:1px solid var(--linea-fuerte); padding:22px; margin:0; }
-  legend { font-size:13px; font-weight:600; padding:0 8px; text-transform:uppercase;
-           letter-spacing:1.2px; }
-  .competidor { display:grid; gap:10px; margin-bottom:16px; padding-bottom:16px;
-                border-bottom:1px solid var(--linea); }
-  .competidor:last-child { border-bottom:0; margin-bottom:0; padding-bottom:0; }
-  .fila { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .nota { background:var(--suave); padding:16px 18px; font-size:14px; color:#3d3d3d;
-          border-left:2px solid var(--negro); }
+  .comparador strong { color:var(--negro); }
 
-  footer { background:var(--negro); color:#909090; padding:44px 0 52px; font-size:14px; }
-  footer a { color:#fff; }
-  footer .marca { color:#fff; font-weight:600; letter-spacing:.3px; margin-bottom:14px; }
-  footer p { margin:0 0 10px; max-width:74ch; line-height:1.7; }
+  /* -- llamada final ------------------------------------------- */
+  .cierre { text-align:center; padding:96px 0; }
+  .cierre h2 { margin:0 auto 20px; max-width:20ch; font-size:38px; letter-spacing:-1px; }
+  .cierre p { font-size:17.5px; color:#3d3d3d; max-width:54ch; margin:0 auto 34px; }
 
-  @media (max-width:900px) {
-    .pasos { grid-template-columns:1fr 1fr; gap:32px; }
+  @media (max-width:980px) {
+    .pasos { grid-template-columns:1fr 1fr; gap:34px; }
     .planes { grid-template-columns:1fr 1fr; }
-    .plan:nth-child(3) { border-left:0; }
-    .plan:nth-child(n+3) { border-top:1px solid var(--linea-fuerte); }
-    .hero h1 { font-size:38px; letter-spacing:-.9px; }
-    .hero { padding:64px 0 52px; }
-    section { padding:56px 0; }
-    h2 { font-size:25px; }
+    .hero h1 { font-size:41px; letter-spacing:-1.1px; }
+    .hero { padding:68px 0 56px; }
+    .cierre h2 { font-size:30px; }
   }
   @media (max-width:640px) {
-    .fuentes, .ventajas, .limites ul { grid-template-columns:1fr; }
-    .fuente + .fuente { border-left:0; border-top:1px solid var(--linea-fuerte); }
-    .pasos, .planes, .fila { grid-template-columns:1fr; }
-    .plan + .plan { border-left:0; border-top:1px solid var(--linea-fuerte); }
-    .plan:nth-child(3) { border-left:0; }
-    .hero h1 { font-size:31px; letter-spacing:-.6px; }
+    .fuentes, .ventajas, .pasos, .planes { grid-template-columns:1fr; }
+    .hero h1 { font-size:32px; letter-spacing:-.7px; }
     .hero .bajada { font-size:17px; }
-    .env { padding:0 20px; }
+    .plan .quien { min-height:0; }
+    .cierre { padding:64px 0; }
   }
-</style>
-</head>
-<body>
+{% endblock %}
 
-<header>
-  <div class="env">
-    {% if logo_data_uri %}<img src="{{ logo_data_uri }}" alt="{{ marca }}">
-    {% else %}<span style="color:#fff;font-weight:600;letter-spacing:1.2px;">{{ marca }}</span>{% endif %}
-    <nav>
-      <a class="oculto" href="#fuentes">Qué revisamos</a>
-      <a class="oculto" href="#como">Cómo funciona</a>
-      <a href="#planes">Planes</a>
-      <a class="cta" href="#empezar">Empezar</a>
-    </nav>
-  </div>
-</header>
+{% block navegacion %}
+  <a class="oculto" href="#fuentes">Qué revisamos</a>
+  <a class="oculto" href="#como">Cómo funciona</a>
+  <a href="#planes">Planes</a>
+  <a class="cta" href="{{ aplicar_url }}">Empezar</a>
+{% endblock %}
 
+{% block contenido %}
 <div class="env">
   <div class="hero">
-    <p class="etiqueta">Inteligencia publicitaria · Costa Rica</p>
-    <h1>{{ titulo }}</h1>
-    <p class="bajada">{{ subtitulo }}</p>
-    <div class="acciones">
-      <a class="btn" href="#empezar">Pedir el primer reporte</a>
-      <a class="btn alt" href="#como">Ver cómo funciona</a>
+    <p class="etiqueta sube">Inteligencia publicitaria &middot; Costa Rica</p>
+    <h1 class="sube" style="transition-delay:.08s">{{ titulo }}</h1>
+    <p class="bajada sube" style="transition-delay:.16s">{{ subtitulo }}</p>
+    <div class="acciones sube" style="transition-delay:.24s">
+      <a class="btn" href="{{ aplicar_url }}"><span>Pedir el primer reporte</span></a>
+      <a class="btn alt" href="#como"><span>Ver cómo funciona</span></a>
     </div>
-    {% if promesa_corta %}<p class="promesa">{{ promesa_corta }}</p>{% endif %}
+    {% if promesa_corta %}
+    <p class="promesa sube" style="transition-delay:.32s">{{ promesa_corta }}</p>{% endif %}
   </div>
 </div>
 
 {% if plataformas %}
 <section id="fuentes">
   <div class="env">
-    <p class="rotulo">Las fuentes</p>
-    <h2>{{ plataformas.titulo }}</h2>
-    {% if plataformas.nota %}<p class="entrada">{{ plataformas.nota }}</p>{% endif %}
+    <div class="sube">
+      <p class="rotulo">Las fuentes</p>
+      <h2>{{ plataformas.titulo }}</h2>
+      {% if plataformas.nota %}<p class="entrada">{{ plataformas.nota }}</p>{% endif %}
+    </div>
     <div class="fuentes">
       {% for f in plataformas.fuentes %}
-      <div class="fuente">
+      <div class="fuente sube" style="transition-delay:{{ loop.index0 * 0.12 }}s">
         <p class="nombre">{{ f.nombre }}</p>
         <p class="donde">{{ f.donde }}</p>
         <p class="biblioteca">{{ f.biblioteca }}</p>
-        <ul>{% for i in f.lee %}<li>{{ i }}</li>{% endfor %}</ul>
-        {% if f.advertencia %}<p class="advertencia">{{ f.advertencia }}</p>{% endif %}
+        <ul>{% for i in f.lee %}<li><span>{{ i }}</span></li>{% endfor %}</ul>
+        {% if f.nota %}<p class="pie-nota">{{ f.nota }}</p>{% endif %}
       </div>
       {% endfor %}
     </div>
@@ -252,11 +181,13 @@
 {% if pasos %}
 <section id="como">
   <div class="env">
-    <p class="rotulo">El proceso</p>
-    <h2>{{ pasos.titulo }}</h2>
+    <div class="sube">
+      <p class="rotulo">El proceso</p>
+      <h2>{{ pasos.titulo }}</h2>
+    </div>
     <div class="pasos">
       {% for p in pasos.lista %}
-      <div class="paso">
+      <div class="paso sube" style="transition-delay:{{ loop.index0 * 0.13 }}s">
         <div class="n">{{ "%02d"|format(loop.index) }}</div>
         <h3>{{ p.nombre }}</h3>
         <p>{{ p.texto }}</p>
@@ -269,11 +200,13 @@
 
 <section id="porque">
   <div class="env">
-    <p class="rotulo">Por qué sirve</p>
-    <h2>Los datos son públicos. El trabajo de mirarlos, no.</h2>
+    <div class="sube">
+      <p class="rotulo">Por qué sirve</p>
+      <h2>Los datos son públicos. El trabajo de mirarlos, no.</h2>
+    </div>
     <div class="ventajas">
       {% for a in argumentos %}
-      <div class="ventaja">
+      <div class="ventaja sube" style="transition-delay:{{ loop.index0 * 0.1 }}s">
         <h3>{{ a.titulo }}</h3>
         <p>{{ a.texto }}</p>
       </div>
@@ -282,207 +215,74 @@
   </div>
 </section>
 
-{% if limites %}
-<section class="limites">
-  <div class="env">
-    <p class="rotulo">Sin letra chica</p>
-    <h2>{{ limites.titulo }}</h2>
-    <ul>{% for l in limites.lista %}<li>{{ l }}</li>{% endfor %}</ul>
-    <p class="cierre">
-      Se lo decimos antes de que pague, no después. Un proveedor que le promete
-      la inversión de su competencia le está estimando un número que nadie
-      publica.
-    </p>
-  </div>
-</section>
-{% endif %}
-
 <section id="planes">
   <div class="env">
-    <p class="rotulo">Planes</p>
-    <h2>Elija la frecuencia que su categoría necesita</h2>
-    <p class="entrada">
-      En categorías donde el precio se mueve todas las semanas, un reporte
-      mensual llega tarde. En otras, semanal es ruido. Puede cambiar de plan
-      cuando quiera.
-    </p>
+    <div class="sube">
+      <p class="rotulo">Planes</p>
+      <h2>Elija cada cuánto quiere saber</h2>
+      <p class="entrada">
+        Lo único que cambia entre los planes es la frecuencia del reporte y
+        cuántos competidores cubre. El contenido y el cuidado son los mismos en
+        todos. Puede cambiar de plan o cancelar cuando quiera.
+      </p>
+    </div>
     <div class="planes">
       {% for p in planes %}
-      <div class="plan{% if p.clave == 'semanal' %} destacado{% endif %}">
+      <div class="plan{% if p.clave == 'semanal' %} destacado{% endif %} sube"
+           style="transition-delay:{{ loop.index0 * 0.09 }}s">
+        <span class="insignia{% if p.clave != 'semanal' %} vacia{% endif %}">Más elegido</span>
         <div class="nombre">{{ p.nombre }}</div>
         {% if p.precio_usd is none %}
-          <div class="precio">A convenir</div>
+          <div class="precio texto">A convenir</div>
         {% elif p.precio_usd == 0 %}
-          <div class="precio">Sin costo</div>
+          <div class="precio texto">Sin costo</div>
         {% else %}
           <div class="precio">${{ p.precio_usd }}<span> / mes</span></div>
         {% endif %}
-        <div class="resumen">{{ p.resumen }}</div>
-        <ul>{% for i in p.incluye %}<li>{{ i }}</li>{% endfor %}</ul>
+        <p class="quien">{{ p.para_quien or p.resumen }}</p>
+        <div class="datos">
+          <div class="dato">
+            <span class="clave">Frecuencia</span>
+            <span class="valor">{{ p.cadencia_texto or '—' }}</span>
+          </div>
+          <div class="dato">
+            <span class="clave">Competidores</span>
+            <span class="valor">
+              {%- if p.competidores_max %}Hasta {{ p.competidores_max }}
+              {%- else %}Sin tope{% endif -%}
+            </span>
+          </div>
+        </div>
+        <ul>{% for i in p.incluye %}<li><span>{{ i }}</span></li>{% endfor %}</ul>
         <div class="pie">
-          {% if p.enlace_pago %}
-          <a class="btn" href="{{ p.enlace_pago }}">
-            {% if p.precio_usd == 0 %}Empezar{% else %}Contratar{% endif %}
+          <a class="btn{% if p.clave != 'semanal' %} alt{% endif %}"
+             href="{{ aplicar_url }}?plan={{ p.clave }}">
+            <span>{% if p.precio_usd == 0 %}Probar sin costo
+                  {%- elif p.precio_usd is none %}Conversemos
+                  {%- else %}Elegir {{ p.nombre|lower }}{% endif %}</span>
           </a>
-          {% else %}
-          <a class="btn alt" href="#empezar">Hablemos</a>
-          {% endif %}
         </div>
       </div>
       {% endfor %}
     </div>
+    <div class="comparador sube">
+      <strong>¿Cuál le sirve?</strong> Si su categoría cambia de precio o de
+      promoción todas las semanas —retail, servicios, gastronomía—, el mensual
+      le va a llegar tarde. Si sus campañas duran un mes o más, el semanal le va
+      a repetir información. Ante la duda, empiece por la prueba sin costo: es
+      un reporte completo y le muestra cuánto se mueve su competencia.
+    </div>
   </div>
 </section>
 
-<section id="empezar">
-  <div class="env">
-    <p class="rotulo">Empezar</p>
-    <h2>{{ formulario.titulo }}</h2>
-    <p class="entrada">{{ formulario.nota }}</p>
-
-    <form id="alta" novalidate{% if modo_servidor %} method="post" action="{{ accion_alta }}"{% endif %}>
-      <div class="campo">
-        <label for="empresa">Nombre de su empresa</label>
-        <input id="empresa" name="empresa" required>
-      </div>
-
-      <div class="fila">
-        <div class="campo">
-          <label for="contacto">Su nombre</label>
-          <input id="contacto" name="contacto" required>
-        </div>
-        <div class="campo">
-          <label for="email">Correo donde quiere recibir el reporte</label>
-          <input id="email" name="email" type="email" required>
-        </div>
-      </div>
-
-      <div class="fila">
-        <div class="campo">
-          <label for="plan">Plan</label>
-          <select id="plan" name="plan">
-            {% for p in planes %}
-            <option value="{{ p.clave }}">{{ p.nombre }}{% if p.precio_usd %} — ${{ p.precio_usd }}/mes{% elif p.precio_usd == 0 %} — sin costo{% endif %}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="campo">
-          <label for="industria">Industria</label>
-          <input id="industria" name="industria" placeholder="En sus palabras">
-        </div>
-      </div>
-
-      <div class="campo">
-        <label for="contexto">Contexto de su negocio</label>
-        <div class="ayuda">
-          Tres o cuatro líneas: qué le preocupa, si compite por precio o por
-          servicio, cuántas sedes tiene, su ticket promedio. Esto es lo que más
-          sube la calidad del reporte.
-        </div>
-        <textarea id="contexto" name="contexto"></textarea>
-      </div>
-
-      <fieldset>
-        <legend>Sus competidores</legend>
-        <div class="ayuda" style="margin-bottom:18px;">
-          De cada uno necesitamos su página de Facebook (o cómo aparece en la
-          biblioteca de anuncios) y su dominio. Con uno solo de los dos también
-          se puede: se cubre esa plataforma y se le avisa de la otra.
-        </div>
-        {% for n in [1, 2, 3] %}
-        <div class="competidor">
-          <div class="campo">
-            <label for="comp{{ n }}">Competidor {{ n }}{% if n > 1 %} (opcional){% endif %}</label>
-            <input id="comp{{ n }}" name="comp{{ n }}" placeholder="Nombre">
-          </div>
-          <div class="fila">
-            <input name="fb{{ n }}" placeholder="facebook.com/sucompetidor">
-            <input name="web{{ n }}" placeholder="sucompetidor.co.cr">
-          </div>
-        </div>
-        {% endfor %}
-      </fieldset>
-
-      <div><button class="btn" type="submit">Enviar solicitud</button></div>
-
-      <div class="nota">
-        {% if modo_servidor %}
-        Al enviar le mostramos un resumen para confirmar. No se activa nada ni se
-        cobra nada hasta que usted lo confirme.
-        {% else %}
-        Al enviar se abre WhatsApp con sus datos ya ordenados. Nada se guarda en
-        esta página.
-        {% endif %}
-      </div>
-    </form>
+<section class="cierre">
+  <div class="env sube">
+    <h2>Su competencia ya está anunciando. La pregunta es si usted lo sabe.</h2>
+    <p>
+      El primer reporte no tiene costo ni compromiso. Si no le sirve, no hay
+      nada que cancelar.
+    </p>
+    <a class="btn" href="{{ aplicar_url }}"><span>Pedir el primer reporte</span></a>
   </div>
 </section>
-
-<footer>
-  <div class="env">
-    <div class="marca">{{ marca }}{% if dominio %} · {{ dominio }}{% endif %}</div>
-    <p>
-      Fuentes: Biblioteca de Anuncios de Meta y Centro de Transparencia de
-      Anuncios de Google, ambas públicas y abiertas a cualquiera.
-    </p>
-    <p>
-      Las plataformas no publican inversión, alcance ni clics de los anuncios
-      comerciales, de modo que los reportes no los incluyen ni los estiman.
-    </p>
-  </div>
-</footer>
-
-{% if not modo_servidor %}
-<script>
-// Sin servidor: el formulario arma un mensaje ordenado y lo manda por
-// WhatsApp, que es donde se cierran las ventas. Si no hay número
-// configurado, cae al correo.
-(function () {
-  var WHATSAPP = {{ contacto.whatsapp | default('', true) | tojson }};
-  var EMAIL = {{ contacto.email | default('', true) | tojson }};
-
-  document.getElementById('alta').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var d = new FormData(e.target);
-    var v = function (k) { return (d.get(k) || '').toString().trim(); };
-
-    if (!v('empresa') || !v('email')) {
-      alert('Hacen falta el nombre de la empresa y el correo.');
-      return;
-    }
-
-    var l = [];
-    l.push('Solicitud de reporte — ' + v('empresa'));
-    l.push('');
-    l.push('Plan: ' + v('plan'));
-    l.push('Contacto: ' + v('contacto') + ' · ' + v('email'));
-    if (v('industria')) { l.push('Industria: ' + v('industria')); }
-    if (v('contexto')) { l.push(''); l.push('Contexto: ' + v('contexto')); }
-
-    var comps = [];
-    for (var i = 1; i <= 3; i++) {
-      var nombre = v('comp' + i);
-      if (!nombre) { continue; }
-      var partes = [nombre];
-      if (v('fb' + i)) { partes.push('Facebook: ' + v('fb' + i)); }
-      if (v('web' + i)) { partes.push('Web: ' + v('web' + i)); }
-      comps.push('  ' + partes.join(' | '));
-    }
-    if (comps.length) { l.push(''); l.push('Competidores:'); l = l.concat(comps); }
-
-    var texto = l.join('\n');
-    if (WHATSAPP) {
-      window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(texto), '_blank');
-    } else if (EMAIL) {
-      window.location.href = 'mailto:' + EMAIL +
-        '?subject=' + encodeURIComponent('Solicitud de reporte — ' + v('empresa')) +
-        '&body=' + encodeURIComponent(texto);
-    } else {
-      alert('Falta configurar el contacto en config/landing.yaml');
-    }
-  });
-})();
-</script>
-{% endif %}
-</body>
-</html>
+{% endblock %}

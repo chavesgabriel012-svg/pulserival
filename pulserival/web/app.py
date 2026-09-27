@@ -103,12 +103,33 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
         app.config["PLANIFICADOR"] = planificador
 
     # ── landing ──────────────────────────────────────────────────────
+    def _contexto_publico() -> dict[str, Any]:
+        ctx = generador.contexto()
+        ctx.update({
+            "modo_servidor": True,
+            "accion_alta": url_for("alta"),
+            "inicio_url": url_for("inicio"),
+            "aplicar_url": url_for("aplicar"),
+        })
+        return ctx
+
     @app.get("/")
     def inicio():
-        ctx = generador.contexto()
-        ctx["modo_servidor"] = True
-        ctx["accion_alta"] = url_for("alta")
-        return render_template("index.html.j2", **ctx)
+        return render_template("index.html.j2", **_contexto_publico())
+
+    @app.get("/aplicar")
+    def aplicar():
+        """El formulario, en su propia página. Más adelante acá va el cobro."""
+        ctx = _contexto_publico()
+        # El plan llega por la URL desde el botón de cada plan. Si viene uno
+        # que no existe, se cae al primero en vez de romper: un enlace viejo
+        # compartido por ahí no puede dejar a alguien sin poder aplicar.
+        pedido = request.args.get("plan")
+        catalogo = ctx.get("planes") or []
+        elegido = next((p for p in catalogo if p.get("clave") == pedido), None)
+        ctx["plan_elegido"] = (elegido or {}).get("clave")
+        ctx["resumen_plan"] = elegido
+        return render_template("aplicar.html.j2", **ctx)
 
     # ── alta ─────────────────────────────────────────────────────────
     @app.post("/alta")

@@ -120,7 +120,6 @@ class TestLoQueDeposita(CasoGitHub):
         casos = [
             ({"email": "no-es-un-correo"}, "correo"),
             ({"empresa": ""}, "empresa"),
-            ({"competidores": []}, "competidor"),
             ({"plan": "inventado"}, "plan"),
             ({"competidores": [{"nombre": "Sin datos"}]}, "Facebook"),
         ]
@@ -133,6 +132,15 @@ class TestLoQueDeposita(CasoGitHub):
                 # Y sobre todo: no llamó a GitHub. Depositar un alta inválida
                 # dejaría basura en el repositorio que hay que borrar a mano.
                 put.assert_not_called()
+
+    def test_un_alta_sin_competidores_se_deposita_igual(self):
+        # Cambió a propósito: la página ofrece deducir los competidores si el
+        # cliente no los indica, así que cero competidores es un alta válida.
+        # El seguro se mudó a `activar()`, que no deja activar a ciegas.
+        with mock.patch("requests.put", return_value=RespuestaFalsa()) as put:
+            resultado = self.deposito.guardar({**self.alta, "competidores": []})
+        self.assertEqual(resultado["competidores"], 0)
+        put.assert_called_once()
 
     def test_la_misma_empresa_dos_veces_el_mismo_dia_no_se_sobreescribe(self):
         respuestas = [RespuestaFalsa(422, "already exists"), RespuestaFalsa(201)]

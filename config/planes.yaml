@@ -26,6 +26,9 @@ planes:
     periodicidad: semanal
     cadencia_dias: 7
     resumen: "Un reporte completo de su competencia, sin costo y sin compromiso."
+    para_quien: "Para ver de qué se trata antes de decidir nada."
+    cadencia_texto: "Una sola vez"
+    competidores_max: 3
     enlace_pago: ""
     incluye:
       - "Un reporte con hasta 3 competidores"
@@ -39,6 +42,9 @@ planes:
     periodicidad: mensual
     cadencia_dias: 30
     resumen: "Un reporte por mes. Para seguir el pulso sin saturarse."
+    para_quien: "Para categorías estables, donde las campañas duran semanas."
+    cadencia_texto: "Cada 30 días"
+    competidores_max: 4
     enlace_pago: ""
     incluye:
       - "Un reporte cada 30 días"
@@ -52,6 +58,9 @@ planes:
     periodicidad: semanal
     cadencia_dias: 7
     resumen: "Un reporte por semana. Para categorías donde el precio se mueve rápido."
+    para_quien: "Para retail, servicios y todo lo que cambia de precio seguido."
+    cadencia_texto: "Cada 7 días"
+    competidores_max: 6
     enlace_pago: ""
     incluye:
       - "Un reporte cada 7 días"
@@ -69,6 +78,9 @@ planes:
     # Sin cadencia fija: se define por cliente en clientes.cadencia_dias.
     cadencia_dias: null
     resumen: "Cadencia, competidores y alcance definidos con usted."
+    para_quien: "Para cadenas, agencias y quien siga más de seis competidores."
+    cadencia_texto: "La que necesite"
+    competidores_max: null
     enlace_pago: ""
     incluye:
       - "La cadencia que necesite (cada N días)"
