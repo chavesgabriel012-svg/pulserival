@@ -243,3 +243,67 @@ class TestSinBaseDeDatos(CasoWeb):
             r = self.alta(email="no-es-un-correo")
         self.assertEqual(r.status_code, 400)
         put.assert_not_called()
+
+
+class TestDiscoPersistente(CasoWeb):
+    """`/salud` tiene que avisar si la base NO está en un disco que persiste.
+
+    Es la falla más cara y la más silenciosa que puede tener el servidor: con
+    el volumen montado en otra ruta, SQLite escribe igual —en el sistema de
+    archivos del contenedor— y todo anda perfecto hasta el deploy siguiente,
+    que se lleva los clientes y el historial de anuncios. Ese historial no se
+    recupera: las plataformas solo muestran lo que está activo hoy.
+    """
+
+    def setUp(self):
+        super().setUp()
+        import os
+
+        for v in ("RAILWAY_ENVIRONMENT", "RAILWAY_SERVICE_NAME", "FLY_APP_NAME"):
+            os.environ.pop(v, None)
+
+    def _disco(self):
+        return self.cliente_web.get("/salud").get_json()["disco"]
+
+    def test_fuera_de_un_hosting_no_alarma(self):
+        # En la máquina local la base no está en ningún disco montado y eso es
+        # lo normal: un aviso acá sería ruido que enseña a ignorar los avisos.
+        self.assertNotIn("ATENCIÓN", self._disco())
+
+    def test_en_un_hosting_sin_disco_montado_avisa_fuerte(self):
+        import os
+
+        os.environ["RAILWAY_ENVIRONMENT"] = "production"
+        self.addCleanup(lambda: os.environ.pop("RAILWAY_ENVIRONMENT", None))
+        aviso = self._disco()
+        self.assertIn("ATENCIÓN", aviso)
+        self.assertIn("se borra", aviso)
+        # Y dice qué revisar, no solo que algo está mal.
+        self.assertIn(str(self.ruta.parent), aviso)
+
+    def test_lo_detecta_tambien_en_fly(self):
+        import os
+
+        os.environ["FLY_APP_NAME"] = "pulserival"
+        self.addCleanup(lambda: os.environ.pop("FLY_APP_NAME", None))
+        self.assertIn("ATENCIÓN", self._disco())
+
+    def test_con_disco_montado_lo_confirma(self):
+        import os
+
+        os.environ["RAILWAY_ENVIRONMENT"] = "production"
+        self.addCleanup(lambda: os.environ.pop("RAILWAY_ENVIRONMENT", None))
+        from pulserival.web.app import crear_app
+
+        # /dev/shm es un punto de montaje real en Linux: sirve de disco de
+        # mentira para comprobar que la detección distingue los dos casos.
+        app = crear_app("/dev/shm/pulserival-prueba.db")
+        app.config["TESTING"] = True
+        disco = app.test_client().get("/salud").get_json()["disco"]
+        self.assertIn("sobrevive", disco)
+        self.assertNotIn("ATENCIÓN", disco)
+
+    def test_no_rompe_salud(self):
+        # El chequeo es informativo: si fallara, no puede tumbar /salud, que es
+        # lo que el hosting usa para decidir si reinicia el contenedor.
+        self.assertTrue(self.cliente_web.get("/salud").get_json()["ok"])

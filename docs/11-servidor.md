@@ -176,12 +176,22 @@ GET https://<su-app>.up.railway.app/salud
 ```json
 {"ok": true, "panel": "habilitado", "sesiones": "persistentes",
  "planificador": "encendido", "cadencia_dias": 7.0, "hora_utc": 11,
+ "disco": "/datos: disco montado, sobrevive a los deploys",
  "siguiente": "no hay ninguna corrida todavía: la primera se dispara a mano"}
 ```
 
-Si dice `"sesiones": "efímeras"` falta `PULSERIVAL_SECRET` y va a tener que
-entrar al panel de nuevo en cada reinicio. Si dice
-`"panel": "sin PULSERIVAL_PANEL_CLAVE"`, el panel está apagado.
+Qué mirar, en orden de gravedad:
+
+- **`"disco"` empezando con `ATENCIÓN`** es lo más grave y lo más silencioso.
+  Quiere decir que el volumen no está montado en la ruta de `PULSERIVAL_DB`.
+  SQLite escribe igual —en el sistema de archivos del contenedor— y todo
+  funciona perfecto **hasta el deploy siguiente**, que se lleva los clientes y
+  el historial de anuncios. Ese historial no se recupera: las plataformas solo
+  muestran lo que está activo hoy. Arreglarlo es montar el volumen exactamente
+  donde apunta `PULSERIVAL_DB`.
+- `"sesiones": "efímeras"`: falta `PULSERIVAL_SECRET` y va a tener que entrar
+  al panel de nuevo en cada reinicio.
+- `"panel": "sin PULSERIVAL_PANEL_CLAVE"`: el panel está apagado.
 
 **Ojo**: `/salud` devuelve 500 cuando falta configurar algo, y el chequeo de
 salud de Railway marca el deploy como fallido. Es a propósito: mejor que quede
