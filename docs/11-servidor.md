@@ -114,8 +114,33 @@ GEMINI_API_KEY=...
 GROQ_API_KEY=...
 ```
 
-Para `PULSERIVAL_SECRET`:
-`python3 -c "import secrets; print(secrets.token_urlsafe(32))"`
+**`PULSERIVAL_SECRET` hay que generarlo.** Son 32 caracteres al azar; da
+igual cómo se generen mientras no los elija una persona. En la **terminal**
+(no adentro de Python), cualquiera de estos:
+
+```bash
+openssl rand -base64 32                                    # macOS y Linux, sin instalar nada
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"   # si tiene Python
+```
+
+En Windows, en PowerShell:
+
+```powershell
+-join ((48..57)+(65..90)+(97..122) | Get-Random -Count 43 | % {[char]$_})
+```
+
+Railway tiene una función `${{secret()}}`, pero **solo funciona al crear
+plantillas**, no en la pestaña Variables de un servicio ya hecho.
+
+Esta variable firma la cookie de sesión del panel y nada más: no protege datos
+de clientes. Si falta, el servidor genera una al azar en cada arranque y usted
+tiene que volver a entrar al panel después de cada deploy (`/salud` lo dice:
+`"sesiones": "efímeras"`). Cambiarla después es gratis: solo cierra las
+sesiones abiertas.
+
+**`PULSERIVAL_PANEL_CLAVE` la elige usted.** Es la que va a escribir para
+entrar al panel. Larga y que no use en ningún otro lado: con ella se pueden
+mandar correos a sus clientes.
 
 `RESEND_API_KEY` solo cuando quiera enviar de verdad. Sin ella el panel igual
 deja simular el envío y guarda la copia.
