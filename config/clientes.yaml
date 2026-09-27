@@ -34,6 +34,19 @@ clientes:
       - clave: monge
         nombre: "Tienda Monge"
         meta_pagina_url: "https://www.facebook.com/TiendaMonge/"
+        # El id numérico manda sobre la URL y evita que el actor tenga que
+        # resolver el nombre de la página. Con Artelec esa resolución falló en
+        # silencio: devolvía 0 anuncios teniendo ~52 activos, y el reporte
+        # llegó a recomendar aprovechar un hueco que no existía.
+        #
+        # Salió de la respuesta real del actor: `prueba-scraper --consulta
+        # "Tienda Monge"` devolvió 7 anuncios, los 7 del anunciante
+        # 423380139744, y sus enlaces van a tiendamonge.com.
+        #
+        # Si alguna vez Monge devuelve 0, lo primero a probar es borrar esta
+        # línea: sin ella vuelve a resolver por la URL, que es como venía
+        # funcionando.
+        meta_pagina_id: "423380139744"
         google_dominio: "tiendamonge.com"
         prioridad: 1
         notas: "Competidor directo en electrodomésticos y muebles con crédito propio"
