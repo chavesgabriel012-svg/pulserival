@@ -77,6 +77,13 @@ problema conocido de Railway con la autodetección. `railway.json` ya fuerza el
 constructor; si igual pasa, en **Settings → Build** hay que elegir Dockerfile a
 mano.
 
+**Si los logs repiten `'$PORT' is not a valid port number`**, Railway está
+usando un comando de arranque que no expande la variable. Revisar
+**Settings → Deploy → Custom Start Command**: tiene que estar **vacío**, para
+que use el `CMD` del Dockerfile. (Este error lo causaba un `Procfile` que ya se
+borró del repositorio; si Railway se lo guardó como comando personalizado en el
+primer deploy, hay que limpiarlo a mano.)
+
 ### 2. El disco
 
 **Settings → Volumes → New Volume**, montado en `/datos`. El plan Hobby trae

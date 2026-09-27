@@ -46,11 +46,23 @@ común a cualquier servidor con disco.
 
 ### 1. Crear el servicio
 
-Apuntando a este repositorio. El `Procfile` ya está (Fly usa el `Dockerfile`):
+Apuntando a este repositorio. El arranque vive **solo en el `Dockerfile`**:
 
 ```
-web: gunicorn 'pulserival.web.app:wsgi()' --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+CMD ["sh", "-c", "exec gunicorn 'pulserival.web.app:wsgi()' \
+  --bind 0.0.0.0:${PORT:-8080} --workers 1 --timeout 120 \
+  --access-logfile - --error-logfile -"]
 ```
+
+**Había un `Procfile` y se borró.** Railway lee el `web:` del Procfile y lo usa
+como comando de arranque **por encima del `CMD` del Dockerfile**, y lo ejecuta
+sin shell. El Procfile traía `--bind 0.0.0.0:$PORT` literal, así que el
+contenedor moría en bucle con `'$PORT' is not a valid port number` mientras el
+Dockerfile —que sí expande la variable— no se usaba nunca. Dos lugares con el
+comando de arranque es un lugar de más.
+
+Si algún día hace falta un Procfile para otro hosting, tiene que usar la misma
+forma shell. Hay un test que lo exige.
 
 **`--workers 1` es a propósito.** SQLite aguanta muchos lectores y un solo
 escritor. Con este volumen un proceso sobra, y evita que dos escrituras se
