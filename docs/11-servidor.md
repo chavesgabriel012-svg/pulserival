@@ -204,9 +204,16 @@ Una sola vez, para no perder el historial:
 ```bash
 git fetch origin datos
 git show datos:datos/pulserival.db > /tmp/pulserival.db
-railway link            # elegir el proyecto
-railway run --service <servicio> bash -c "cat > /datos/pulserival.db" < /tmp/pulserival.db
+railway link                                    # elegir proyecto y servicio
+railway ssh -- sh -c "cat > /datos/pulserival.db" < /tmp/pulserival.db
+railway ssh -- ls -la /datos                    # comprobar que llegó y pesa algo
+railway redeploy                                # que el proceso la lea de nuevo
 ```
+
+**`railway ssh`, no `railway run`.** `railway run` ejecuta el comando **en su
+máquina** con las variables del servicio inyectadas: escribiría en un `/datos`
+de su computadora y la base del servidor quedaría intacta, sin que nada avise.
+`railway ssh` es el que entra al contenedor.
 
 Si arranca sin esto no pasa nada malo: el esquema se crea solo y las
 migraciones son aditivas.
@@ -214,10 +221,14 @@ migraciones son aditivas.
 ### 7. Cargar los clientes y la primera corrida
 
 ```bash
-railway run python -m pulserival.cli aplicar-config
-railway run python -m pulserival.cli prueba-scraper --consulta "Tienda Monge"
-railway run python -m pulserival.cli ciclo --modo auto --limite 40
+railway ssh -- python -m pulserival.cli aplicar-config
+railway ssh -- python -m pulserival.cli clientes lista
+railway ssh -- python -m pulserival.cli prueba-scraper --consulta "Tienda Monge"
+railway ssh -- python -m pulserival.cli ciclo --modo auto --limite 40
 ```
+
+El `prueba-scraper` antes del ciclo cuesta centavos y confirma que
+`APIFY_TOKEN` funciona de verdad, antes de disparar la corrida completa.
 
 **El planificador no dispara la primera corrida solo.** Es la única forma de
 que un deploy no pueda gastar plata por su cuenta, y además es el orden
@@ -241,11 +252,17 @@ En GitHub: **Settings → Secrets and variables → Actions → Variables**, cre
 ## Operar en Railway
 
 ```bash
-railway logs                                        # incluye el planificador
-railway run python -m pulserival.cli costos
-railway run python -m pulserival.cli clientes lista
-railway run python -m pulserival.cli ciclo --modo auto     # forzar una corrida
+railway logs                                             # incluye el planificador
+railway ssh -- python -m pulserival.cli costos
+railway ssh -- python -m pulserival.cli clientes lista
+railway ssh -- python -m pulserival.cli reporte lista
+railway ssh -- python -m pulserival.cli ciclo --modo auto   # forzar una corrida
 ```
+
+Siempre `railway ssh --`, nunca `railway run`: el segundo corre en su máquina
+con las variables del servicio inyectadas, así que apuntaría a un `/datos` que
+en su computadora no es la base del servidor. El comando no falla, y esa es la
+parte peligrosa.
 
 El panel está en `https://<su-app>.up.railway.app/panel/` y el gasto en
 `/panel/gasto`.
