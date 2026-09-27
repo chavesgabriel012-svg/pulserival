@@ -77,6 +77,13 @@ problema conocido de Railway con la autodetección. `railway.json` ya fuerza el
 constructor; si igual pasa, en **Settings → Build** hay que elegir Dockerfile a
 mano.
 
+**Si los logs repiten `'$PORT' is not a valid port number`**, Railway está
+usando un comando de arranque que no expande la variable. Revisar
+**Settings → Deploy → Custom Start Command**: tiene que estar **vacío**, para
+que use el `CMD` del Dockerfile. (Este error lo causaba un `Procfile` que ya se
+borró del repositorio; si Railway se lo guardó como comando personalizado en el
+primer deploy, hay que limpiarlo a mano.)
+
 ### 2. El disco
 
 **Settings → Volumes → New Volume**, montado en `/datos`. El plan Hobby trae
@@ -114,8 +121,33 @@ GEMINI_API_KEY=...
 GROQ_API_KEY=...
 ```
 
-Para `PULSERIVAL_SECRET`:
-`python3 -c "import secrets; print(secrets.token_urlsafe(32))"`
+**`PULSERIVAL_SECRET` hay que generarlo.** Son 32 caracteres al azar; da
+igual cómo se generen mientras no los elija una persona. En la **terminal**
+(no adentro de Python), cualquiera de estos:
+
+```bash
+openssl rand -base64 32                                    # macOS y Linux, sin instalar nada
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"   # si tiene Python
+```
+
+En Windows, en PowerShell:
+
+```powershell
+-join ((48..57)+(65..90)+(97..122) | Get-Random -Count 43 | % {[char]$_})
+```
+
+Railway tiene una función `${{secret()}}`, pero **solo funciona al crear
+plantillas**, no en la pestaña Variables de un servicio ya hecho.
+
+Esta variable firma la cookie de sesión del panel y nada más: no protege datos
+de clientes. Si falta, el servidor genera una al azar en cada arranque y usted
+tiene que volver a entrar al panel después de cada deploy (`/salud` lo dice:
+`"sesiones": "efímeras"`). Cambiarla después es gratis: solo cierra las
+sesiones abiertas.
+
+**`PULSERIVAL_PANEL_CLAVE` la elige usted.** Es la que va a escribir para
+entrar al panel. Larga y que no use en ningún otro lado: con ella se pueden
+mandar correos a sus clientes.
 
 `RESEND_API_KEY` solo cuando quiera enviar de verdad. Sin ella el panel igual
 deja simular el envío y guarda la copia.
@@ -144,12 +176,22 @@ GET https://<su-app>.up.railway.app/salud
 ```json
 {"ok": true, "panel": "habilitado", "sesiones": "persistentes",
  "planificador": "encendido", "cadencia_dias": 7.0, "hora_utc": 11,
+ "disco": "/datos: disco montado, sobrevive a los deploys",
  "siguiente": "no hay ninguna corrida todavía: la primera se dispara a mano"}
 ```
 
-Si dice `"sesiones": "efímeras"` falta `PULSERIVAL_SECRET` y va a tener que
-entrar al panel de nuevo en cada reinicio. Si dice
-`"panel": "sin PULSERIVAL_PANEL_CLAVE"`, el panel está apagado.
+Qué mirar, en orden de gravedad:
+
+- **`"disco"` empezando con `ATENCIÓN`** es lo más grave y lo más silencioso.
+  Quiere decir que el volumen no está montado en la ruta de `PULSERIVAL_DB`.
+  SQLite escribe igual —en el sistema de archivos del contenedor— y todo
+  funciona perfecto **hasta el deploy siguiente**, que se lleva los clientes y
+  el historial de anuncios. Ese historial no se recupera: las plataformas solo
+  muestran lo que está activo hoy. Arreglarlo es montar el volumen exactamente
+  donde apunta `PULSERIVAL_DB`.
+- `"sesiones": "efímeras"`: falta `PULSERIVAL_SECRET` y va a tener que entrar
+  al panel de nuevo en cada reinicio.
+- `"panel": "sin PULSERIVAL_PANEL_CLAVE"`: el panel está apagado.
 
 **Ojo**: `/salud` devuelve 500 cuando falta configurar algo, y el chequeo de
 salud de Railway marca el deploy como fallido. Es a propósito: mejor que quede

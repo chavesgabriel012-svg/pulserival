@@ -44,6 +44,24 @@ class TestDockerfile(unittest.TestCase):
         # por la misma base.
         self.assertIn("--workers 1", self.cmd)
 
+    def test_no_hay_un_Procfile_que_pise_el_CMD(self):
+        # Railway lee el `web:` del Procfile y lo usa como comando de arranque,
+        # por encima del CMD del Dockerfile, y lo ejecuta SIN shell. El Procfile
+        # tenía `--bind 0.0.0.0:$PORT` literal, así que el contenedor moría en
+        # bucle con "'$PORT' is not a valid port number" mientras el Dockerfile,
+        # que sí expandía la variable, no se usaba nunca.
+        #
+        # Un solo lugar donde vive el comando de arranque. Si alguien necesita
+        # un Procfile para otro hosting, que use la misma forma shell del
+        # Dockerfile, no el $PORT pelado.
+        procfile = RAIZ / "Procfile"
+        if procfile.exists():
+            texto = procfile.read_text(encoding="utf-8")
+            self.assertNotIn("$PORT", texto.replace("${PORT", ""),
+                             "El Procfile tiene $PORT sin expandir")
+            self.assertIn("sh -c", texto,
+                          "El Procfile tiene que usar forma shell, como el Dockerfile")
+
     def test_la_base_no_queda_dentro_de_la_imagen(self):
         ignorados = (RAIZ / ".dockerignore").read_text(encoding="utf-8")
         for carpeta in ("datos/", "borradores/", ".env"):

@@ -249,6 +249,7 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
             # marque caído que descubrirlo por un alta perdida.
             return {**estado, "ok": False, "falta_configurar": faltan}, 500
         if deposito.nombre == "sqlite":
+            estado["disco"] = _revisar_disco(app.config["RUTA_DB"])
             con = conectar()
             try:
                 estado["clientes"] = db.fila(con, "SELECT COUNT(*) AS n FROM clientes")["n"]
@@ -260,6 +261,36 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
         return estado
 
     return app
+
+
+def _revisar_disco(ruta_db: str) -> str:
+    """¿La base está en un disco que sobrevive al próximo deploy?
+
+    Es la falla más cara que puede tener este servidor, y la más silenciosa:
+    si el disco está montado en otra ruta, SQLite escribe igual —en el sistema
+    de archivos del contenedor— y todo funciona perfecto hasta el deploy
+    siguiente, que se lleva los clientes y el historial de anuncios. Y ese
+    historial es lo único que permite decir "esto es nuevo": una vez perdido no
+    se recupera, porque las plataformas solo muestran lo que está activo hoy.
+
+    Solo se avisa cuando se está corriendo en un hosting. En la máquina local
+    la base no está en ningún disco montado y eso es lo normal.
+    """
+    carpeta = Path(ruta_db).parent
+    try:
+        montado = os.path.ismount(carpeta)
+    except OSError:
+        return f"{carpeta}: no se pudo comprobar"
+    if montado:
+        return f"{carpeta}: disco montado, sobrevive a los deploys"
+    # RAILWAY_* y FLY_APP_NAME solo existen dentro de esos hostings.
+    en_hosting = any(os.environ.get(v) for v in
+                     ("RAILWAY_ENVIRONMENT", "RAILWAY_SERVICE_NAME", "FLY_APP_NAME"))
+    if en_hosting:
+        return (f"ATENCIÓN · {carpeta} NO es un disco montado: la base se borra "
+                f"en el próximo deploy. Revise que el volumen esté montado "
+                f"exactamente en {carpeta}")
+    return f"{carpeta}: sin disco montado (normal fuera de un servidor)"
 
 
 def _contacto_visible() -> str:
