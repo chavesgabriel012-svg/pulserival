@@ -5,6 +5,10 @@
 #  una frase o un número de WhatsApp no debería necesitar tocar código.
 #  Después de editar acá, regenerar con:
 #      python3 -m pulserival.cli landing
+#
+#  REGLA AL ESCRIBIR ACÁ: nada que no se pueda sostener. Sin cifras de
+#  clientes, sin testimonios, sin "líderes en", sin promesas de tiempo de
+#  respuesta. Lo que se promete en esta página es lo que el pipeline hace.
 # ─────────────────────────────────────────────────────────────────────
 
 marca: PulseRival
@@ -17,28 +21,100 @@ contacto:
   whatsapp: ""                   # solo dígitos con código de país: 50688887777
   email: ""                      # respaldo si no hay WhatsApp
 
-titulo: "Sepa qué está anunciando su competencia, todas las semanas"
+titulo: "Qué está anunciando su competencia en Meta y Google, cada semana"
 subtitulo: >-
-  Revisamos los anuncios activos de sus competidores en Facebook, Instagram
-  y Google, y le mandamos un reporte que explica qué cambió y qué conviene
-  hacer. No una lista de anuncios: un análisis.
+  Revisamos los anuncios activos de sus competidores en Facebook, Instagram y
+  Google, los comparamos contra la semana anterior y le explicamos qué cambió y
+  qué conviene hacer. No una lista de anuncios: un análisis, con el enlace a
+  cada anuncio para que lo compruebe.
 
-# Por qué alguien pagaría por esto. Tres, no diez.
+# Frase corta bajo el botón. Lo que alguien necesita saber antes de decidir.
+promesa_corta: >-
+  Datos públicos, verificables uno por uno. Sin contratos ni instalaciones.
+
+# ── Las dos fuentes ──────────────────────────────────────────────────
+# Lo que se lee de cada plataforma. La asimetría es real y está dicha a
+# propósito: Meta publica el texto de los anuncios y Google no publica el de
+# todos, así que de Google se leen señales de actividad. Prometer lo mismo de
+# las dos sería inventar.
+plataformas:
+  titulo: "Las dos bibliotecas públicas, leídas todas las semanas"
+  nota: >-
+    Las dos son públicas y cualquiera puede abrirlas. Casi nadie lo hace todas
+    las semanas, ni compara contra la semana pasada, ni saca conclusiones.
+  fuentes:
+    - nombre: "Meta"
+      donde: "Facebook e Instagram"
+      biblioteca: "Biblioteca de Anuncios de Meta"
+      lee:
+        - "El texto completo del anuncio y su titular"
+        - "La imagen o el video, y el botón que usa"
+        - "Desde cuándo está al aire y a dónde manda"
+        - "Cuántas variantes del mismo mensaje tiene corriendo"
+    - nombre: "Google"
+      donde: "Búsqueda, YouTube y Display"
+      biblioteca: "Centro de Transparencia de Anuncios de Google"
+      lee:
+        - "Cuántos anuncios tiene activos y de qué formato"
+        - "Desde cuándo corre cada uno y cuántos días lleva"
+        - "Cuántas variaciones y en qué regiones aparece"
+        - "El enlace a la ficha pública de cada anuncio"
+      advertencia: >-
+        Google no publica el texto de todos los anuncios. Ahí leemos actividad,
+        no mensajes, y el reporte lo dice cuando es el caso.
+
+# ── Cómo funciona ────────────────────────────────────────────────────
+pasos:
+  titulo: "Cómo se arma su reporte"
+  lista:
+    - nombre: "Recolectamos"
+      texto: >-
+        Cada semana leemos las dos bibliotecas para los competidores que usted
+        nos indique, y guardamos cada anuncio con su ficha pública.
+    - nombre: "Comparamos"
+      texto: >-
+        Cada anuncio se contrasta con lo que vimos antes: cuál es nuevo, cuál
+        cambió el mensaje, cuál dejó de publicarse. Ese contraste es el
+        producto; una foto suelta no dice nada.
+    - nombre: "Interpretamos"
+      texto: >-
+        Qué significan esos movimientos para su negocio, en su contexto y su
+        industria. Agrupado por competidor, no en una lista plana.
+    - nombre: "Revisamos y enviamos"
+      texto: >-
+        Ningún reporte sale sin que una persona lo lea. Un control automático
+        marca antes lo que no se sostiene, y lo dudoso se corrige o se dice.
+
+# ── Por qué sirve ────────────────────────────────────────────────────
 argumentos:
-  - titulo: "Los datos son públicos. El trabajo de mirarlos, no."
-    texto: >-
-      Cualquiera puede abrir la Biblioteca de Anuncios de Meta. Casi nadie lo
-      hace todas las semanas, ni compara contra la semana pasada, ni saca
-      conclusiones. Eso es lo que hacemos.
   - titulo: "Cada afirmación tiene su enlace"
     texto: >-
       Todo lo que dice el reporte se puede verificar en un clic: cada anuncio
-      que mencionamos enlaza a su ficha pública en la plataforma.
+      que mencionamos enlaza a su ficha pública en la plataforma. Si algo no
+      le cuadra, lo comprueba usted mismo en el momento.
   - titulo: "Lo que no se sabe, no se inventa"
     texto: >-
-      Las plataformas no publican cuánto invirtió un competidor, ni su
-      alcance, ni sus clics. Ningún proveedor los tiene. Nosotros no se los
-      vamos a estimar: el reporte dice lo que se puede comprobar.
+      Las plataformas no publican cuánto invirtió un competidor, ni su alcance,
+      ni sus clics. Ningún proveedor los tiene. Nosotros no se los vamos a
+      estimar: el reporte dice lo que se puede comprobar y marca lo que no.
+  - titulo: "Le avisamos cuando no hay nada"
+    texto: >-
+      Si un competidor no está pautando esta semana, se lo decimos. Un reporte
+      relleno para justificar el mes es la forma más rápida de que deje de
+      leerlo.
+  - titulo: "Revisión humana antes de cada envío"
+    texto: >-
+      El borrador lo arma el sistema; la versión que usted recibe la aprueba
+      una persona. Es más lento y es a propósito.
+
+# ── Los límites, dichos de frente ────────────────────────────────────
+limites:
+  titulo: "Lo que este reporte no hace"
+  lista:
+    - "No dice cuánto invierte su competencia. Las plataformas no lo publican."
+    - "No mide alcance, impresiones ni clics de los anuncios comerciales. Tampoco se publican."
+    - "No accede a las cuentas publicitarias de nadie: todo sale de bibliotecas públicas."
+    - "No reemplaza a su agencia ni a su equipo. Les da con qué trabajar."
 
 # Lo que el cliente tiene que mandarnos para arrancar. Es el mismo contenido
 # de docs/05-que-necesito-de-vos.md, en versión formulario.
