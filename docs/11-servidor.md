@@ -245,14 +245,38 @@ va a funcionar.
 
 Una sola vez, para no perder el historial:
 
+Se sube con `scp`, que viene incluido en Windows, macOS y Linux. **No con
+`railway ssh ... < archivo`**: PowerShell no soporta `<` para redirigir un
+archivo, y pasar binario por una tubería de PowerShell lo corrompe.
+
+Primero hay que tener el archivo. Con el repositorio clonado:
+
 ```bash
 git fetch origin datos
-git show datos:datos/pulserival.db > /tmp/pulserival.db
-railway link                                    # elegir proyecto y servicio
-railway ssh -- sh -c "cat > /datos/pulserival.db" < /tmp/pulserival.db
-railway ssh -- ls -la /datos                    # comprobar que llegó y pesa algo
-railway redeploy                                # que el proceso la lea de nuevo
+git show origin/datos:datos/pulserival.db > pulserival.db
 ```
+
+Sin el repositorio clonado, se baja de GitHub: rama `datos`, archivo
+`datos/pulserival.db`, botón **Download raw file**. Comprobar el tamaño: si
+pesa unos pocos KB, se bajó la página en vez del archivo.
+
+```bash
+railway ssh config     # escribe un atajo en ~/.ssh/config e imprime su nombre
+scp pulserival.db ATAJO:/datos/nueva.db
+railway ssh -- ls -la /datos      # nueva.db tiene que pesar lo mismo que el original
+```
+
+Se sube con otro nombre a propósito: el servidor tiene la base abierta, y
+sobrescribirla en caliente puede dejarla corrupta. Recién con el tamaño
+confirmado:
+
+```bash
+railway ssh -- mv /datos/nueva.db /datos/pulserival.db
+railway redeploy
+```
+
+Las migraciones corren solas al arrancar, así que una base vieja se actualiza
+sin perder nada.
 
 **`railway ssh`, no `railway run`.** `railway run` ejecuta el comando **en su
 máquina** con las variables del servicio inyectadas: escribiría en un `/datos`
