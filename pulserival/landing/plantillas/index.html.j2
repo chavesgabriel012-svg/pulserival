@@ -70,6 +70,79 @@
   .ventaja h3 { font-size:20px; margin:0 0 9px; }
   .ventaja p { margin:0; font-size:16px; color:var(--gris-texto); line-height:1.5; }
 
+  /* -- la muestra del correo ----------------------------------- */
+  /* Esta es la parte que mas cuesta explicar con palabras: que el detalle
+     va agrupado por competidor y por plataforma. Es una maqueta hecha con
+     los mismos tokens, no una captura, asi que no se despixela ni se queda
+     vieja cuando cambia la marca. */
+  .muestra { display:grid; grid-template-columns:1fr 1.15fr; gap:48px;
+             align-items:start; }
+  .muestra.con-pasos { margin-top:72px; padding-top:56px;
+                       border-top:1px solid var(--linea); }
+  /* El texto se queda quieto mientras se recorre la muestra: es mas alta que
+     el parrafo que la explica, y si no, se lee la mitad del ejemplo con media
+     pantalla vacia al lado. */
+  .muestra-texto { position:sticky; top:106px; }
+  .muestra-texto h3 { font-size:27px; margin:0 0 14px; max-width:18ch; }
+  .muestra-texto p { font-size:17px; color:var(--gris-texto); margin:0 0 16px;
+                     line-height:1.55; max-width:44ch; }
+  .muestra-texto .pie-muestra {
+    font-family:var(--mono); font-size:11.5px; letter-spacing:.04em;
+    color:var(--piedra); line-height:1.6; text-transform:none; margin:0;
+  }
+
+  .correo { border:1px solid var(--linea); border-radius:var(--radio);
+            overflow:hidden; background:var(--blanco);
+            box-shadow:0 14px 40px rgba(20,19,18,.08); }
+  .correo-barra { background:var(--tinta); padding:14px 20px; display:flex;
+                  align-items:center; gap:14px; }
+  .correo-barra img { height:17px; width:auto; display:block; }
+  .correo-barra span { margin-left:auto; font-family:var(--mono); font-size:10.5px;
+                       color:var(--texto-osc-2); letter-spacing:.04em; }
+  .correo-cuerpo { padding:22px 20px 24px; }
+  .correo-asunto { font-family:var(--display); font-weight:700; font-size:19px;
+                   letter-spacing:-.02em; margin:0 0 16px; }
+  .correo-conteo { display:grid; grid-template-columns:repeat(4,1fr);
+                   border-top:1.5px solid var(--tinta);
+                   border-bottom:1px solid var(--linea); margin-bottom:22px; }
+  .correo-conteo > div { text-align:center; padding:12px 4px;
+                         border-right:1px solid var(--linea); }
+  .correo-conteo > div:last-child { border-right:0; }
+  .correo-conteo strong { display:block; font-family:var(--display); font-size:22px;
+                          font-weight:700; letter-spacing:-.02em; }
+  .correo-conteo span { font-family:var(--mono); font-size:9.5px; letter-spacing:.09em;
+                        text-transform:uppercase; color:var(--gris-texto); }
+  .correo-conteo .alto strong { color:var(--pulso-texto); }
+  .correo-rotulo { font-family:var(--display); font-weight:700; font-size:15px;
+                   margin:0 0 4px; padding-bottom:8px;
+                   border-bottom:1.5px solid var(--tinta); }
+  .correo-competidor { margin-top:18px; }
+  .correo-competidor .quien {
+    font-family:var(--display); font-weight:700; font-size:15px; margin:0 0 2px;
+    padding-bottom:7px; border-bottom:1px solid var(--linea);
+  }
+  .correo-competidor .quien span { font-family:var(--cuerpo); font-weight:400;
+                                   font-size:13.5px; color:var(--gris-texto); }
+  .correo-plataforma {
+    font-family:var(--mono); font-size:9.5px; letter-spacing:.09em;
+    text-transform:uppercase; color:var(--piedra); margin:14px 0 8px; font-weight:500;
+  }
+  .correo-anuncio { margin-bottom:12px; }
+  .correo-anuncio .marca-estado { margin:0 0 2px; font-size:13px; }
+  .correo-anuncio .ref { font-family:var(--mono); font-size:11.5px;
+                         font-weight:500; color:var(--tinta); }
+  /* El estado se distingue por simbolo ademas de por color: el naranja solo
+     no le sirve a quien no lo ve. Es la misma regla que en el correo real. */
+  .correo-anuncio .estado { color:var(--gris-texto); font-size:13px; }
+  .correo-anuncio .estado.nuevo { color:var(--pulso-texto); font-weight:600; }
+  .correo-anuncio .detalle { color:var(--piedra); font-size:12.5px; }
+  .correo-anuncio .texto { margin:0 0 3px; font-size:13.5px; color:var(--gris-texto);
+                           line-height:1.45; }
+  .correo-anuncio .fuente-enlace {
+    margin:0; font-size:12.5px; color:var(--tinta);
+    text-decoration:underline; text-underline-offset:2px;
+  }
+
   /* -- planes -------------------------------------------------- */
   .planes { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; align-items:stretch; }
   .plan {
@@ -136,6 +209,9 @@
 
   @media (max-width:980px) {
     .pasos { grid-template-columns:1fr 1fr; gap:34px; }
+    .muestra { grid-template-columns:1fr; gap:32px; }
+    .muestra-texto { position:static; }
+    .muestra-texto h3, .muestra-texto p { max-width:none; }
     .planes { grid-template-columns:1fr 1fr; }
     .plan .quien { min-height:3.2em; }
     .hero h1 { font-size:42px; }
@@ -144,6 +220,8 @@
   }
   @media (max-width:640px) {
     .fuentes, .ventajas, .pasos, .planes { grid-template-columns:1fr; }
+    .correo-conteo { grid-template-columns:1fr 1fr; }
+    .correo-conteo > div:nth-child(2) { border-right:0; }
     .hero h1 { font-size:33px; }
     .hero .bajada { font-size:18px; }
     .plan .quien { min-height:0; }
@@ -152,8 +230,8 @@
 {% endblock %}
 
 {% block navegacion %}
-  <a class="oculto" href="#fuentes">Qué revisamos</a>
-  <a class="oculto" href="#como">Cómo funciona</a>
+  <a class="oculto" href="#fuentes">¿Qué revisamos?</a>
+  <a class="oculto" href="#como">¿Cómo funciona?</a>
   <a href="#planes">Planes</a>
   <a class="cta" href="{{ aplicar_url }}">Empezar</a>
 {% endblock %}
@@ -161,7 +239,7 @@
 {% block contenido %}
 <div class="env">
   <div class="hero">
-    <p class="etiqueta sube">Inteligencia publicitaria &middot; Costa Rica</p>
+    <p class="etiqueta sube">Inteligencia publicitaria</p>
     <h1 class="sube" style="transition-delay:.08s">{{ titulo }}</h1>
     <p class="bajada sube" style="transition-delay:.16s">{{ subtitulo }}</p>
     <div class="acciones sube" style="transition-delay:.24s">
@@ -172,6 +250,18 @@
     <p class="promesa sube" style="transition-delay:.32s">{{ promesa_corta }}</p>{% endif %}
   </div>
 </div>
+
+<section class="cierre">
+  <div class="env sube">
+    <p class="rotulo">El primer paso</p>
+    <h2>Su competencia ya está anunciando. La pregunta es si usted lo sabe.</h2>
+    <p>
+      El primer reporte no tiene costo ni compromiso. Si no le sirve, no hay
+      nada que cancelar.
+    </p>
+    <a class="btn" href="{{ aplicar_url }}"><span>Pedir el primer reporte</span></a>
+  </div>
+</section>
 
 {% if plataformas %}
 <section id="fuentes">
@@ -196,9 +286,13 @@
 </section>
 {% endif %}
 
-{% if pasos %}
+{# La seccion sale si hay pasos o si hay ejemplo: el ejemplo no depende de
+   que existan los pasos, y colgarlo de ellos lo hacia desaparecer sin aviso
+   cuando faltaban. #}
+{% if pasos or ejemplo %}
 <section id="como">
   <div class="env">
+    {% if pasos %}
     <div class="sube">
       <p class="rotulo">El proceso</p>
       <h2>{{ pasos.titulo }}</h2>
@@ -212,6 +306,59 @@
       </div>
       {% endfor %}
     </div>
+    {% endif %}
+
+    {% if ejemplo %}
+    <div class="muestra{% if pasos %} con-pasos{% endif %} sube">
+      <div class="muestra-texto">
+        <h3>{{ ejemplo.titulo }}</h3>
+        <p>{{ ejemplo.nota }}</p>
+        <p class="pie-muestra">{{ ejemplo.pie }}</p>
+      </div>
+
+      {# Maqueta del correo, no una captura: se mantiene sola con los mismos
+         tokens de marca y no se despixela en pantallas grandes. #}
+      <div class="correo" aria-label="Ejemplo de reporte">
+        <div class="correo-barra">
+          <img src="{{ marca_url }}/logo-negativo.svg" alt="{{ marca }}">
+          <span>{{ ejemplo.periodo }}</span>
+        </div>
+        <div class="correo-cuerpo">
+          <p class="correo-asunto">{{ ejemplo.asunto }}</p>
+          <div class="correo-conteo">
+            {% for c in ejemplo.conteo %}
+            <div{% if c.destacado %} class="alto"{% endif %}>
+              <strong>{{ c.valor }}</strong><span>{{ c.etiqueta }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          <p class="correo-rotulo">Detalle de anuncios</p>
+          {% for comp in ejemplo.competidores %}
+          <div class="correo-competidor">
+            <p class="quien">{{ comp.nombre }} <span>{{ comp.resumen }}</span></p>
+            {% for b in comp.bloques %}
+            <p class="correo-plataforma">{{ b.plataforma }}</p>
+            {% for a in b.anuncios %}
+            <div class="correo-anuncio">
+              <p class="marca-estado">
+                <span class="ref">[{{ a.referencia }}]</span>
+                <span class="estado {{ 'nuevo' if a.estado == 'nuevo' }}">
+                  {%- if a.estado == 'nuevo' %}+
+                  {%- elif a.estado == 'cambiado' %}&#916;
+                  {%- else %}&#8722;{% endif %} {{ a.estado }}</span>
+                <span class="detalle">{{ a.detalle }}</span>
+              </p>
+              <p class="texto">{{ a.texto }}</p>
+              <p class="fuente-enlace">Ver en la fuente</p>
+            </div>
+            {% endfor %}
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
   </div>
 </section>
 {% endif %}
@@ -290,18 +437,6 @@
       a repetir información. Ante la duda, empiece por la prueba sin costo: es
       un reporte completo y le muestra cuánto se mueve su competencia.
     </div>
-  </div>
-</section>
-
-<section class="cierre">
-  <div class="env sube">
-    <p class="rotulo">El primer paso</p>
-    <h2>Su competencia ya está anunciando. La pregunta es si usted lo sabe.</h2>
-    <p>
-      El primer reporte no tiene costo ni compromiso. Si no le sirve, no hay
-      nada que cancelar.
-    </p>
-    <a class="btn" href="{{ aplicar_url }}"><span>Pedir el primer reporte</span></a>
   </div>
 </section>
 {% endblock %}
