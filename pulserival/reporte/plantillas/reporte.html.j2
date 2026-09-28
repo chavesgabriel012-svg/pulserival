@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ asunto }}</title>
 </head>
-<body style="margin:0;padding:0;background:#f4f4f4;">
+<body style="margin:0;padding:0;background:#F4F2EE;">
   <div style="display:none;max-height:0;overflow:hidden;">{{ preheader }}</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:28px 12px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F2EE;padding:28px 12px;">
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-             style="max-width:660px;background:#ffffff;border:1px solid #d4d4d4;
+             style="max-width:660px;background:#ffffff;border:1px solid #D9D5CE;
                     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
 
         <!-- encabezado -->
-        <tr><td style="background:#000000;padding:18px 30px;">
+        <tr><td style="background:#141312;padding:18px 30px;">
           <table role="presentation" width="100%"><tr>
             <td>
               {% if logo_data_uri %}
@@ -26,16 +26,16 @@
               </span>
               {% endif %}
             </td>
-            <td align="right" style="color:#b0b0b0;font-size:12px;">{{ periodo_fin }}</td>
+            <td align="right" style="color:#B5B0A6;font-size:12px;">{{ periodo_fin }}</td>
           </tr></table>
         </td></tr>
 
         <!-- título -->
         <tr><td style="padding:30px 30px 0;">
-          <div style="font-size:22px;font-weight:600;color:#000000;line-height:1.3;">
+          <div style="font-size:22px;font-weight:600;color:#141312;line-height:1.3;">
             Competencia de {{ cliente }}
           </div>
-          <div style="font-size:13px;color:#6b6b6b;margin-top:7px;">
+          <div style="font-size:13px;color:#6B665E;margin-top:7px;">
             Del {{ periodo_inicio }} al {{ periodo_fin }}
             {%- if competidores %} · {{ competidores | length }} competidores{% endif %}
           </div>
@@ -45,13 +45,13 @@
         {% if conteo %}
         <tr><td style="padding:24px 30px 0;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-                 style="border-top:2px solid #000000;border-bottom:1px solid #d4d4d4;">
+                 style="border-top:2px solid #141312;border-bottom:1px solid #D9D5CE;">
             <tr>
               {% for etiqueta, valor in [('Nuevos', conteo.nuevo), ('Cambiaron', conteo.cambiado),
                                           ('Se apagaron', conteo.pausado), ('Siguen', conteo.continua)] %}
-              <td style="padding:16px 6px;text-align:center;{% if not loop.last %}border-right:1px solid #e4e4e4;{% endif %}">
-                <div style="font-size:28px;font-weight:600;color:#000000;line-height:1;">{{ valor }}</div>
-                <div style="font-size:10px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.8px;margin-top:7px;">{{ etiqueta }}</div>
+              <td style="padding:16px 6px;text-align:center;{% if not loop.last %}border-right:1px solid #D9D5CE;{% endif %}">
+                <div style="font-size:28px;font-weight:600;line-height:1;color:{{ '#B22800' if etiqueta == 'Nuevos' and valor else '#141312' }};">{{ valor }}</div>
+                <div style="font-size:10px;color:#6B665E;text-transform:uppercase;letter-spacing:.8px;margin-top:7px;">{{ etiqueta }}</div>
               </td>
               {% endfor %}
             </tr>
@@ -62,31 +62,31 @@
         <!-- comparativo -->
         {% if senales %}
         <tr><td style="padding:26px 30px 0;">
-          <div style="font-size:15px;font-weight:600;color:#000000;margin-bottom:10px;">
+          <div style="font-size:15px;font-weight:600;color:#141312;margin-bottom:10px;">
             Comparativo de actividad
           </div>
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
                  style="border-collapse:collapse;font-size:12px;">
             <tr>
-              <th align="left"  style="padding:8px 8px;color:#000000;font-weight:600;border-bottom:1.5px solid #000000;">Competidor</th>
-              <th align="left"  style="padding:8px 6px;color:#000000;font-weight:600;border-bottom:1.5px solid #000000;">Plataforma</th>
-              <th align="right" style="padding:8px 6px;color:#000000;font-weight:600;border-bottom:1.5px solid #000000;">Mensajes</th>
-              <th align="right" style="padding:8px 6px;color:#000000;font-weight:600;border-bottom:1.5px solid #000000;">Piezas</th>
-              <th align="right" style="padding:8px 6px;color:#000000;font-weight:600;border-bottom:1.5px solid #000000;">Nuevos</th>
-              <th align="right" style="padding:8px 8px;color:#000000;font-weight:600;border-bottom:1.5px solid #000000;">Días</th>
+              <th align="left"  style="padding:8px 8px;color:#141312;font-weight:600;border-bottom:1.5px solid #141312;">Competidor</th>
+              <th align="left"  style="padding:8px 6px;color:#141312;font-weight:600;border-bottom:1.5px solid #141312;">Plataforma</th>
+              <th align="right" style="padding:8px 6px;color:#141312;font-weight:600;border-bottom:1.5px solid #141312;">Mensajes</th>
+              <th align="right" style="padding:8px 6px;color:#141312;font-weight:600;border-bottom:1.5px solid #141312;">Piezas</th>
+              <th align="right" style="padding:8px 6px;color:#141312;font-weight:600;border-bottom:1.5px solid #141312;">Nuevos</th>
+              <th align="right" style="padding:8px 8px;color:#141312;font-weight:600;border-bottom:1.5px solid #141312;">Días</th>
             </tr>
             {% for f in senales %}
             <tr>
-              <td style="padding:9px 8px;border-bottom:1px solid #e4e4e4;color:#000000;">{{ f.competidor }}</td>
-              <td style="padding:9px 6px;border-bottom:1px solid #e4e4e4;color:#6b6b6b;">{{ 'Meta' if f.plataforma == 'meta' else 'Google' }}</td>
-              <td align="right" style="padding:9px 6px;border-bottom:1px solid #e4e4e4;color:#000000;">{{ f.mensajes }}</td>
-              <td align="right" style="padding:9px 6px;border-bottom:1px solid #e4e4e4;color:#4a4a4a;">{{ f.piezas }}</td>
-              <td align="right" style="padding:9px 6px;border-bottom:1px solid #e4e4e4;color:#000000;font-weight:{{ '600' if f.nuevos else '400' }};">{{ f.nuevos }}</td>
-              <td align="right" style="padding:9px 8px;border-bottom:1px solid #e4e4e4;color:#4a4a4a;">{{ f.dias_mensaje_mas_viejo if f.dias_mensaje_mas_viejo is not none else '—' }}</td>
+              <td style="padding:9px 8px;border-bottom:1px solid #D9D5CE;color:#141312;">{{ f.competidor }}</td>
+              <td style="padding:9px 6px;border-bottom:1px solid #D9D5CE;color:#6B665E;">{{ 'Meta' if f.plataforma == 'meta' else 'Google' }}</td>
+              <td align="right" style="padding:9px 6px;border-bottom:1px solid #D9D5CE;color:#141312;">{{ f.mensajes }}</td>
+              <td align="right" style="padding:9px 6px;border-bottom:1px solid #D9D5CE;color:#6B665E;">{{ f.piezas }}</td>
+              <td align="right" style="padding:9px 6px;border-bottom:1px solid #D9D5CE;color:#141312;font-weight:{{ '600' if f.nuevos else '400' }};">{{ f.nuevos }}</td>
+              <td align="right" style="padding:9px 8px;border-bottom:1px solid #D9D5CE;color:#6B665E;">{{ f.dias_mensaje_mas_viejo if f.dias_mensaje_mas_viejo is not none else '—' }}</td>
             </tr>
             {% endfor %}
           </table>
-          <div style="font-size:11px;color:#8a8a8a;margin-top:8px;line-height:1.5;">
+          <div style="font-size:11px;color:#8A857D;margin-top:8px;line-height:1.5;">
             Mensajes: avisos distintos al aire. Piezas: veces que repite cada aviso.
             Días: antigüedad del aviso más viejo que mantiene activo.
           </div>
@@ -94,66 +94,67 @@
         {% endif %}
 
         <!-- análisis -->
-        <tr><td style="padding:8px 30px 4px;font-size:15px;color:#2b2b2b;">
+        <tr><td style="padding:8px 30px 4px;font-size:15px;color:#1E1D1B;">
           {{ cuerpo_html | safe }}
         </td></tr>
 
         <!-- detalle por competidor -->
         {% if por_competidor %}
         <tr><td style="padding:26px 30px 0;">
-          <div style="font-size:15px;font-weight:600;color:#000000;border-top:2px solid #000000;padding-top:18px;">
+          <div style="font-size:15px;font-weight:600;color:#141312;border-top:2px solid #141312;padding-top:18px;">
             Detalle de anuncios
           </div>
-          <div style="font-size:11px;color:#8a8a8a;margin-top:5px;">
+          <div style="font-size:11px;color:#8A857D;margin-top:5px;">
             Cada anuncio enlaza a su ficha en la biblioteca pública de la plataforma.
           </div>
 
           {% for g in por_competidor %}
           <div style="margin-top:22px;">
-            <div style="font-size:14px;font-weight:600;color:#000000;border-bottom:1px solid #000000;padding-bottom:6px;">
+            <div style="font-size:14px;font-weight:600;color:#141312;border-bottom:1px solid #141312;padding-bottom:6px;">
               {{ g.competidor }} — {{ g.total }} anuncio{{ '' if g.total == 1 else 's' }}{% if (g.piezas or 0) > (g.total or 0) %} en {{ g.piezas }} piezas{% endif %}
             </div>
 
             {% for plataforma, etiqueta in [('meta', 'Meta (Facebook e Instagram)'), ('google', 'Google')] %}
             {% if g[plataforma] %}
-            <div style="font-size:12px;font-weight:600;color:#4a4a4a;margin:14px 0 2px;text-transform:uppercase;letter-spacing:.6px;">
+            <div style="font-size:12px;font-weight:600;color:#6B665E;margin:14px 0 2px;text-transform:uppercase;letter-spacing:.6px;">
               {{ etiqueta }} · {{ g[plataforma] | length }}
             </div>
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:12px;color:#4a4a4a;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:12px;color:#6B665E;">
               {% for a in g[plataforma] %}
               <tr>
                 {% if miniaturas %}
-                <td style="padding:10px 12px 10px 0;border-bottom:1px solid #ededed;vertical-align:top;width:70px;">
+                <td style="padding:10px 12px 10px 0;border-bottom:1px solid #E4E1DA;vertical-align:top;width:70px;">
                   {% if a.creativo_url %}
                   <img src="{{ a.creativo_url }}" width="58" alt=""
-                       style="width:58px;border:1px solid #e4e4e4;display:block;">
+                       style="width:58px;border:1px solid #D9D5CE;display:block;">
                   {% else %}
-                  <div style="width:58px;height:44px;border:1px solid #e4e4e4;background:#fafafa;"></div>
+                  <div style="width:58px;height:44px;border:1px solid #D9D5CE;background:#F4F2EE;"></div>
                   {% endif %}
                 </td>
                 {% endif %}
-                <td style="padding:10px 0;border-bottom:1px solid #ededed;vertical-align:top;line-height:1.55;">
-                  <span style="color:#000000;font-weight:600;">{{ a.referencia }}</span>
-                  <span style="color:#8a8a8a;">
+                <td style="padding:10px 0;border-bottom:1px solid #E4E1DA;vertical-align:top;line-height:1.55;">
+                  <span style="color:#141312;font-weight:600;">{{ a.referencia }}</span>
+                  <span style="color:{{ '#B22800' if a.clasificacion == 'nuevo' else '#8A857D' }};">
+                    {%- if a.clasificacion == 'nuevo' %}+ {% elif a.clasificacion == 'cambiado' %}&#916; {% elif a.clasificacion == 'pausado' %}&#8722; {% endif -%}
                     {{ a.clasificacion }}
                     {%- if a.variantes and a.variantes > 1 %} · {{ a.variantes }} piezas{% endif %}
                     {%- if a.tipo_creativo %} · {{ a.tipo_creativo }}{% endif %}
                     {%- if a.fecha_inicio %} · desde {{ a.fecha_inicio }}{% endif %}
                   </span><br>
                   {% if a.sin_texto %}
-                  <span style="color:#8a8a8a;">La plataforma no publica el texto de este anuncio.</span>
+                  <span style="color:#8A857D;">La plataforma no publica el texto de este anuncio.</span>
                   {% else %}
                   {{ (a.titulo or a.texto or '')[:180] }}{% if (a.titulo or a.texto or '')|length > 180 %}…{% endif %}
                   {% endif %}
                   {% if a.url_anuncio %}
-                  <br><a href="{{ a.url_anuncio }}" style="color:#000000;text-decoration:underline;">Ver en la fuente</a>
+                  <br><a href="{{ a.url_anuncio }}" style="color:#141312;text-decoration:underline;">Ver en la fuente</a>
                   {% endif %}
                 </td>
               </tr>
               {% endfor %}
               {% if g[plataforma ~ '_no_listados'] %}
               <tr><td {% if miniaturas %}colspan="2"{% endif %}
-                      style="padding:10px 0;border-bottom:1px solid #ededed;color:#8a8a8a;">
+                      style="padding:10px 0;border-bottom:1px solid #E4E1DA;color:#8A857D;">
                 y {{ g[plataforma ~ '_no_listados'] }} anuncio{{ '' if g[plataforma ~ '_no_listados'] == 1 else 's' }}
                 más de este competidor en la plataforma, incluidos en los conteos del comparativo.
               </td></tr>
@@ -168,7 +169,7 @@
 
         <!-- nota al pie -->
         <tr><td style="padding:26px 30px 24px;">
-          <div style="border-top:1px solid #d4d4d4;padding-top:14px;font-size:11px;color:#8a8a8a;line-height:1.7;">
+          <div style="border-top:1px solid #D9D5CE;padding-top:14px;font-size:11px;color:#8A857D;line-height:1.7;">
             Fuentes: Biblioteca de Anuncios de Meta y Centro de Transparencia de Anuncios
             de Google, ambas públicas. Revisadas de forma automática para cada competidor
             y comparadas contra los periodos anteriores. Un anuncio que deja de aparecer
@@ -179,10 +180,10 @@
         </td></tr>
 
         <!-- pie -->
-        <tr><td style="background:#000000;padding:14px 30px;font-size:11px;color:#b0b0b0;line-height:1.6;">
+        <tr><td style="background:#141312;padding:14px 30px;font-size:11px;color:#B5B0A6;line-height:1.6;">
           {{ marca | default('PulseRival') }} · Preparado para {{ cliente }}
           {% if contacto_remitente %}<br>{{ contacto_remitente }}{% endif %}
-          {% if enlace_baja %}<br><a href="{{ enlace_baja }}" style="color:#8a8a8a;">Darse de baja</a>{% endif %}
+          {% if enlace_baja %}<br><a href="{{ enlace_baja }}" style="color:#8A857D;">Darse de baja</a>{% endif %}
         </td></tr>
       </table>
     </td></tr>

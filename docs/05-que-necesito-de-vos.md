@@ -118,9 +118,10 @@ Además necesito: la dirección `De:` que querés usar
 2. **Día y hora de envío.** El cron está en lunes 5 a.m. Costa Rica para que
    el borrador te espere temprano. Vos decidís qué día sale al cliente:
    martes en la mañana funciona bien (el lunes está saturado).
-3. **Marca.** El email dice "PulseRival" con un encabezado sobrio. Si tenés
-   logo y colores, mandámelos y los pongo. Si el producto va en blanco (bajo
-   la marca de una agencia), decímelo ahora: cambia el diseño del email.
+3. **Marca.** Resuelto: la identidad vive en `pulserival/marca/` y la usan
+   las tres caras del producto (la web, el panel y el correo). Ver
+   `docs/12-marca.md`. Si el producto va en blanco (bajo la marca de una
+   agencia), decímelo: cambia el diseño del email.
 4. **Qué pasa si una semana no hay movimiento.** Hoy el sistema genera un
    reporte honesto y corto que dice "no hubo movimiento y eso también es
    información". Alternativa: no enviar y avisar por WhatsApp. **Recomiendo

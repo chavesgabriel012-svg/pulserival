@@ -12,6 +12,7 @@ import unicodedata
 import unittest
 from unittest import mock
 
+from pulserival import marca
 from pulserival.landing import generador as construir_mod
 
 LANDING_BASE = {
@@ -60,6 +61,18 @@ class CasoPaginas(unittest.TestCase):
 
     def aplicar(self, **kw):
         return self.render("aplicar.html.j2", **kw)
+
+    def resumen_visible(self, html: str) -> str:
+        """El aside del plan que se ve. Los otros se rinden con `hidden`.
+
+        La pagina lleva el resumen de todos los planes para poder cambiarlo
+        cuando la persona cambia el selector, asi que buscar un texto en el
+        HTML entero no dice nada: hay que mirar el que queda visible.
+        """
+        asides = re.findall(r'<aside class="resumen sube"(.*?)</aside>', html, re.S)
+        visibles = [a for a in asides if "hidden" not in a.split(">", 1)[0]]
+        self.assertLessEqual(len(visibles), 1, "hay mas de un resumen visible")
+        return visibles[0] if visibles else ""
 
 
 class TestPortada(CasoPaginas):
@@ -129,13 +142,14 @@ class TestPortada(CasoPaginas):
                                               "lista": ["No dice la inversión"]}})
         self.assertNotIn("Lo que no hace", h)
 
-    def test_sin_emojis_y_en_blanco_y_negro(self):
+    def test_sin_emojis_y_solo_con_la_paleta_de_marca(self):
+        # Cambió a propósito: antes la regla era "todo gris". La identidad de
+        # marca trae el naranja Pulso, así que prohibir el color dejó de tener
+        # sentido. Lo que sí lo tiene es prohibir un color que nadie decidió.
         h = self.portada()
         self.assertEqual(
             [c for c in h if unicodedata.category(c) == "So" or ord(c) > 0x1F000], [])
-        for color in set(re.findall(r"#[0-9a-fA-F]{6}", h)):
-            r, g, b = (int(color[i:i + 2], 16) for i in (1, 3, 5))
-            self.assertLessEqual(max(r, g, b) - min(r, g, b), 8, f"{color} no es gris")
+        self.assertEqual(marca.fuera_de_paleta(h), [])
 
 
 class TestAnimaciones(CasoPaginas):
@@ -190,36 +204,46 @@ class TestAplicar(CasoPaginas):
             self.assertIn(f'name="{campo}"', h)
 
     def test_el_plan_de_la_url_llega_preseleccionado(self):
-        h = self.aplicar(plan_elegido="semanal", resumen_plan=PLANES_BASE[1])
+        h = self.aplicar(plan_elegido="semanal")
         self.assertIn('value="semanal" selected', h)
-        self.assertIn("Cada 7 días", h)
+        self.assertIn("Cada 7 días", self.resumen_visible(h))
+
+    def test_el_resumen_visible_es_el_del_plan_elegido(self):
+        # El selector y el resumen de al lado tienen que decir lo mismo: si no,
+        # la persona lee un plan y envia otro.
+        h = self.aplicar(plan_elegido="prueba")
+        self.assertIn("Sin costo", self.resumen_visible(h))
+        self.assertNotIn("Cada 7 días", self.resumen_visible(h))
 
     def test_sin_plan_elegido_no_se_rompe(self):
         # Un enlace viejo con un plan que ya no existe no puede dejar a
         # alguien sin poder aplicar.
-        h = self.aplicar(plan_elegido=None, resumen_plan=None)
+        h = self.aplicar(plan_elegido=None)
         self.assertIn("<form", h)
-        self.assertNotIn("selected", h)
+        # Ninguna opcion viene marcada. Se busca en las <option> y no en el
+        # HTML entero porque el guion de la pagina dice `selectedIndex`.
+        self.assertNotRegex(h, r"<option[^>]*\sselected")
+        self.assertEqual("", self.resumen_visible(h))
+        # Sin resumen la columna se cierra en vez de dejar un hueco al lado.
+        self.assertIn('class="columnas sola"', h)
 
     def test_avisa_que_el_cobro_todavia_no_esta_conectado(self):
-        h = self.aplicar(plan_elegido="semanal", resumen_plan=PLANES_BASE[1])
-        self.assertIn("cobro todavía no está conectado", h)
+        h = self.aplicar(plan_elegido="semanal")
+        self.assertIn("cobro todavía no está conectado", self.resumen_visible(h))
 
     def test_el_plan_sin_costo_no_pide_tarjeta(self):
-        h = self.aplicar(plan_elegido="prueba", resumen_plan=PLANES_BASE[0])
-        self.assertIn("No se le pide tarjeta", h)
+        h = self.aplicar(plan_elegido="prueba")
+        self.assertIn("No se le pide tarjeta", self.resumen_visible(h))
 
     def test_el_whatsapp_configurado_llega_al_javascript(self):
         h = self.aplicar(landing={"contacto": {"whatsapp": "50688887777"}})
         self.assertIn('"50688887777"', h)
 
-    def test_sin_emojis_y_en_blanco_y_negro(self):
+    def test_sin_emojis_y_solo_con_la_paleta_de_marca(self):
         h = self.aplicar()
         self.assertEqual(
             [c for c in h if unicodedata.category(c) == "So" or ord(c) > 0x1F000], [])
-        for color in set(re.findall(r"#[0-9a-fA-F]{6}", h)):
-            r, g, b = (int(color[i:i + 2], 16) for i in (1, 3, 5))
-            self.assertLessEqual(max(r, g, b) - min(r, g, b), 8, f"{color} no es gris")
+        self.assertEqual(marca.fuera_de_paleta(h), [])
 
 
 class TestGenerador(unittest.TestCase):

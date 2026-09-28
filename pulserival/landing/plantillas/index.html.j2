@@ -5,30 +5,33 @@
   /* -- portada ------------------------------------------------- */
   .hero { padding:104px 0 88px; }
   .hero .etiqueta {
-    font-size:12px; text-transform:uppercase; letter-spacing:2.4px;
-    color:var(--tenue); margin:0 0 24px; font-weight:600;
+    font-family:var(--mono); font-size:12px; text-transform:uppercase;
+    letter-spacing:.1em; color:var(--pulso-texto); margin:0 0 24px; font-weight:500;
   }
-  .hero h1 {
-    font-size:56px; line-height:1.06; margin:0 0 26px;
-    letter-spacing:-1.8px; font-weight:600; max-width:26ch;
-  }
-  .hero .bajada { font-size:19.5px; color:#333; max-width:60ch; margin:0 0 36px; }
+  .hero h1 { font-size:60px; line-height:1.05; margin:0 0 26px; max-width:24ch; }
+  .hero .bajada { font-size:20px; color:var(--gris-texto); max-width:58ch;
+                  margin:0 0 36px; line-height:1.5; }
   .acciones { display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
-  .promesa { font-size:14px; color:var(--gris); margin:22px 0 0; }
+  .promesa { font-family:var(--mono); font-size:12px; letter-spacing:.06em;
+             color:var(--piedra); margin:24px 0 0; }
 
   /* -- las dos bibliotecas ------------------------------------- */
   .fuentes { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
   .fuente {
-    border:1px solid var(--linea); padding:34px 32px;
-    transition:border-color .3s var(--curva), transform .3s var(--curva);
+    background:var(--blanco); border:1px solid var(--linea); padding:34px 32px;
+    border-radius:var(--radio);
+    transition:border-color .3s var(--curva), transform .3s var(--curva),
+               box-shadow .3s var(--curva);
   }
-  .fuente:hover { border-color:var(--negro); transform:translateY(-3px); }
-  .fuente .nombre { font-size:26px; font-weight:600; letter-spacing:-.5px; margin:0; }
-  .fuente .donde { font-size:14.5px; color:var(--gris); margin:3px 0 5px; }
+  .fuente:hover { border-color:var(--piedra); transform:translateY(-3px);
+                  box-shadow:0 10px 28px rgba(20,19,18,.07); }
+  .fuente .nombre { font-family:var(--display); font-size:27px; font-weight:700;
+                    letter-spacing:-.02em; margin:0; }
+  .fuente .donde { font-size:16px; color:var(--gris-texto); margin:4px 0 6px; }
   .fuente .biblioteca {
-    font-size:11.5px; text-transform:uppercase; letter-spacing:1.4px;
-    color:var(--tenue); margin:0 0 24px; padding-bottom:20px;
-    border-bottom:1px solid var(--linea); font-weight:600;
+    font-family:var(--mono); font-size:11px; text-transform:uppercase;
+    letter-spacing:.1em; color:var(--piedra); margin:0 0 24px; padding-bottom:20px;
+    border-bottom:1px solid var(--linea); font-weight:500;
   }
   .fuente ul { list-style:none; padding:0; margin:0; }
   /* La lista usa grid en vez de posición absoluta: el guion queda alineado
@@ -36,98 +39,113 @@
      estaba saliendo descentrado. */
   .fuente li {
     display:grid; grid-template-columns:18px 1fr; gap:10px; align-items:start;
-    font-size:15px; padding:10px 0; color:#333;
+    font-size:16px; padding:10px 0; color:var(--tinta);
   }
   .fuente li:before {
-    content:""; width:14px; height:1.5px; background:var(--negro);
-    margin-top:.72em;
+    content:""; width:14px; height:2px; background:var(--pulso);
+    margin-top:.66em;
   }
   .fuente .pie-nota {
     margin:22px 0 0; padding-top:18px; border-top:1px solid var(--linea);
-    font-size:14px; color:var(--gris); line-height:1.6;
+    font-size:15px; color:var(--gris-texto); line-height:1.55;
   }
 
   /* -- el proceso ---------------------------------------------- */
   .pasos { display:grid; grid-template-columns:repeat(4,1fr); gap:30px; }
   .paso .n {
-    font-size:13px; font-weight:700; letter-spacing:1.2px; color:var(--tenue);
-    padding-bottom:14px; margin-bottom:18px; position:relative;
+    font-family:var(--mono); font-size:13px; font-weight:500; letter-spacing:.1em;
+    color:var(--pulso-texto); padding-bottom:14px; margin-bottom:18px; position:relative;
   }
   .paso .n:after {
     content:""; position:absolute; left:0; bottom:0; height:2px; width:100%;
-    background:var(--negro); transform:scaleX(0); transform-origin:left;
+    background:var(--pulso); transform:scaleX(0); transform-origin:left;
     transition:transform .7s var(--curva);
   }
   .js .sube.visto .paso .n:after, .paso.visto .n:after { transform:scaleX(1); }
-  .paso h3 { font-size:18.5px; margin:0 0 9px; font-weight:600; letter-spacing:-.25px; }
-  .paso p { margin:0; font-size:15px; color:#3d3d3d; }
+  .paso h3 { font-size:19px; margin:0 0 9px; }
+  .paso p { margin:0; font-size:16px; color:var(--gris-texto); line-height:1.5; }
 
   /* -- ventajas ------------------------------------------------ */
   .ventajas { display:grid; grid-template-columns:1fr 1fr; gap:44px 52px; }
-  .ventaja h3 { font-size:19.5px; margin:0 0 9px; font-weight:600; letter-spacing:-.25px; }
-  .ventaja p { margin:0; font-size:15px; color:#3d3d3d; }
+  .ventaja h3 { font-size:20px; margin:0 0 9px; }
+  .ventaja p { margin:0; font-size:16px; color:var(--gris-texto); line-height:1.5; }
 
   /* -- planes -------------------------------------------------- */
   .planes { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; align-items:stretch; }
   .plan {
-    border:1px solid var(--linea); padding:30px 26px; display:flex; flex-direction:column;
+    background:var(--blanco); border:1px solid var(--linea); border-radius:var(--radio);
+    padding:30px 26px; display:flex; flex-direction:column;
     transition:border-color .3s var(--curva), transform .3s var(--curva),
-               box-shadow .3s var(--curva); background:#fff;
+               box-shadow .3s var(--curva);
   }
-  .plan:hover { border-color:var(--negro); transform:translateY(-4px);
-                box-shadow:0 10px 30px rgba(0,0,0,.09); }
-  .plan.destacado { border:1.5px solid var(--negro); }
+  .plan:hover { border-color:var(--piedra); transform:translateY(-4px);
+                box-shadow:0 12px 32px rgba(20,19,18,.09); }
+  .plan.destacado { border:1.5px solid var(--pulso); }
+  .plan.destacado:hover { border-color:var(--pulso); 
+                          box-shadow:0 12px 32px rgba(221,65,21,.16); }
   .plan .insignia {
-    font-size:10.5px; text-transform:uppercase; letter-spacing:1.6px; font-weight:700;
-    background:var(--negro); color:#fff; padding:4px 10px; align-self:flex-start;
-    margin-bottom:14px;
+    font-family:var(--mono); font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.1em; font-weight:500; background:var(--pulso); color:var(--blanco);
+    padding:4px 10px; align-self:flex-start; margin-bottom:14px;
+    border-radius:3px;
   }
   .plan .insignia.vacia { visibility:hidden; }
-  .plan .nombre { font-size:12px; text-transform:uppercase; letter-spacing:1.6px;
-                  color:var(--gris); margin-bottom:12px; font-weight:600; }
-  .plan .precio { font-size:40px; font-weight:600; line-height:1.05;
-                  letter-spacing:-1.6px; }
-  .plan .precio.texto { font-size:29px; letter-spacing:-.9px; }
-  .plan .precio span { font-size:14px; font-weight:400; color:var(--gris); letter-spacing:0; }
-  .plan .quien { font-size:14.5px; color:#333; margin:16px 0 20px; min-height:3em; }
+  .plan .nombre { font-family:var(--mono); font-size:11.5px; text-transform:uppercase;
+                  letter-spacing:.1em; color:var(--piedra); margin-bottom:12px; }
+  .plan .precio { font-family:var(--display); font-size:42px; font-weight:700;
+                  line-height:1.05; letter-spacing:-.03em; }
+  .plan .precio.texto { font-size:30px; }
+  .plan .precio span { font-family:var(--cuerpo); font-size:15px; font-weight:400;
+                       color:var(--gris-texto); letter-spacing:0; }
+  /* El alto fijo es para que la tabla Frecuencia/Competidores arranque a la
+     misma altura en las cuatro tarjetas: si cada texto ocupa las lineas que
+     le toquen, las filas quedan escalonadas y se leen como si compararan
+     cosas distintas. A cuatro columnas el texto mas largo son tres lineas. */
+  .plan .quien { font-size:16px; color:var(--tinta); margin:16px 0 20px;
+                 min-height:4.4em; line-height:1.45; }
   .plan .datos { border-top:1px solid var(--linea); margin-bottom:18px; }
   .plan .dato {
     display:flex; justify-content:space-between; gap:12px; font-size:13.5px;
     padding:10px 0; border-bottom:1px solid var(--linea);
   }
-  .plan .dato .clave { color:var(--gris); }
-  .plan .dato .valor { font-weight:600; text-align:right; }
+  .plan .dato .clave { color:var(--gris-texto); }
+  .plan .dato .valor { font-family:var(--display); font-weight:600; text-align:right; }
   .plan ul { list-style:none; padding:0; margin:0 0 26px; }
   .plan li {
     display:grid; grid-template-columns:16px 1fr; gap:9px; align-items:start;
-    font-size:14px; padding:7px 0; color:#3d3d3d;
+    font-size:15px; padding:7px 0; color:var(--gris-texto);
   }
-  .plan li:before { content:""; width:12px; height:1.5px; background:#bdbdbd; margin-top:.7em; }
+  .plan li:before { content:""; width:12px; height:1.5px; background:var(--piedra);
+                    margin-top:.66em; }
   .plan .pie { margin-top:auto; }
   .plan .btn { width:100%; text-align:center; padding:13px 8px; font-size:14.5px; }
 
   .comparador {
-    margin-top:36px; padding:22px 24px; background:var(--suave);
-    font-size:14.5px; color:#3d3d3d; line-height:1.7;
+    margin-top:36px; padding:24px 26px; background:var(--blanco);
+    border-left:3px solid var(--pulso); border-radius:0 var(--radio) var(--radio) 0;
+    font-size:16px; color:var(--gris-texto); line-height:1.6;
   }
-  .comparador strong { color:var(--negro); }
+  .comparador strong { color:var(--tinta); font-family:var(--display); }
 
   /* -- llamada final ------------------------------------------- */
-  .cierre { text-align:center; padding:96px 0; }
-  .cierre h2 { margin:0 auto 20px; max-width:20ch; font-size:38px; letter-spacing:-1px; }
-  .cierre p { font-size:17.5px; color:#3d3d3d; max-width:54ch; margin:0 auto 34px; }
+  .cierre { text-align:center; padding:104px 0; background:var(--tinta); }
+  .cierre .rotulo { color:var(--pulso-oscuro); }
+  .cierre h2 { margin:0 auto 20px; max-width:20ch; font-size:42px; color:var(--papel); }
+  .cierre p { font-size:18px; color:var(--texto-osc-2); max-width:54ch;
+              margin:0 auto 36px; line-height:1.5; }
 
   @media (max-width:980px) {
     .pasos { grid-template-columns:1fr 1fr; gap:34px; }
     .planes { grid-template-columns:1fr 1fr; }
-    .hero h1 { font-size:41px; letter-spacing:-1.1px; }
+    .plan .quien { min-height:3.2em; }
+    .hero h1 { font-size:42px; }
     .hero { padding:68px 0 56px; }
-    .cierre h2 { font-size:30px; }
+    .cierre h2 { font-size:32px; } .cierre { padding:72px 0; }
   }
   @media (max-width:640px) {
     .fuentes, .ventajas, .pasos, .planes { grid-template-columns:1fr; }
-    .hero h1 { font-size:32px; letter-spacing:-.7px; }
-    .hero .bajada { font-size:17px; }
+    .hero h1 { font-size:33px; }
+    .hero .bajada { font-size:18px; }
     .plan .quien { min-height:0; }
     .cierre { padding:64px 0; }
   }
@@ -277,6 +295,7 @@
 
 <section class="cierre">
   <div class="env sube">
+    <p class="rotulo">El primer paso</p>
     <h2>Su competencia ya está anunciando. La pregunta es si usted lo sabe.</h2>
     <p>
       El primer reporte no tiene costo ni compromiso. Si no le sirve, no hay

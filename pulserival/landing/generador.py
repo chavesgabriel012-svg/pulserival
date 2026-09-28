@@ -27,10 +27,17 @@ def contexto() -> dict[str, Any]:
 
     datos = dict(config.config_landing())
     datos["planes"] = list(config.config_planes().get("planes") or [])
+    # El mismo plan que trae seleccionado el formulario: el resumen de al
+    # lado tiene que decir lo mismo que el selector antes de que corra el JS.
+    if datos["planes"]:
+        datos.setdefault("plan_elegido", datos["planes"][0].get("clave"))
     datos.setdefault("marca", "PulseRival")
     datos.setdefault("contacto", {})
     # El mismo wordmark que va en el correo: una sola fuente para el logo.
     datos["logo_data_uri"] = render.logo_data_uri()
+    # Por defecto las páginas apuntan a /marca/, que es donde las sirve Flask.
+    # El generador estático lo reemplaza por la carpeta copiada al lado.
+    datos.setdefault("marca_url", "/marca")
     return datos
 
 
@@ -49,14 +56,40 @@ def render(plantilla: str, datos: dict[str, Any]) -> str:
     return entorno().get_template(plantilla).render(**datos)
 
 
-def construir(destino: Path | None = None) -> list[Path]:
+def carpeta_destino(destino: Path | str | None) -> Path:
+    """Normaliza el destino a una carpeta.
+
+    Cuando la landing era una sola página, `--destino` era la ruta del
+    index.html. Ahora son varias páginas más los activos de marca, así que el
+    destino es la carpeta. Se sigue aceptando una ruta a un .html para no
+    romperle la mano a quien ya tenía el comando escrito: se usa su carpeta.
+    """
+    if not destino:
+        return config.DIR_SALIDA / "landing"
+    ruta = Path(destino)
+    if ruta.suffix.lower() in (".html", ".htm"):
+        return ruta.parent
+    return ruta
+
+
+def construir(destino: Path | str | None = None) -> list[Path]:
     """Escribe las páginas estáticas. Devuelve las rutas, en orden."""
-    carpeta = Path(destino) if destino else (config.DIR_SALIDA / "landing")
+    carpeta = carpeta_destino(destino)
     carpeta.mkdir(parents=True, exist_ok=True)
     base = contexto()
     # En estático los enlaces son archivos, no rutas del servidor: la página
     # tiene que funcionar abierta con doble clic desde una carpeta.
-    base.update({"inicio_url": "index.html", "aplicar_url": "aplicar.html"})
+    base.update({"inicio_url": "index.html", "aplicar_url": "aplicar.html",
+                 "marca_url": "marca"})
+    # Los activos de marca se copian al lado del HTML: la página estática tiene
+    # que funcionar abierta desde una carpeta, sin servidor.
+    from .. import marca as marca_mod
+
+    destino_marca = carpeta / "marca"
+    destino_marca.mkdir(exist_ok=True)
+    for activo in marca_mod.ACTIVOS.iterdir():
+        if activo.is_file():
+            (destino_marca / activo.name).write_bytes(activo.read_bytes())
     escritas = []
     for plantilla, archivo in PAGINAS:
         ruta = carpeta / archivo

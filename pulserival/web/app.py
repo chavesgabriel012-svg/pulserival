@@ -29,10 +29,11 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
-from flask import Flask, abort, redirect, render_template, request, url_for
+from flask import (Flask, abort, redirect, render_template, request,
+                   send_from_directory, url_for)
 from jinja2 import ChoiceLoader, FileSystemLoader
 
-from .. import altas, config, db, planes
+from .. import altas, config, db, marca as marca_mod, planes
 from ..landing import generador
 from . import deposito as deposito_mod
 from . import planificador as plan_mod
@@ -110,8 +111,20 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
             "accion_alta": url_for("alta"),
             "inicio_url": url_for("inicio"),
             "aplicar_url": url_for("aplicar"),
+            "marca_url": "/marca",
         })
         return ctx
+
+    @app.get("/marca/<path:archivo>")
+    def activo_marca(archivo: str):
+        """Logos, favicons y la imagen para compartir.
+
+        Se sirven desde acá y no desde /static para tener un solo lugar con
+        una sola regla de caché. Son archivos que no cambian: un año.
+        """
+        respuesta = send_from_directory(marca_mod.ACTIVOS, archivo)
+        respuesta.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        return respuesta
 
     @app.get("/")
     def inicio():
@@ -127,8 +140,13 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
         pedido = request.args.get("plan")
         catalogo = ctx.get("planes") or []
         elegido = next((p for p in catalogo if p.get("clave") == pedido), None)
+        # Sin plan en la URL, o con uno que ya no existe, queda el primero: el
+        # selector del formulario siempre muestra alguno, y si el resumen de al
+        # lado dijera otra cosa la persona estaría leyendo un plan que no es el
+        # que va a enviar.
+        if elegido is None and catalogo:
+            elegido = catalogo[0]
         ctx["plan_elegido"] = (elegido or {}).get("clave")
-        ctx["resumen_plan"] = elegido
         return render_template("aplicar.html.j2", **ctx)
 
     # ── alta ─────────────────────────────────────────────────────────
@@ -326,6 +344,11 @@ def _pagina(titulo: str, mensaje: str, volver: bool = False) -> str:
     return render_template(
         "mensaje.html.j2",
         **generador.contexto(), titulo_pagina=titulo, mensaje=mensaje, volver=volver)
+
+
+def _con_marca(datos: dict[str, Any]) -> dict[str, Any]:
+    datos.setdefault("marca_url", "/marca")
+    return datos
 
 
 def _verificar(competidores: list) -> list[dict[str, Any]]:

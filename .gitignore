@@ -3,6 +3,10 @@
 datos/*.db
 datos/*.db-journal
 datos/crudo/
+# Los respaldos de `cli respaldo` son copias de la base: nunca al repositorio,
+# que ademas es publico. Los que quedaron versionados eran bases vacias de
+# correr los tests, pero la regla vale igual para uno real.
+datos/respaldos/
 salida/*
 !salida/.gitkeep
 borradores/*.md

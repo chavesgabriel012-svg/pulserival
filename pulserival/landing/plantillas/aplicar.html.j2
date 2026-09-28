@@ -3,28 +3,35 @@
 
 {% block estilos %}
   .cabeza { padding:72px 0 44px; }
-  .cabeza h1 { font-size:42px; line-height:1.12; margin:0 0 16px; letter-spacing:-1.2px;
-               font-weight:600; max-width:20ch; }
-  .cabeza p { font-size:17.5px; color:#3d3d3d; max-width:62ch; margin:0; }
+  .cabeza h1 { font-size:46px; margin:0 0 16px; max-width:20ch; }
+  .cabeza p { font-size:18px; color:var(--gris-texto); max-width:62ch; margin:0;
+              line-height:1.5; }
   .volver {
-    display:inline-block; font-size:13.5px; color:var(--gris); text-decoration:none;
+    display:inline-block; font-size:13.5px; color:var(--gris-texto); text-decoration:none;
     margin-bottom:24px; transition:color .2s var(--curva);
   }
-  .volver:hover { color:var(--negro); }
+  .volver:hover { color:var(--tinta); }
 
   .columnas { display:grid; grid-template-columns:1fr 320px; gap:56px; align-items:start;
               padding-bottom:96px; }
+  /* Sin plan elegido no hay resumen que mostrar: la segunda columna se cierra
+     en vez de dejar 320px en blanco al lado del formulario. */
+  .columnas.sola { grid-template-columns:1fr; max-width:760px; }
+  .columnas.sola .lado { display:none; }
+  .lado { position:sticky; top:98px; }
   form { display:grid; gap:24px; }
-  .grupo { border:1px solid var(--linea); padding:26px 26px 28px; }
+  .grupo { background:var(--blanco); border:1px solid var(--linea);
+           border-radius:var(--radio); padding:28px 28px 30px; }
   .grupo > .titulo {
-    font-size:12px; text-transform:uppercase; letter-spacing:1.8px; font-weight:700;
-    margin:0 0 4px;
+    font-family:var(--mono); font-size:11.5px; text-transform:uppercase;
+    letter-spacing:.1em; font-weight:500; color:var(--pulso-texto); margin:0 0 4px;
   }
   .grupo > .titulo .opcional {
-    font-weight:600; letter-spacing:.4px; text-transform:none; font-size:12.5px;
-    color:var(--gris); margin-left:8px;
+    font-family:var(--cuerpo); font-weight:400; letter-spacing:0;
+    text-transform:none; font-size:14px; color:var(--piedra); margin-left:10px;
   }
-  .grupo > .bajada { font-size:14px; color:var(--gris); margin:0 0 22px; }
+  .grupo > .bajada { font-size:15.5px; color:var(--gris-texto); margin:0 0 22px;
+                     line-height:1.5; }
   .grupo > .campo + .campo, .grupo > .campo + .fila,
   .grupo > .fila + .campo, .grupo > .fila + .fila { margin-top:18px; }
 
@@ -34,26 +41,31 @@
   .fila { align-items:start; }
 
   /* Resumen del plan elegido, fijo al costado mientras se llena el formulario. */
-  .resumen { border:1.5px solid var(--negro); padding:26px 24px; position:sticky; top:96px; }
+  .resumen { background:var(--blanco); border:1.5px solid var(--pulso);
+             border-radius:var(--radio); padding:28px 26px; }
+  .resumen[hidden] { display:none; }
   .resumen .rotulo { margin-bottom:12px; }
-  .resumen .nombre { font-size:24px; font-weight:600; letter-spacing:-.5px; margin:0 0 4px; }
-  .resumen .precio { font-size:32px; font-weight:600; letter-spacing:-1.2px; margin:10px 0 0; }
-  .resumen .precio span { font-size:13.5px; font-weight:400; color:var(--gris);
-                          letter-spacing:0; }
+  .resumen .nombre { font-family:var(--display); font-size:25px; font-weight:700;
+                     letter-spacing:-.02em; margin:0 0 4px; }
+  .resumen .precio { font-family:var(--display); font-size:34px; font-weight:700;
+                     letter-spacing:-.03em; margin:10px 0 0; }
+  .resumen .precio span { font-family:var(--cuerpo); font-size:15px; font-weight:400;
+                          color:var(--gris-texto); letter-spacing:0; }
   .resumen .dato { display:flex; justify-content:space-between; gap:12px; font-size:13.5px;
                    padding:11px 0; border-bottom:1px solid var(--linea); }
   .resumen .dato:first-of-type { border-top:1px solid var(--linea); margin-top:18px; }
-  .resumen .dato .clave { color:var(--gris); }
-  .resumen .dato .valor { font-weight:600; text-align:right; }
-  .resumen .cambiar { display:inline-block; font-size:13px; color:var(--gris);
-                      margin-top:16px; }
+  .resumen .dato .clave { color:var(--gris-texto); }
+  .resumen .dato .valor { font-family:var(--display); font-weight:600; text-align:right; }
+  .resumen .cambiar { display:inline-block; font-size:14px; color:var(--pulso-texto);
+                      margin-top:18px; }
   .resumen .cobro { margin-top:20px; padding-top:18px; border-top:1px solid var(--linea);
-                    font-size:13.5px; color:var(--gris); line-height:1.6; }
+                    font-size:14.5px; color:var(--gris-texto); line-height:1.55; }
 
   @media (max-width:900px) {
-    .columnas { grid-template-columns:1fr; gap:36px; }
-    .resumen { position:static; order:-1; }
-    .cabeza h1 { font-size:32px; }
+    .columnas, .columnas.sola { grid-template-columns:1fr; max-width:none; }
+    .columnas { gap:36px; }
+    .lado { position:static; order:-1; }
+    .cabeza h1 { font-size:33px; }
     .cabeza { padding:48px 0 32px; }
   }
 {% endblock %}
@@ -70,7 +82,7 @@
     <p>{{ aplicar.nota }}</p>
   </div>
 
-  <div class="columnas">
+  <div class="columnas{% if not plan_elegido %} sola{% endif %}">
     <form id="alta" novalidate{% if modo_servidor %} method="post" action="{{ accion_alta }}"{% endif %}>
 
       <div class="grupo sube">
@@ -156,41 +168,84 @@
       </div>
     </form>
 
-    {% if resumen_plan %}
-    <aside class="resumen sube">
-      <p class="rotulo">Su plan</p>
-      <p class="nombre">{{ resumen_plan.nombre }}</p>
-      {% if resumen_plan.precio_usd is none %}
-        <p class="precio">A convenir</p>
-      {% elif resumen_plan.precio_usd == 0 %}
-        <p class="precio">Sin costo</p>
-      {% else %}
-        <p class="precio">${{ resumen_plan.precio_usd }}<span> / mes</span></p>
-      {% endif %}
-      <div class="dato">
-        <span class="clave">Frecuencia</span>
-        <span class="valor">{{ resumen_plan.cadencia_texto or '—' }}</span>
-      </div>
-      <div class="dato">
-        <span class="clave">Competidores</span>
-        <span class="valor">
-          {%- if resumen_plan.competidores_max %}Hasta {{ resumen_plan.competidores_max }}
-          {%- else %}Sin tope{% endif -%}
-        </span>
-      </div>
-      <a class="cambiar" href="{{ inicio_url }}#planes">Comparar los planes</a>
-      <p class="cobro">
-        {% if resumen_plan.precio_usd %}El cobro todavía no está conectado. Al
-        enviar la solicitud coordinamos el pago con usted antes de activar nada.
-        {% else %}No se le pide tarjeta ni datos de pago.{% endif %}
-      </p>
-    </aside>
-    {% endif %}
+    <div class="lado">
+      {% for p in planes %}
+      <aside class="resumen sube" data-plan="{{ p.clave }}"
+             {% if p.clave != plan_elegido %}hidden{% endif %}>
+        <p class="rotulo">Su plan</p>
+        <p class="nombre">{{ p.nombre }}</p>
+        {% if p.precio_usd is none %}
+          <p class="precio">A convenir</p>
+        {% elif p.precio_usd == 0 %}
+          <p class="precio">Sin costo</p>
+        {% else %}
+          <p class="precio">${{ p.precio_usd }}<span> / mes</span></p>
+        {% endif %}
+        <div class="dato">
+          <span class="clave">Frecuencia</span>
+          <span class="valor">{{ p.cadencia_texto or '—' }}</span>
+        </div>
+        <div class="dato">
+          <span class="clave">Competidores</span>
+          <span class="valor">
+            {%- if p.competidores_max %}Hasta {{ p.competidores_max }}
+            {%- else %}Sin tope{% endif -%}
+          </span>
+        </div>
+        <a class="cambiar" href="{{ inicio_url }}#planes">Comparar los planes</a>
+        <p class="cobro">
+          {% if p.precio_usd %}El cobro todavía no está conectado. Al
+          enviar la solicitud coordinamos el pago con usted antes de activar nada.
+          {% else %}No se le pide tarjeta ni datos de pago.{% endif %}
+        </p>
+      </aside>
+      {% endfor %}
+    </div>
   </div>
 </div>
 {% endblock %}
 
 {% block guion %}
+<script>
+// El plan viaja en la URL desde el boton de cada plan de la portada. En el
+// servidor ya viene elegido de vuelta; en la version estatica no hay quien lea
+// la URL, asi que se lee aca: si no, la persona elige un plan en la portada y
+// llega al formulario con otro puesto, sin enterarse.
+(function () {
+  var columnas = document.querySelector('.columnas');
+  var seleccion = document.getElementById('plan');
+  var resumenes = document.querySelectorAll('.resumen[data-plan]');
+  if (!columnas || !seleccion) { return; }
+
+  function mostrar(clave) {
+    var visible = false;
+    for (var i = 0; i < resumenes.length; i++) {
+      var coincide = resumenes[i].getAttribute('data-plan') === clave;
+      resumenes[i].hidden = !coincide;
+      if (coincide) { visible = true; }
+    }
+    columnas.classList.toggle('sola', !visible);
+  }
+
+  var pedido = null;
+  var consulta = window.location.search;
+  if (consulta) {
+    var partes = consulta.substring(1).split('&');
+    for (var j = 0; j < partes.length; j++) {
+      var par = partes[j].split('=');
+      if (par[0] === 'plan') { pedido = decodeURIComponent(par[1] || ''); }
+    }
+  }
+  if (pedido) {
+    for (var k = 0; k < seleccion.options.length; k++) {
+      if (seleccion.options[k].value === pedido) { seleccion.selectedIndex = k; break; }
+    }
+  }
+
+  mostrar(seleccion.value);
+  seleccion.addEventListener('change', function () { mostrar(seleccion.value); });
+})();
+</script>
 {% if not modo_servidor %}
 <script>
 // Sin servidor: el formulario arma un mensaje ordenado y lo manda por

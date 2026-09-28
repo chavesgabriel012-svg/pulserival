@@ -5,35 +5,63 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block titulo %}{{ marca }}{% endblock %}</title>
 <meta name="description" content="{{ subtitulo }}">
+<meta name="theme-color" content="#141312">
 <meta property="og:title" content="{{ self.titulo() }}">
 <meta property="og:description" content="{{ subtitulo }}">
 <meta property="og:type" content="website">
+<meta property="og:image" content="{{ marca_url }}/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="{{ marca_url }}/favicon.ico" sizes="any">
+<link rel="icon" href="{{ marca_url }}/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{{ marca_url }}/apple-touch-icon.png">
+<link rel="manifest" href="{{ marca_url }}/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 {# La clase `js` se pone ANTES de que el navegador pinte nada. Sin esto, la
    animación de aparición tendría que esconder el contenido desde el CSS, y
    quien tenga JavaScript apagado se quedaría con una página en blanco. #}
 <script>document.documentElement.classList.add('js');</script>
 <style>
-  /* Blanco y negro, sin excepciones. Lo que da jerarquía acá es el tamaño
-     del texto, el aire y el movimiento: no hay color al que recurrir. */
-  :root {
-    --negro:#000; --tinta:#111; --gris:#5a5a5a; --tenue:#8d8d8d;
-    --linea:#e6e6e6; --linea-fuerte:#000; --suave:#f7f7f7;
+  /* Tokens de la identidad de marca (assets/tokens.json de la entrega).
+     Regla de color: papel y tinta hacen el 95 % del trabajo. El naranja Pulso
+     aparece poco —el ojo del logo, el botón principal, las marcas de cambio—
+     y nunca en degradado. */
+  :root{
+    --tinta:#141312;        /* texto principal, fondos oscuros */
+    --papel:#F4F2EE;        /* fondo principal */
+    --blanco:#FFFFFF;       /* tarjetas sobre papel */
+    --pulso:#DD4115;        /* acento sobre claro */
+    --pulso-oscuro:#EF5B36; /* acento sobre fondos oscuros */
+    --pulso-texto:#B22800;  /* acento en texto pequeño sobre claro (contraste AA) */
+    --piedra:#8A857D;       /* bordes fuertes; nunca texto pequeño */
+    --gris-texto:#6B665E;   /* texto secundario sobre papel */
+    --linea:#D9D5CE;        /* divisores sobre papel */
+    --desk:#1E1D1B;         /* fondo oscuro de secciones */
+    --linea-osc:#3A3834;
+    --texto-osc-2:#B5B0A6;
+    --radio:6px;
+
+    --display:'Schibsted Grotesk',system-ui,-apple-system,sans-serif;
+    --cuerpo:'Source Serif 4',Georgia,serif;
+    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,monospace;
     --curva:cubic-bezier(.22,.7,.3,1);
   }
   * { box-sizing:border-box; }
   html { scroll-behavior:smooth; }
   body {
-    margin:0; background:#fff; color:var(--tinta);
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
-    line-height:1.62; -webkit-font-smoothing:antialiased;
-    text-rendering:optimizeLegibility;
+    margin:0; background:var(--papel); color:var(--tinta);
+    font-family:var(--cuerpo); font-size:17px; line-height:1.5;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
   }
   .env { max-width:1080px; margin:0 auto; padding:0 28px; }
-  a { color:var(--negro); }
+  a { color:var(--tinta); }
+  h1, h2, h3, .display { font-family:var(--display); font-weight:700;
+                         letter-spacing:-.02em; line-height:1.1; }
+  .mono { font-family:var(--mono); font-size:12px; letter-spacing:.1em;
+          text-transform:uppercase; }
 
   /* -- aparecer al bajar --------------------------------------- */
-  /* Solo con JavaScript encendido, y solo si la persona no pidió menos
-     movimiento. El observador les agrega `visto` cuando entran en pantalla. */
   .js .sube { opacity:0; transform:translateY(22px); }
   .js .sube.visto {
     opacity:1; transform:none;
@@ -46,98 +74,116 @@
 
   /* -- encabezado ---------------------------------------------- */
   header {
-    background:var(--negro); position:sticky; top:0; z-index:20;
+    background:var(--tinta); position:sticky; top:0; z-index:20;
     transition:box-shadow .3s var(--curva);
   }
-  header.pegado { box-shadow:0 1px 0 rgba(255,255,255,.18); }
-  header .env { display:flex; align-items:center; gap:32px; height:64px; }
+  header.pegado { box-shadow:0 1px 0 var(--linea-osc); }
+  header .env { display:flex; align-items:center; gap:32px; height:66px; }
   .marca-enlace {
     display:flex; align-items:center; text-decoration:none;
     transition:opacity .2s var(--curva);
   }
-  .marca-enlace:hover { opacity:.72; }
-  .marca-enlace img { display:block; height:22px; width:auto; }
-  .marca-enlace span { color:#fff; font-weight:700; letter-spacing:.4px; font-size:18px; }
+  .marca-enlace:hover { opacity:.75; }
+  .marca-enlace img { display:block; height:26px; width:auto; }
+  .marca-enlace span { color:var(--papel); font-family:var(--display);
+                       font-weight:800; letter-spacing:.4px; font-size:19px; }
   header nav { margin-left:auto; display:flex; gap:28px; align-items:center; }
   header nav a {
-    color:#fff; text-decoration:none; font-size:13.5px; letter-spacing:.2px;
-    opacity:.72; transition:opacity .2s var(--curva); position:relative;
-    padding:4px 0;
+    color:var(--papel); text-decoration:none; font-family:var(--display);
+    font-size:14px; font-weight:500; opacity:.78;
+    transition:opacity .2s var(--curva); position:relative; padding:4px 0;
   }
   header nav a:after {
-    content:""; position:absolute; left:0; bottom:0; height:1px; width:100%;
-    background:#fff; transform:scaleX(0); transform-origin:left;
+    content:""; position:absolute; left:0; bottom:0; height:1.5px; width:100%;
+    background:var(--pulso-oscuro); transform:scaleX(0); transform-origin:left;
     transition:transform .3s var(--curva);
   }
   header nav a:hover { opacity:1; }
   header nav a:hover:after { transform:scaleX(1); }
   header nav a.cta {
-    opacity:1; border:1px solid #fff; padding:8px 18px; font-weight:600;
-    transition:background .25s var(--curva), color .25s var(--curva);
+    opacity:1; background:var(--pulso); color:var(--blanco); padding:9px 20px;
+    font-weight:700; border-radius:var(--radio);
+    transition:background .25s var(--curva);
   }
   header nav a.cta:after { display:none; }
-  header nav a.cta:hover { background:#fff; color:var(--negro); }
-  @media (max-width:760px) { header nav a.oculto { display:none; } }
+  header nav a.cta:hover { background:var(--pulso-oscuro); }
+  @media (max-width:760px) {
+    header nav a.oculto { display:none; }
+    .marca-enlace img { height:22px; }
+  }
 
   /* -- botones ------------------------------------------------- */
   .btn {
-    display:inline-block; background:var(--negro); color:#fff; text-decoration:none;
-    padding:15px 30px; font-weight:600; font-size:15px; border:1.5px solid var(--negro);
-    cursor:pointer; font-family:inherit; position:relative; overflow:hidden;
-    transition:transform .25s var(--curva), box-shadow .25s var(--curva);
+    display:inline-block; background:var(--pulso); color:var(--blanco);
+    text-decoration:none; padding:15px 30px; font-family:var(--display);
+    font-weight:700; font-size:16px; border:1.5px solid var(--pulso);
+    border-radius:var(--radio); cursor:pointer; letter-spacing:-.01em;
+    transition:background .25s var(--curva), border-color .25s var(--curva),
+               transform .25s var(--curva), box-shadow .25s var(--curva);
   }
-  .btn:before {
-    content:""; position:absolute; inset:0; background:#fff;
-    transform:scaleY(0); transform-origin:bottom;
-    transition:transform .3s var(--curva);
+  .btn:hover {
+    background:var(--pulso-oscuro); border-color:var(--pulso-oscuro);
+    transform:translateY(-2px); box-shadow:0 8px 20px rgba(221,65,21,.22);
   }
-  .btn span { position:relative; z-index:1; transition:color .25s var(--curva); }
-  .btn:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,.14); }
-  .btn:hover:before { transform:scaleY(1); }
-  .btn:hover span { color:var(--negro); }
-  .btn.alt { background:#fff; color:var(--negro); }
-  .btn.alt:before { background:var(--negro); }
-  .btn.alt:hover span { color:#fff; }
+  .btn.alt {
+    background:transparent; color:var(--tinta); border-color:var(--piedra);
+  }
+  .btn.alt:hover {
+    background:var(--tinta); border-color:var(--tinta); color:var(--papel);
+    box-shadow:0 8px 20px rgba(20,19,18,.16);
+  }
   @media (prefers-reduced-motion: reduce) {
-    .btn, .btn:before, .btn span { transition:none; }
+    .btn { transition:background .2s; }
     .btn:hover { transform:none; box-shadow:none; }
   }
 
   /* -- secciones ----------------------------------------------- */
-  section { padding:84px 0; }
+  section { padding:88px 0; }
   section + section { border-top:1px solid var(--linea); }
   .rotulo {
-    font-size:12px; text-transform:uppercase; letter-spacing:2.2px;
-    color:var(--tenue); margin:0 0 16px; font-weight:600;
+    font-family:var(--mono); font-size:12px; text-transform:uppercase;
+    letter-spacing:.1em; color:var(--pulso-texto); margin:0 0 16px; font-weight:500;
   }
-  h2 { font-size:32px; line-height:1.18; margin:0 0 18px; letter-spacing:-.7px;
-       font-weight:600; max-width:24ch; }
-  .entrada { font-size:17px; color:#3d3d3d; max-width:64ch; margin:0 0 48px; }
+  h2 { font-size:36px; margin:0 0 18px; max-width:24ch; }
+  .entrada { font-size:18px; color:var(--gris-texto); max-width:64ch; margin:0 0 48px;
+             line-height:1.5; }
 
   /* -- formularios --------------------------------------------- */
-  .campo label { display:block; font-size:14px; font-weight:600; margin-bottom:7px; }
-  .campo .ayuda { font-size:13.5px; color:var(--gris); font-weight:400; margin-bottom:9px; }
+  .campo label { display:block; font-family:var(--display); font-size:14px;
+                 font-weight:600; margin-bottom:7px; }
+  .campo .ayuda { font-size:15px; color:var(--gris-texto); margin-bottom:9px; }
   input, textarea, select {
-    width:100%; padding:13px 14px; border:1px solid #cfcfcf; font-size:15px;
-    font-family:inherit; background:#fff; color:var(--tinta);
+    width:100%; padding:13px 14px; border:1px solid var(--linea); font-size:16px;
+    font-family:var(--cuerpo); background:var(--blanco); color:var(--tinta);
+    border-radius:var(--radio);
     transition:border-color .2s var(--curva), box-shadow .2s var(--curva);
   }
-  input::placeholder, textarea::placeholder { color:#adadad; }
+  input::placeholder, textarea::placeholder { color:var(--piedra); }
   input:focus, textarea:focus, select:focus {
-    outline:none; border-color:var(--negro); box-shadow:inset 0 0 0 1px var(--negro);
+    outline:none; border-color:var(--pulso); box-shadow:0 0 0 3px rgba(221,65,21,.16);
   }
-  textarea { min-height:112px; resize:vertical; line-height:1.6; }
-  .fila { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-  .nota { background:var(--suave); padding:17px 19px; font-size:14px; color:#3d3d3d;
-          border-left:2px solid var(--negro); }
+  textarea { min-height:112px; resize:vertical; line-height:1.55; }
+  /* Los dos campos de una fila alinean sus casillas abajo: si una etiqueta
+     ocupa dos lineas y la otra una, sin esto las casillas quedan a distinta
+     altura y la fila se lee torcida. */
+  .fila { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:stretch; }
+  .fila > .campo { display:flex; flex-direction:column; }
+  .fila > .campo > input, .fila > .campo > select { margin-top:auto; }
+  .nota { background:var(--blanco); padding:17px 19px; font-size:15px;
+          color:var(--gris-texto); border-left:3px solid var(--pulso);
+          border-radius:0 var(--radio) var(--radio) 0; line-height:1.55; }
 
-  footer { background:var(--negro); color:#8d8d8d; padding:52px 0 60px; font-size:14px; }
-  footer a { color:#fff; }
-  footer .pie-marca { color:#fff; font-weight:700; letter-spacing:.4px; margin-bottom:16px;
-                      font-size:16px; }
-  footer p { margin:0 0 11px; max-width:74ch; line-height:1.7; }
+  /* La linea de arriba separa el pie del cierre: los dos son oscuros y sin
+     ella se leen como un solo bloque que no termina nunca. */
+  footer { background:var(--tinta); color:var(--texto-osc-2); padding:56px 0 64px;
+           font-size:15px; border-top:1px solid var(--linea-osc); }
+  footer a { color:var(--papel); }
+  footer .pie-marca img { height:24px; width:auto; display:block; margin-bottom:20px; }
+  footer p { margin:0 0 11px; max-width:74ch; line-height:1.6; }
+  footer .legal { font-family:var(--mono); font-size:11.5px; letter-spacing:.06em;
+                  color:var(--piedra); margin-top:24px; text-transform:none; }
 
-  @media (max-width:900px) { section { padding:60px 0; } h2 { font-size:26px; } }
+  @media (max-width:900px) { section { padding:62px 0; } h2 { font-size:29px; } }
   @media (max-width:640px) {
     .fila { grid-template-columns:1fr; }
     .env { padding:0 20px; }
@@ -150,8 +196,7 @@
 <header id="cabecera">
   <div class="env">
     <a class="marca-enlace" href="{{ inicio_url|default('/') }}" aria-label="{{ marca }}, ir al inicio">
-      {% if logo_data_uri %}<img src="{{ logo_data_uri }}" alt="{{ marca }}">
-      {% else %}<span>{{ marca }}</span>{% endif %}
+      <img src="{{ marca_url }}/logo-negativo.svg" alt="{{ marca }}">
     </a>
     <nav>{% block navegacion %}{% endblock %}</nav>
   </div>
@@ -161,7 +206,9 @@
 
 <footer>
   <div class="env">
-    <div class="pie-marca">{{ marca }}{% if dominio %} &middot; {{ dominio }}{% endif %}</div>
+    <div class="pie-marca">
+      <img src="{{ marca_url }}/logo-negativo.svg" alt="{{ marca }}">
+    </div>
     <p>
       Fuentes: Biblioteca de Anuncios de Meta y Centro de Transparencia de
       Anuncios de Google, ambas públicas y abiertas a cualquiera.
@@ -170,6 +217,7 @@
       Las plataformas no publican inversión, alcance ni clics de los anuncios
       comerciales, de modo que los reportes no los incluyen ni los estiman.
     </p>
+    <p class="legal">{{ marca }}{% if dominio %} &middot; {{ dominio }}{% endif %}</p>
   </div>
 </footer>
 
@@ -206,7 +254,6 @@
     }
   });
 
-  // Sombra en el encabezado apenas se despega del tope.
   var cab = document.getElementById('cabecera');
   var marcar = function () { cab.classList.toggle('pegado', window.scrollY > 8); };
   marcar();

@@ -4,41 +4,68 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block titulo %}{{ marca }}{% endblock %}</title>
+<meta name="theme-color" content="#141312">
+<link rel="icon" href="{{ marca_url }}/favicon.ico" sizes="any">
+<link rel="icon" href="{{ marca_url }}/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root { --negro:#000; --gris:#6b6b6b; --linea:#d4d4d4; --suave:#f4f4f4; }
+  /* Mismos tokens de marca que las páginas públicas. */
+  :root {
+    --tinta:#141312; --papel:#F4F2EE; --blanco:#FFFFFF;
+    --pulso:#DD4115; --pulso-oscuro:#EF5B36; --pulso-texto:#B22800;
+    --piedra:#8A857D; --gris-texto:#6B665E; --linea:#D9D5CE;
+    --texto-osc-2:#B5B0A6; --radio:6px;
+    --display:'Schibsted Grotesk',system-ui,-apple-system,sans-serif;
+    --cuerpo:'Source Serif 4',Georgia,serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
   * { box-sizing:border-box; }
-  body { margin:0; background:#fff; color:#1b1b1b; line-height:1.6;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; }
+  body { margin:0; background:var(--papel); color:var(--tinta); line-height:1.55;
+    font-family:var(--cuerpo); font-size:17px; -webkit-font-smoothing:antialiased; }
   .env { max-width:760px; margin:0 auto; padding:0 24px; }
-  a { color:var(--negro); }
-  header { background:var(--negro); padding:18px 0; }
+  a { color:var(--tinta); }
+  header { background:var(--tinta); padding:20px 0; }
   header img { display:block; height:24px; width:auto; }
-  h1 { font-size:28px; line-height:1.25; margin:0 0 16px; letter-spacing:-.3px; }
-  h2 { font-size:13px; text-transform:uppercase; letter-spacing:1.4px; margin:36px 0 18px;
-       padding-bottom:8px; border-bottom:2px solid var(--negro); display:inline-block; }
+  h1 { font-family:var(--display); font-size:30px; line-height:1.15; margin:0 0 16px;
+       letter-spacing:-.02em; font-weight:700; }
+  h2 { font-family:var(--mono); font-size:12px; text-transform:uppercase;
+       letter-spacing:.1em; margin:36px 0 18px; color:var(--pulso-texto);
+       font-weight:500; }
   .cuerpo { padding:56px 0 72px; }
-  .btn { display:inline-block; background:var(--negro); color:#fff; text-decoration:none;
-    padding:14px 26px; font-weight:600; font-size:15px; border:2px solid var(--negro);
-    cursor:pointer; font-family:inherit; }
-  .btn:hover { background:#fff; color:var(--negro); }
-  .btn.alt { background:#fff; color:var(--negro); }
-  .nota { background:var(--suave); padding:16px 18px; font-size:14px; color:#3a3a3a;
-          border-left:3px solid var(--negro); margin:24px 0; }
-  .aviso { border:2px solid var(--negro); padding:16px 18px; font-size:14px; margin:0 0 28px; }
-  .aviso strong { text-transform:uppercase; letter-spacing:1px; font-size:12px; }
-  table { width:100%; border-collapse:collapse; font-size:15px; }
-  td, th { text-align:left; padding:10px 0; border-bottom:1px solid #ededed; vertical-align:top; }
-  th { width:40%; color:var(--gris); font-weight:600; font-size:13px; }
-  .pill { font-size:12px; color:var(--gris); }
-  footer { background:var(--negro); color:#b0b0b0; padding:24px 0; font-size:13px; margin-top:48px; }
+  .btn { display:inline-block; background:var(--pulso); color:var(--blanco);
+    text-decoration:none; padding:14px 26px; font-family:var(--display);
+    font-weight:700; font-size:16px; border:1.5px solid var(--pulso);
+    border-radius:var(--radio); cursor:pointer; transition:background .2s; }
+  .btn:hover { background:var(--pulso-oscuro); border-color:var(--pulso-oscuro); }
+  .btn.alt { background:transparent; color:var(--tinta); border-color:var(--piedra); }
+  .btn.alt:hover { background:var(--tinta); border-color:var(--tinta); color:var(--papel); }
+  .nota { background:var(--blanco); padding:16px 18px; font-size:15px;
+          color:var(--gris-texto); border-left:3px solid var(--pulso);
+          border-radius:0 var(--radio) var(--radio) 0; margin:24px 0; }
+  .aviso { border:1.5px solid var(--pulso); background:var(--blanco); padding:16px 18px;
+           font-size:15px; margin:0 0 28px; border-radius:var(--radio); }
+  .aviso strong { font-family:var(--mono); text-transform:uppercase;
+                  letter-spacing:.1em; font-size:11.5px; color:var(--pulso-texto);
+                  font-weight:500; }
+  table { width:100%; border-collapse:collapse; font-size:16px; }
+  td, th { text-align:left; padding:11px 0; border-bottom:1px solid var(--linea);
+           vertical-align:top; }
+  th { width:40%; color:var(--gris-texto); font-family:var(--display);
+       font-weight:600; font-size:14px; }
+  .pill { font-family:var(--mono); font-size:11.5px; letter-spacing:.08em;
+          color:var(--piedra); }
+  footer { background:var(--tinta); color:var(--texto-osc-2); padding:26px 0;
+           font-family:var(--mono); font-size:11.5px; letter-spacing:.06em;
+           margin-top:48px; }
 </style>
 </head>
 <body>
 <header><div class="env">
-  {% if logo_data_uri %}<img src="{{ logo_data_uri }}" alt="{{ marca }}">
-  {% else %}<span style="color:#fff;font-weight:600;letter-spacing:1.2px;">{{ marca }}</span>{% endif %}
+  <img src="{{ marca_url }}/logo-negativo.svg" alt="{{ marca }}">
 </div></header>
 <div class="env cuerpo">{% block contenido %}{% endblock %}</div>
-<footer><div class="env">{{ marca }}{% if dominio %} · {{ dominio }}{% endif %}</div></footer>
+<footer><div class="env">{{ marca }}{% if dominio %} &middot; {{ dominio }}{% endif %}</div></footer>
 </body>
 </html>
