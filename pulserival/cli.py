@@ -455,11 +455,16 @@ def cmd_altas(args) -> int:
             "email": entrada.get("contacto_email"),
             "competidores": len(entrada.get("competidores") or []),
             "estado": entrada.get("estado_suscripcion") or "—",
+            # De donde salio. Es la unica razon por la que el formulario
+            # pregunta, asi que tiene que verse en la bandeja y no solo
+            # quedar guardado en el YAML.
+            "origen": entrada.get("origen") or "—",
             # Una clave que ya está en clientes.yaml significa que el alta ya
             # se procesó y el archivo quedó de más: se puede borrar.
             "nota": "ya está en clientes.yaml" if entrada["clave"] in ya_cargados else "",
         })
-    tabla(filas, ["clave", "empresa", "plan", "email", "competidores", "estado", "nota"])
+    tabla(filas, ["clave", "empresa", "plan", "email", "competidores", "estado",
+                  "origen", "nota"])
     for a in avisos:
         aviso(a)
     print("\n  Para activar una: revisar los competidores con `prueba-scraper`, pasar la")

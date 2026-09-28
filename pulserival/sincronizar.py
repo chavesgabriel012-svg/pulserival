@@ -35,7 +35,7 @@ CAMPOS_CLIENTE = (
     "nombre_empresa", "contacto_nombre", "contacto_email", "contacto_whatsapp",
     "periodicidad", "plan", "estado_suscripcion", "cadencia_dias",
     "precio_mensual_usd", "pago_proveedor", "pago_referencia",
-    "dia_envio", "industria", "notas", "activo",
+    "dia_envio", "industria", "notas", "origen", "activo",
 )
 CAMPOS_COMPETIDOR = (
     "nombre", "meta_pagina_url", "meta_pagina_id", "meta_consulta",
@@ -170,6 +170,10 @@ def aplicar(con: sqlite3.Connection, ruta: Path | None = None) -> dict[str, Any]
             "dia_envio": entrada.get("dia_envio", "martes"),
             "industria": entrada.get("industria"),
             "notas": (entrada.get("notas") or "").strip() or None,
+            # Viene del alta: si no se copia aca, pasar la entrada de
+            # config/altas/ a config/clientes.yaml pierde la respuesta de la
+            # encuesta sin que nadie se entere.
+            "origen": (entrada.get("origen") or "").strip() or None,
             "activo": 1 if entrada.get("activo", True) else 0,
         }
         existente = db.fila(con, "SELECT * FROM clientes WHERE clave = ?", (clave,))

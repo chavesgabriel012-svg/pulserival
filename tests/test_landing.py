@@ -29,6 +29,15 @@ LANDING_BASE = {
             "ayuda": "Sirve su página de Facebook o su dominio.",
         },
         "cierre": "No se cobra nada hasta que usted lo confirme.",
+        "pasos": [{"nombre": "Su empresa", "corto": "Empresa"},
+                  {"nombre": "Contexto", "corto": "Contexto"},
+                  {"nombre": "Sus competidores", "corto": "Competencia"},
+                  {"nombre": "Cómo nos conoció", "corto": "Cómo nos conoció"}],
+        "origen": {"titulo": "¿Cómo se enteró de PulseRival?", "opcional": "Opcional",
+                   "ayuda": "No cambia nada de su reporte.",
+                   "etiqueta": "Elija la que más se acerque",
+                   "opciones": ["Búsqueda en Google", "Instagram o Facebook"],
+                   "otro": "Otro", "otro_ayuda": "¿Dónde fue?"},
     },
 }
 PLANES_BASE = [
@@ -279,6 +288,61 @@ class TestAplicar(CasoPaginas):
                              "explicacion": "Lo hacemos bien, pero no le prometemos acertar."},
         }})
         self.assertIn("no le prometemos acertar", h)
+
+    def test_el_formulario_va_por_pasos(self):
+        h = self.aplicar()
+        # Cuatro bloques, cada uno con su numero de paso.
+        for n in (1, 2, 3, 4):
+            self.assertIn(f'data-paso="{n}"', h)
+        self.assertIn("Continuar", h)
+        self.assertIn("Atrás", h)
+
+    def bloque_del_paso(self, html: str, n: int) -> str:
+        """El marcado de un paso. Se corta dentro del <form> a proposito.
+
+        Buscar en el HTML entero no sirve: los guiones del final nombran
+        `[required]` y `data-paso`, y el texto de un guion no es un campo
+        del formulario.
+        """
+        forma = html.split("<form", 1)[1].split("</form>", 1)[0]
+        trozo = forma.split(f'data-paso="{n}"', 1)[1]
+        siguiente = trozo.find('data-paso="')
+        return trozo if siguiente < 0 else trozo[:siguiente]
+
+    def test_solo_el_primer_paso_es_obligatorio(self):
+        # Los otros tres mejoran el reporte pero no impiden pedirlo: si
+        # alguno bloqueara, la persona se va antes de terminar.
+        h = self.aplicar()
+        self.assertIn("required", self.bloque_del_paso(h, 1))
+        for n in (2, 3, 4):
+            with self.subTest(paso=n):
+                self.assertNotIn("required", self.bloque_del_paso(h, n))
+
+    def test_sin_javascript_los_cuatro_pasos_quedan_a_la_vista(self):
+        # La clase `por-pasos` la pone el guion. Si el CSS escondiera los
+        # bloques sin esa condicion, quien tenga JavaScript apagado veria un
+        # formulario de un solo campo y no podria mandar nada.
+        h = self.aplicar()
+        self.assertIn(".por-pasos .paso { display:none; }", h)
+        self.assertNotIn("\n  .paso { display:none; }", h)
+        self.assertIn(".barra { display:none; }", h)
+
+    def test_el_ultimo_paso_pregunta_como_nos_conocieron(self):
+        h = self.aplicar(landing={"aplicar": dict(
+            LANDING_BASE["aplicar"],
+            origen={"titulo": "¿Cómo se enteró?", "opcional": "Opcional",
+                    "ayuda": "No cambia nada de su reporte.",
+                    "etiqueta": "Elija una",
+                    "opciones": ["Búsqueda en Google", "Alguien me lo recomendó"],
+                    "otro": "Otro", "otro_ayuda": "¿Dónde fue?"})})
+        self.assertIn("¿Cómo se enteró?", h)
+        self.assertIn("Búsqueda en Google", h)
+        self.assertIn('name="origen"', h)
+        # "Otro" abre un campo de texto: la etiqueta sola no dice donde
+        # poner el tiempo, que es lo unico para lo que existe la pregunta.
+        self.assertIn('name="origen_otro"', h)
+        self.assertIn('value="otro"', h)
+
 
     def test_pide_facebook_y_dominio_de_cada_competidor(self):
         h = self.aplicar()

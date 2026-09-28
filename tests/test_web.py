@@ -114,6 +114,30 @@ class TestAlta(CasoWeb):
         fila = db.fila(self.con, "SELECT * FROM clientes ORDER BY id DESC LIMIT 1")
         self.assertEqual(db.competidores_de(self.con, int(fila["id"])), [])
 
+    def test_la_encuesta_de_origen_llega_hasta_la_base(self):
+        # Existe para decidir donde poner el tiempo. Si el formulario la
+        # pregunta y la respuesta se pierde en el camino, la pregunta es
+        # solo un paso mas que llenar.
+        r = self.alta(origen="Alguien me lo recomendó")
+        self.assertEqual(r.status_code, 302)
+        fila = db.fila(self.con, "SELECT * FROM clientes ORDER BY id DESC LIMIT 1")
+        self.assertEqual(fila["origen"], "Alguien me lo recomendó")
+
+    def test_con_otro_vale_lo_que_escribio_y_no_la_etiqueta(self):
+        # "Otro" a secas no dice donde poner el tiempo.
+        r = self.alta(origen="otro", origen_otro="Un grupo de WhatsApp del gremio")
+        self.assertEqual(r.status_code, 302)
+        fila = db.fila(self.con, "SELECT * FROM clientes ORDER BY id DESC LIMIT 1")
+        self.assertEqual(fila["origen"], "Un grupo de WhatsApp del gremio")
+
+    def test_sin_responder_la_encuesta_el_alta_entra_igual(self):
+        # Es opcional: bloquear por una pregunta de marketing seria cambiar
+        # un cliente por un dato.
+        r = self.alta(origen="", origen_otro="")
+        self.assertEqual(r.status_code, 302)
+        fila = db.fila(self.con, "SELECT * FROM clientes ORDER BY id DESC LIMIT 1")
+        self.assertIsNone(fila["origen"])
+
     def test_un_cliente_sin_competidores_NO_se_puede_activar(self):
         # Activarlo generaría un reporte vacío en la corrida siguiente, con su
         # costo de IA, y el cliente recibiría un correo que no dice nada.

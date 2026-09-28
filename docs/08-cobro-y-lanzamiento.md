@@ -84,7 +84,29 @@ todavía.** Antes del primer cliente que pague:
 - [ ] Confirmar qué pasa cuando una tarjeta es rechazada: si la pasarela
       reintenta, cuántas veces, y cómo se entera usted.
 
-### 4. Lo legal y lo fiscal
+### 4. El paso 5 del formulario: el checkout
+
+El formulario de `/aplicar` va por pasos: 1 empresa, 2 contexto, 3
+competencia, 4 cómo nos conoció. **El cobro es el paso 5 y todavía no
+existe.** Hoy el formulario termina en "Enviar solicitud", la solicitud
+queda sin activar y el pago se coordina a mano.
+
+Cuando haya pasarela, agregarlo es:
+
+1. Un bloque más en `pulserival/landing/plantillas/aplicar.html.j2`, con la
+   forma `<div class="grupo paso" data-paso="5">`. El guion de los pasos no
+   tiene la lista escrita: la lee del DOM, así que toma el paso nuevo sin
+   tocar JavaScript.
+2. Una entrada más en `aplicar.pasos` de `config/landing.yaml`, para que la
+   barra de arriba lo muestre.
+3. Decidir qué pasa con el plan de prueba, que no cobra: lo más simple es
+   saltarse el paso 5 cuando `precio_usd` es 0.
+
+**Nada de esto está probado con una transacción real.** La lista de la
+sección 3 sigue siendo la que bloquea el lanzamiento: el paso 5 es la
+interfaz del cobro, no el cobro.
+
+### 5. Lo legal y lo fiscal
 
 Fuera del alcance de este código, pero bloquea el lanzamiento igual:
 facturación electrónica, condiciones del servicio, y qué pasa con los datos

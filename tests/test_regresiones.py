@@ -14,6 +14,7 @@ from pulserival.reporte import generar as generar_mod
 from pulserival.reporte import render
 from pulserival.revision import flujo
 from tests.base import CLAVES_BLOQUEADAS, CasoBase
+from tests.test_panel import CasoPanel as CasoPanelBase
 
 
 def anuncio(**kw) -> AnuncioCrudo:
@@ -756,3 +757,44 @@ class TestLandingEstatica(unittest.TestCase):
             self.assertTrue((Path(tmp) / "index.html").is_file())
             self.assertFalse((Path(tmp) / "index.html").is_dir())
             self.assertIn(Path(tmp) / "aplicar.html", escritas)
+
+
+class TestPanelEnPantallaAngosta(CasoPanelBase):
+    def test_el_contenido_no_queda_pegado_al_borde(self):
+        # `.cuerpo` declaraba `padding:40px 0 80px`, y el elemento lleva las
+        # dos clases (`env cuerpo`). El atajo pisaba el relleno lateral de
+        # `.env`, asi que el contenido tocaba el borde de la ventana en
+        # cualquier pantalla de 1180px o menos. En el escritorio no se veia
+        # porque el `margin:0 auto` dejaba aire a los lados.
+        self.entrar()
+        html = self.web.get("/panel/").get_data(as_text=True)
+        self.assertIn("padding-top:40px; padding-bottom:80px;", html)
+        self.assertNotIn(".cuerpo { padding:40px 0 80px; }", html)
+
+
+class TestOrigenDelAlta(CasoBase):
+    def test_pasar_un_alta_a_clientes_yaml_no_pierde_de_donde_salio(self):
+        # `origen` llega en el YAML que deposita el formulario, pero
+        # `aplicar-config` solo copia los campos de CAMPOS_CLIENTE. Si el
+        # campo no esta en esa lista, mover la entrada de config/altas/ a
+        # config/clientes.yaml borra la respuesta de la encuesta sin avisar,
+        # que es justo el dato para el que existe la pregunta.
+        import tempfile
+        from pathlib import Path
+
+        import yaml
+
+        from pulserival import sincronizar
+
+        self.assertIn("origen", sincronizar.CAMPOS_CLIENTE)
+        with tempfile.TemporaryDirectory() as tmp:
+            ruta = Path(tmp) / "clientes.yaml"
+            ruta.write_text(yaml.safe_dump({"clientes": [{
+                "clave": "roble", "empresa": "Ferretería El Roble",
+                "contacto_email": "ana@roble.test", "periodicidad": "semanal",
+                "origen": "Alguien me lo recomendó", "activo": True,
+                "competidores": [{"nombre": "EPA", "google_dominio": "epa.cr"}],
+            }]}, allow_unicode=True), encoding="utf-8")
+            sincronizar.aplicar(self.con, ruta)
+        fila = db.fila(self.con, "SELECT * FROM clientes WHERE clave = 'roble'")
+        self.assertEqual(fila["origen"], "Alguien me lo recomendó")

@@ -35,6 +35,49 @@
   .grupo > .campo + .campo, .grupo > .campo + .fila,
   .grupo > .fila + .campo, .grupo > .fila + .fila { margin-top:18px; }
 
+  /* -- el formulario por pasos --------------------------------- */
+  /* Sin JavaScript no pasa nada de esto: los cuatro bloques quedan a la
+     vista, con un solo boton de enviar, que es como funcionaba antes. La
+     clase `por-pasos` la pone el guion, igual que `js` en el <html>. */
+  .barra { display:none; }
+  .por-pasos .barra {
+    display:flex; list-style:none; padding:0; margin:0 0 24px; gap:8px;
+    flex-wrap:wrap;
+  }
+  .por-pasos .barra li {
+    display:flex; align-items:center; gap:8px; font-family:var(--display);
+    font-size:13.5px; font-weight:500; color:var(--piedra);
+    padding:8px 14px 8px 8px; border-radius:100px; background:var(--blanco);
+    border:1px solid var(--linea); transition:color .25s var(--curva),
+    border-color .25s var(--curva);
+  }
+  .por-pasos .barra li .n {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:22px; height:22px; border-radius:50%; background:var(--linea);
+    color:var(--gris-texto); font-family:var(--mono); font-size:11.5px;
+    transition:background .25s var(--curva), color .25s var(--curva);
+  }
+  /* Los pasos por los que ya paso se pueden volver a tocar. Los de adelante
+     no: hay que pasar por el paso 1, que es el unico obligatorio. */
+  .por-pasos .barra li.visitado { cursor:pointer; color:var(--gris-texto); }
+  .por-pasos .barra li.visitado:hover { border-color:var(--piedra); color:var(--tinta); }
+  .por-pasos .barra li.visitado .n { background:var(--tinta); color:var(--papel); }
+  .por-pasos .barra li.actual { color:var(--tinta); border-color:var(--pulso); }
+  .por-pasos .barra li.actual .n { background:var(--pulso); color:var(--blanco); }
+
+  .por-pasos .paso { display:none; }
+  .por-pasos .paso.actual { display:block; }
+
+  .navegacion { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .navegacion .btn[hidden] { display:none; }
+  /* El mensaje de un campo que falta. Solo aparece cuando el guion lo pone:
+     en el HTML no hay errores escritos de antemano. */
+  .error-campo {
+    display:block; font-family:var(--display); font-size:13.5px; font-weight:500;
+    color:var(--pulso-texto); margin-top:6px;
+  }
+  .campo.malo input, .campo.malo select { border-color:var(--pulso); }
+
   .competidor { padding:18px 0; border-top:1px solid var(--linea); }
   .competidor:first-of-type { border-top:0; padding-top:4px; }
   .competidor .campo + .fila { margin-top:10px; }
@@ -69,10 +112,17 @@
     .cabeza { padding:48px 0 32px; }
   }
   @media (max-width:640px) {
-    /* El boton que manda la solicitud es la accion de toda la pagina: al
-       ancho completo, como los de la portada. */
-    form > .sube > .btn { display:block; width:100%; text-align:center; }
+    /* Los botones de avanzar y enviar, al ancho completo. En dos pasos con
+       "Atras" al lado, cada uno se lleva la mitad. */
+    .navegacion { display:grid; grid-template-columns:1fr; gap:10px; }
+    .navegacion .btn { display:block; width:100%; text-align:center; }
+    .navegacion.con-atras { grid-template-columns:auto 1fr; }
     .grupo { padding:22px 20px 24px; }
+    /* En pantalla angosta la barra dice solo en que paso esta: cuatro
+       pastillas con texto se llevan tres lineas y empujan el formulario
+       fuera de la pantalla. */
+    .por-pasos .barra li { padding:8px; font-size:0; gap:0; }
+    .por-pasos .barra li.actual { font-size:13.5px; gap:8px; padding:8px 14px 8px 8px; }
   }
   /* Dos enlaces de texto que median 20px de alto. Con el dedo eso es
      apuntarle a una linea, y pasa igual en una tableta que en un celular:
@@ -98,8 +148,17 @@
   <div class="columnas{% if not plan_elegido %} sola{% endif %}">
     <form id="alta" novalidate{% if modo_servidor %} method="post" action="{{ accion_alta }}"{% endif %}>
 
-      <div class="grupo sube">
-        <p class="titulo">Su empresa</p>
+      {# La barra de pasos. Sin JavaScript no se muestra: ahi el formulario es
+         uno solo, con los cuatro bloques a la vista, y una barra que dice
+         "paso 1 de 4" mentiria. #}
+      <ol class="barra" aria-hidden="true">
+        {% for p in aplicar.pasos %}
+        <li data-ir="{{ loop.index }}"><span class="n">{{ loop.index }}</span>{{ p.corto }}</li>
+        {% endfor %}
+      </ol>
+
+      <div class="grupo paso sube" data-paso="1">
+        <p class="titulo">{{ aplicar.pasos[0].nombre if aplicar.pasos else 'Su empresa' }}</p>
         <p class="bajada">Para saber a quién le estamos reportando.</p>
         <div class="campo">
           <label for="empresa">Nombre de la empresa</label>
@@ -134,8 +193,8 @@
         </div>
       </div>
 
-      <div class="grupo sube">
-        <p class="titulo">Contexto de su negocio</p>
+      <div class="grupo paso sube" data-paso="2">
+        <p class="titulo">{{ aplicar.pasos[1].nombre if aplicar.pasos else 'Contexto de su negocio' }}<span class="opcional">Opcional</span></p>
         <p class="bajada">
           Tres o cuatro líneas: qué le preocupa, si compite por precio o por
           servicio, cuántas sedes tiene, su ticket promedio. Esto es lo que más
@@ -147,7 +206,7 @@
         </div>
       </div>
 
-      <div class="grupo sube">
+      <div class="grupo paso sube" data-paso="3">
         <p class="titulo">
           {{ aplicar.competidores.titulo }}<span class="opcional">Opcional</span>
         </p>
@@ -170,11 +229,41 @@
         {% endfor %}
       </div>
 
-      <div class="sube">
-        <button class="btn" type="submit"><span>Enviar solicitud</span></button>
+      {% if aplicar.origen %}
+      <div class="grupo paso sube" data-paso="4">
+        <p class="titulo">
+          {{ aplicar.origen.titulo }}<span class="opcional">{{ aplicar.origen.opcional }}</span>
+        </p>
+        <p class="bajada">{{ aplicar.origen.ayuda }}</p>
+        <div class="campo">
+          <label for="origen">{{ aplicar.origen.etiqueta }}</label>
+          <select id="origen" name="origen">
+            <option value=""></option>
+            {% for o in aplicar.origen.opciones %}
+            <option value="{{ o }}">{{ o }}</option>
+            {% endfor %}
+            <option value="otro">{{ aplicar.origen.otro }}</option>
+          </select>
+        </div>
+        {# Se muestra solo al elegir "Otro": "Otro" a secas no dice donde
+           poner el tiempo, que es lo unico para lo que existe la pregunta. #}
+        <div class="campo" id="campo-origen-otro" hidden>
+          <label for="origen_otro">{{ aplicar.origen.otro_ayuda }}</label>
+          <input id="origen_otro" name="origen_otro">
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="navegacion sube">
+        <button class="btn alt" type="button" data-atras hidden>
+          <span>Atrás</span></button>
+        <button class="btn" type="button" data-siguiente hidden>
+          <span>Continuar</span></button>
+        <button class="btn" type="submit" data-enviar>
+          <span>Enviar solicitud</span></button>
       </div>
 
-      <div class="nota sube">
+      <div class="nota sube" data-cierre>
         {% if modo_servidor %}{{ aplicar.cierre }}
         {% else %}Al enviar se abre WhatsApp con sus datos ya ordenados. Nada se
         guarda en esta página.{% endif %}
@@ -219,6 +308,154 @@
 {% endblock %}
 
 {% block guion %}
+<script>
+// El formulario, de a un paso. Solo el primero es obligatorio: los otros tres
+// mejoran el reporte pero no impiden pedirlo, asi que se puede seguir de largo
+// dejandolos en blanco. Sin JavaScript no corre nada de esto y el formulario
+// queda como siempre: los cuatro bloques a la vista y un solo boton.
+//
+// El paso del cobro va a ser uno mas: se agrega su `<div class="grupo paso"
+// data-paso="5">` en la plantilla y el guion lo toma solo, porque la lista de
+// pasos sale del DOM y no esta escrita aca.
+(function () {
+  var forma = document.getElementById('alta');
+  if (!forma) { return; }
+  var pasos = [].slice.call(forma.querySelectorAll('.paso[data-paso]'));
+  if (pasos.length < 2) { return; }
+
+  var barra = forma.querySelector('.barra');
+  var pastillas = barra ? [].slice.call(barra.querySelectorAll('li')) : [];
+  var navegacion = forma.querySelector('.navegacion');
+  var atras = forma.querySelector('[data-atras]');
+  var siguiente = forma.querySelector('[data-siguiente]');
+  var enviar = forma.querySelector('[data-enviar]');
+  var cierre = forma.querySelector('[data-cierre]');
+  var actual = 0;
+  var masLejos = 0;
+
+  forma.classList.add('por-pasos');
+  if (barra) { barra.removeAttribute('aria-hidden'); }
+
+  function limpiarError(campo) {
+    campo.classList.remove('malo');
+    var viejo = campo.querySelector('.error-campo');
+    if (viejo) { viejo.remove(); }
+  }
+
+  function marcarError(control, mensaje) {
+    var campo = control.closest('.campo');
+    if (!campo) { return; }
+    limpiarError(campo);
+    campo.classList.add('malo');
+    var aviso = document.createElement('span');
+    aviso.className = 'error-campo';
+    aviso.textContent = mensaje;
+    campo.appendChild(aviso);
+  }
+
+  // Solo el paso 1 tiene campos obligatorios. Se valida aca y no con el
+  // navegador porque el formulario es `novalidate`: los mensajes propios
+  // estan en espanol y quedan pegados al campo que falta.
+  function validar(indice) {
+    var bloque = pasos[indice];
+    var faltan = [].slice.call(bloque.querySelectorAll('[required]'));
+    var primero = null;
+    faltan.forEach(function (control) {
+      var campo = control.closest('.campo');
+      if (campo) { limpiarError(campo); }
+      var valor = (control.value || '').trim();
+      var mensaje = '';
+      if (!valor) {
+        mensaje = 'Esto nos hace falta para poder escribirle.';
+      } else if (control.type === 'email' && valor.indexOf('@') < 1) {
+        mensaje = 'Revise el correo: le falta el arroba.';
+      }
+      if (mensaje) {
+        marcarError(control, mensaje);
+        if (!primero) { primero = control; }
+      }
+    });
+    if (primero) { primero.focus(); }
+    return !primero;
+  }
+
+  function pintar() {
+    pasos.forEach(function (bloque, i) {
+      bloque.classList.toggle('actual', i === actual);
+    });
+    pastillas.forEach(function (pastilla, i) {
+      pastilla.classList.toggle('actual', i === actual);
+      pastilla.classList.toggle('visitado', i < masLejos && i !== actual);
+    });
+    var ultimo = actual === pasos.length - 1;
+    atras.hidden = actual === 0;
+    siguiente.hidden = ultimo;
+    enviar.hidden = !ultimo;
+    // La nota de cierre habla de lo que pasa al enviar: mientras el boton
+    // diga "Continuar" esta contando algo que todavia no va a pasar.
+    if (cierre) { cierre.hidden = !ultimo; }
+    if (navegacion) { navegacion.classList.toggle('con-atras', !atras.hidden); }
+  }
+
+  function ir(indice) {
+    if (indice === actual) { return; }
+    // Hacia adelante hay que pasar la validacion de donde se esta parado.
+    if (indice > actual && !validar(actual)) { return; }
+    actual = indice;
+    if (actual > masLejos) { masLejos = actual; }
+    pintar();
+    // Al cambiar de paso el formulario arranca de nuevo arriba: si no, se
+    // queda a media altura y parece que no paso nada.
+    var y = forma.getBoundingClientRect().top + window.scrollY - 96;
+    window.scrollTo({ top: y < 0 ? 0 : y, behavior: 'smooth' });
+  }
+
+  siguiente.addEventListener('click', function () { ir(actual + 1); });
+  atras.addEventListener('click', function () { ir(actual - 1); });
+  pastillas.forEach(function (pastilla, i) {
+    pastilla.addEventListener('click', function () {
+      if (i < masLejos || i === actual) { ir(i); }
+    });
+  });
+
+  // Enter dentro de un campo avanza de paso en vez de enviar el formulario a
+  // medio llenar. En el ultimo paso envia, que es lo que se espera.
+  forma.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || e.target.tagName === 'TEXTAREA') { return; }
+    if (actual < pasos.length - 1) { e.preventDefault(); ir(actual + 1); }
+  });
+
+  // Si el envio falla la validacion del paso 1, hay que volver a mostrarlo:
+  // el error esta en un paso que no se esta viendo.
+  forma.addEventListener('submit', function (e) {
+    for (var i = 0; i < pasos.length; i++) {
+      if (!validar(i)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        actual = i;
+        if (actual > masLejos) { masLejos = actual; }
+        pintar();
+        return;
+      }
+    }
+  }, true);
+
+  masLejos = 0;
+  pintar();
+})();
+
+// "Otro" abre el campo de texto: la etiqueta sola no dice donde poner el
+// tiempo, que es lo unico para lo que existe la pregunta.
+(function () {
+  var origen = document.getElementById('origen');
+  var campo = document.getElementById('campo-origen-otro');
+  if (!origen || !campo) { return; }
+  var revisar = function () { campo.hidden = origen.value !== 'otro'; };
+  origen.addEventListener('change', revisar);
+  revisar();
+})();
+</script>
+
 <script>
 // El plan viaja en la URL desde el boton de cada plan de la portada. En el
 // servidor ya viene elegido de vuelta; en la version estatica no hay quien lea
@@ -297,6 +534,10 @@
     }
     if (comps.length) { l.push(''); l.push('Competidores:'); l = l.concat(comps); }
     else { l.push(''); l.push('Competidores: los deduce PulseRival.'); }
+
+    // La encuesta del ultimo paso. Si eligio "Otro" vale lo que escribio.
+    var origen = v('origen') === 'otro' ? v('origen_otro') : v('origen');
+    if (origen) { l.push(''); l.push('Nos conocio por: ' + origen); }
 
     var texto = l.join('\n');
     if (WHATSAPP) {

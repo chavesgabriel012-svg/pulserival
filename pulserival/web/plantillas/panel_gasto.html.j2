@@ -7,9 +7,9 @@
 
   <table style="margin-top:26px;max-width:520px;">
     <tr><th>Concepto</th><th class="num">Acumulado</th></tr>
-    <tr><td>Recolección de anuncios</td><td class="num">${{ '%.4f' % total_fuentes }}</td></tr>
-    <tr><td>Análisis con IA</td><td class="num">${{ '%.4f' % total_ia }}</td></tr>
-    <tr><td><strong>Total</strong></td><td class="num"><strong>${{ '%.4f' % total }}</strong></td></tr>
+    <tr><td data-etiqueta="Concepto">Recolección de anuncios</td><td class="num" data-etiqueta="Acumulado">${{ '%.4f' % total_fuentes }}</td></tr>
+    <tr><td data-etiqueta="Concepto">Análisis con IA</td><td class="num" data-etiqueta="Acumulado">${{ '%.4f' % total_ia }}</td></tr>
+    <tr><td data-etiqueta="Concepto"><strong>Total</strong></td><td class="num" data-etiqueta="Acumulado"><strong>${{ '%.4f' % total }}</strong></td></tr>
   </table>
   <div class="nota">
     El tope por corrida configurado es <strong>${{ '%.2f' % tope }}</strong>
@@ -22,8 +22,9 @@
   <table>
     <tr><th>Cliente</th><th class="num">Reportes</th><th class="num">Costo de IA</th></tr>
     {% for f in por_cliente %}
-    <tr><td>{{ f.cliente }}</td><td class="num">{{ f.reportes }}</td>
-        <td class="num">${{ '%.4f' % (f.costo_usd or 0) }}</td></tr>
+    <tr><td data-etiqueta="Cliente">{{ f.cliente }}</td>
+        <td class="num" data-etiqueta="Reportes">{{ f.reportes }}</td>
+        <td class="num" data-etiqueta="Costo de IA">${{ '%.4f' % (f.costo_usd or 0) }}</td></tr>
     {% endfor %}
   </table>
   <p class="sub" style="margin-top:10px;">La recolección no se puede repartir por cliente:
@@ -37,11 +38,14 @@
         <th class="num">Entrada</th><th class="num">Salida</th><th class="num">Costo</th>
         <th class="num">Fallos</th></tr>
     {% for f in ia %}
-    <tr><td>{{ f.tarea }}</td><td>{{ f.proveedor }}</td><td>{{ f.modelo }}</td>
-        <td class="num">{{ f.llamadas }}</td><td class="num">{{ f.entrada or 0 }}</td>
-        <td class="num">{{ f.salida or 0 }}</td>
-        <td class="num">${{ '%.4f' % (f.costo_usd or 0) }}</td>
-        <td class="num">{{ f.fallos or 0 }}</td></tr>
+    <tr><td data-etiqueta="Tarea">{{ f.tarea }}</td>
+        <td data-etiqueta="Proveedor">{{ f.proveedor }}</td>
+        <td data-etiqueta="Modelo">{{ f.modelo }}</td>
+        <td class="num" data-etiqueta="Llamadas">{{ f.llamadas }}</td>
+        <td class="num" data-etiqueta="Entrada">{{ f.entrada or 0 }}</td>
+        <td class="num" data-etiqueta="Salida">{{ f.salida or 0 }}</td>
+        <td class="num" data-etiqueta="Costo">${{ '%.4f' % (f.costo_usd or 0) }}</td>
+        <td class="num" data-etiqueta="Fallos">{{ f.fallos or 0 }}</td></tr>
     {% endfor %}
   </table>
   <p class="sub" style="margin-top:10px;">Los fallos importan: una llamada que falla y cae
@@ -55,9 +59,12 @@
     <tr><th>#</th><th>Cuándo</th><th>Estado</th><th>Fuente</th><th>Disparada por</th>
         <th class="num">Costo</th></tr>
     {% for f in corridas %}
-    <tr><td>{{ f.id }}</td><td>{{ f.cuando }}</td><td>{{ f.estado }}</td>
-        <td>{{ f.fuente or '—' }}</td><td>{{ f.disparada_por or '—' }}</td>
-        <td class="num">${{ '%.4f' % (f.costo_usd or 0) }}</td></tr>
+    <tr><td data-etiqueta="#">{{ f.id }}</td>
+        <td data-etiqueta="Cuándo">{{ f.cuando }}</td>
+        <td data-etiqueta="Estado">{{ f.estado }}</td>
+        <td data-etiqueta="Fuente">{{ f.fuente or '—' }}</td>
+        <td data-etiqueta="Disparada por">{{ f.disparada_por or '—' }}</td>
+        <td class="num" data-etiqueta="Costo">${{ '%.4f' % (f.costo_usd or 0) }}</td></tr>
     {% endfor %}
   </table>
   {% else %}<p class="vacio">Todavía no hubo corridas.</p>{% endif %}

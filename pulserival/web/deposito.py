@@ -179,6 +179,7 @@ def _yaml_del_alta(listo: dict[str, Any], clave: str, ahora: datetime) -> str:
         "estado_suscripcion": listo["estado"],
         "industria": listo["industria"],
         "notas": listo["notas"],
+        "origen": listo["origen"],
         # Las dos banderas que impiden que esto empiece a gastar solo. Hacen
         # falta las dos: `activo` lo saltea el pipeline entero, y
         # `estado_suscripcion` lo saltea la lógica de planes.
