@@ -80,6 +80,17 @@
            los del panel, y sin permisos para que no pueda hacer nada. #}
         <iframe src="{{ url_for('panel.correo', rid=r.id) }}" sandbox
                 title="Previsualización del correo"></iframe>
+        {# Bajar el archivo en vez de guardarlo a mano desde el navegador o
+           entrar por SSH a buscarlo al disco del servidor. #}
+        <p class="descargas">
+          Descargar:
+          <a class="btn alt chico"
+             href="{{ url_for('panel.descargar', rid=r.id, formato='html') }}">
+            El correo (.html)</a>
+          <a class="btn alt chico"
+             href="{{ url_for('panel.descargar', rid=r.id, formato='md') }}">
+            El texto (.md)</a>
+        </p>
       </details>
 
       {% if r.editado and borrador_md and borrador_md != cuerpo_md %}

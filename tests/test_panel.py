@@ -255,6 +255,57 @@ class TestRevisar(CasoPanel):
         self.assertEqual(self.web.get("/panel/reporte/9999").status_code, 404)
 
 
+class TestDescargar(CasoPanel):
+    """Bajar el reporte sin pasar por la consola.
+
+    Antes habia que guardar la vista del correo a mano desde el navegador, o
+    entrar por SSH al disco del servidor a buscar lo que dejo `cli reporte
+    exportar`. Para mandarle el reporte a alguien hacia falta una de esas dos
+    vueltas.
+    """
+
+    def test_baja_el_correo_como_archivo(self):
+        self.entrar()
+        r = self.web.get(f"/panel/reporte/{self.rid}/descargar?formato=html")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("attachment", r.headers["Content-Disposition"])
+        # El nombre dice de quien y de cuando es: se van a juntar varios en
+        # la carpeta de descargas.
+        self.assertIn("gimnasio-fuerza-tica", r.headers["Content-Disposition"])
+        self.assertIn("2026-01-07", r.headers["Content-Disposition"])
+        self.assertIn("Gimnasio Fuerza Tica", r.get_data(as_text=True))
+
+    def test_baja_el_texto_editable(self):
+        self.entrar()
+        r = self.web.get(f"/panel/reporte/{self.rid}/descargar?formato=md")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn(".md", r.headers["Content-Disposition"])
+        self.assertIn("Monge sacó tres anuncios nuevos", r.get_data(as_text=True))
+
+    def test_baja_la_version_editada_y_no_el_borrador(self):
+        # Si bajara el borrador, uno mandaria el texto de la IA creyendo que
+        # manda el suyo: el error no se ve hasta que el cliente lo lee.
+        self.entrar()
+        self.web.post(f"/panel/reporte/{self.rid}/guardar", data={
+            "csrf": self.token(f"/panel/reporte/{self.rid}"),
+            "cuerpo": "## Resumen\n\nEsta es mi versión revisada a mano.",
+            "etiqueta": "tono", "razon": "prueba"})
+        r = self.web.get(f"/panel/reporte/{self.rid}/descargar?formato=md")
+        self.assertIn("mi versión revisada a mano", r.get_data(as_text=True))
+
+    def test_un_formato_que_no_existe_no_devuelve_nada(self):
+        self.entrar()
+        self.assertEqual(
+            self.web.get(f"/panel/reporte/{self.rid}/descargar?formato=pdf").status_code, 404)
+
+    def test_sin_sesion_no_se_puede_descargar(self):
+        # Es el contenido del reporte de un cliente: no puede quedar detras de
+        # una URL adivinable.
+        r = self.web.get(f"/panel/reporte/{self.rid}/descargar?formato=html")
+        self.assertEqual(r.status_code, 302)
+        self.assertIn("/panel/entrar", r.headers["Location"])
+
+
 class TestEnviar(CasoPanel):
     def test_no_envia_un_borrador_sin_revisar(self):
         # El seguro está en enviar_reporte(), y el panel no lo puede puentear.

@@ -111,8 +111,10 @@ def enviar_reporte(
         canal = "email:smtp"
     else:
         raise EnvioError(
-            "No hay forma de enviar configurada. Poné RESEND_API_KEY o SMTP_HOST en .env, "
-            "o usá --simular para generar el archivo sin enviar."
+            # Sin vos ni usted: el mismo texto sale por el CLI (que vosea) y por
+            # el panel (que ustedea), y quedaba mal en uno de los dos.
+            "No hay forma de enviar configurada. Falta RESEND_API_KEY o SMTP_HOST "
+            "en .env; con --simular se genera el archivo sin enviar."
         )
 
     db.actualizar(con, "reportes_generados", reporte_id,
