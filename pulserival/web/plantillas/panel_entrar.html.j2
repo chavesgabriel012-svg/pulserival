@@ -9,9 +9,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <style>
+  /* Sin esto, `width:100%` mas el relleno se pasa del ancho de la ventana y
+     aparece barra horizontal en cualquier telefono. */
+  * { box-sizing:border-box; }
   body { margin:0; background:#141312; color:#F4F2EE; min-height:100vh; display:grid;
     place-items:center; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; }
-  .caja { width:340px; padding:0 24px; }
+  /* Ancho maximo, no ancho fijo: en un telefono angosto (320px) una caja
+     de 340 se salia de la pantalla. */
+  .caja { width:100%; max-width:340px; padding:0 24px; }
   img { display:block; height:26px; margin:0 0 36px; }
   h1 { font-family:'Schibsted Grotesk',system-ui,sans-serif; font-size:22px;
        letter-spacing:-.02em; margin:0 0 22px; font-weight:700; }
@@ -25,6 +30,11 @@
   button:hover { background:#EF5B36; border-color:#EF5B36; }
   .error { border:1px solid #EF5B36; color:#EF5B36; padding:12px 14px; font-size:14px;
            margin:0 0 18px; border-radius:6px; }
+  /* Con el dedo, 44px es el minimo comodo. Va al final para que gane sobre
+     los rellenos de arriba. */
+  @media (pointer: coarse) {
+    input, button { padding:15px; }
+  }
 </style>
 </head>
 <body>

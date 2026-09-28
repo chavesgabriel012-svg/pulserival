@@ -372,6 +372,25 @@ class TestIdentidad(CasoPanel):
                 html = self.web.get(ruta).get_data(as_text=True)
                 self.assertEqual(marca.fuera_de_paleta(html), [])
 
+    def test_las_tablas_se_vuelven_fichas_en_celular(self):
+        # Una tabla de seis columnas en 390px medía 529px de ancho: había que
+        # arrastrar de lado para llegar al botón de abrir, que es justo lo
+        # que uno viene a tocar. Cada celda lleva su etiqueta para poder
+        # apilarse sin perder de qué dato se trata.
+        self.entrar()
+        html = self.web.get("/panel/").get_data(as_text=True)
+        self.assertIn('data-etiqueta="Cliente"', html)
+        self.assertIn('data-etiqueta="Control de calidad"', html)
+        self.assertIn("table td[data-etiqueta]:before", html)
+
+    def test_los_blancos_de_toque_van_por_puntero(self):
+        # Por ancho dejaba afuera a una tableta, que se toca con el dedo
+        # igual que un celular. En el panel median entre 15 y 42px.
+        self.entrar()
+        for ruta in ("/panel/", f"/panel/reporte/{self.rid}"):
+            self.assertIn("@media (pointer: coarse)",
+                          self.web.get(ruta).get_data(as_text=True))
+
     def test_la_pantalla_de_entrar_tambien(self):
         from pulserival import marca
 

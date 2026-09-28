@@ -14,6 +14,7 @@ from pulserival.reporte import generar as generar_mod
 from pulserival.reporte import render
 from pulserival.revision import flujo
 from tests.base import CLAVES_BLOQUEADAS, CasoBase
+from tests.test_panel import CasoPanel as CasoPanelBase
 
 
 def anuncio(**kw) -> AnuncioCrudo:
@@ -756,3 +757,16 @@ class TestLandingEstatica(unittest.TestCase):
             self.assertTrue((Path(tmp) / "index.html").is_file())
             self.assertFalse((Path(tmp) / "index.html").is_dir())
             self.assertIn(Path(tmp) / "aplicar.html", escritas)
+
+
+class TestPanelEnPantallaAngosta(CasoPanelBase):
+    def test_el_contenido_no_queda_pegado_al_borde(self):
+        # `.cuerpo` declaraba `padding:40px 0 80px`, y el elemento lleva las
+        # dos clases (`env cuerpo`). El atajo pisaba el relleno lateral de
+        # `.env`, asi que el contenido tocaba el borde de la ventana en
+        # cualquier pantalla de 1180px o menos. En el escritorio no se veia
+        # porque el `margin:0 auto` dejaba aire a los lados.
+        self.entrar()
+        html = self.web.get("/panel/").get_data(as_text=True)
+        self.assertIn("padding-top:40px; padding-bottom:80px;", html)
+        self.assertNotIn(".cuerpo { padding:40px 0 80px; }", html)

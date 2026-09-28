@@ -14,10 +14,10 @@
     </tr>
     {% for r in pendientes %}
     <tr>
-      <td><strong>{{ r.cliente }}</strong><br><span class="sub">{{ r.email }}</span></td>
-      <td>{{ r.periodo }}<br><span class="sub">generado {{ r.generado_en }}</span></td>
-      <td class="num">{{ r.movimientos }}</td>
-      <td>
+      <td data-etiqueta="Cliente"><strong>{{ r.cliente }}</strong><br><span class="sub">{{ r.email }}</span></td>
+      <td data-etiqueta="Periodo">{{ r.periodo }}<br><span class="sub">generado {{ r.generado_en }}</span></td>
+      <td class="num" data-etiqueta="Movimientos">{{ r.movimientos }}</td>
+      <td data-etiqueta="Control de calidad">
         {# El control de calidad no bloquea: usted decide. Pero lo que encontró
            tiene que estar a la vista antes de abrir el reporte. #}
         {% if r.aprobado %}<span class="marca">Aprobado</span>
@@ -27,7 +27,7 @@
         {% if r.avisos %}<br><span class="sub">{{ r.avisos }} aviso{{ 's' if r.avisos != 1 }}</span>{% endif %}
         {% if r.palabras %}<br><span class="sub">{{ r.palabras }} palabras · cobertura {{ r.cobertura }}</span>{% endif %}
       </td>
-      <td>{{ r.estado }}{% if r.editado %}<br><span class="sub">ya editado</span>{% endif %}</td>
+      <td data-etiqueta="Estado">{{ r.estado }}{% if r.editado %}<br><span class="sub">ya editado</span>{% endif %}</td>
       <td><a class="btn chico" href="{{ url_for('panel.ver', rid=r.id) }}">Abrir</a></td>
     </tr>
     {% endfor %}
@@ -40,14 +40,14 @@
     <tr><th>Cliente</th><th>Periodo</th><th>Qué pasó</th><th class="num">Costo</th></tr>
     {% for r in historial %}
     <tr>
-      <td>{{ r.cliente }}</td>
-      <td>{{ r.periodo }}</td>
-      <td>
+      <td data-etiqueta="Cliente">{{ r.cliente }}</td>
+      <td data-etiqueta="Periodo">{{ r.periodo }}</td>
+      <td data-etiqueta="Qué pasó">
         {% if r.estado == 'enviado' %}Enviado {{ r.enviado_en }}
         {% else %}Descartado{% if r.motivo_descarte %}<br><span class="sub">{{ r.motivo_descarte }}</span>{% endif %}
         {% endif %}
       </td>
-      <td class="num">${{ '%.4f' % r.costo_usd }}</td>
+      <td class="num" data-etiqueta="Costo">${{ '%.4f' % r.costo_usd }}</td>
     </tr>
     {% endfor %}
   </table>
