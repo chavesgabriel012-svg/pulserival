@@ -78,6 +78,35 @@
     transition:box-shadow .3s var(--curva);
   }
   header.pegado { box-shadow:0 1px 0 var(--linea-osc); }
+  /* El nombre del producto, hecho movimiento: un pulso naranja cruza el borde
+     de abajo del encabezado y despues no pasa nada por varios segundos. El
+     encabezado esta siempre a la vista, asi que el latido es corto y muy
+     espaciado; algo moviendose sin parar arriba de todo cansa y distrae de
+     lo que se esta leyendo.
+     La pista recorta el desborde horizontal sin tocar el encabezado, que
+     necesita dejar salir su sombra cuando se pega. */
+  header .pista {
+    position:absolute; left:0; right:0; bottom:0; height:1.5px;
+    overflow:hidden; pointer-events:none;
+  }
+  header .pulso {
+    display:block; width:96px; height:100%; background:var(--pulso-oscuro);
+    opacity:0; will-change:transform;
+    /* Lineal a proposito: la curva de la pagina frena al final y dejaba
+       el pulso arrastrandose contra el borde derecho. Un latido cruza
+       parejo. */
+    animation:cruza-el-pulso 11s linear 1.5s infinite;
+  }
+  @keyframes cruza-el-pulso {
+    0%   { transform:translateX(-96px); opacity:0; }
+    3%   { opacity:.9; }
+    17%  { opacity:.9; }
+    21%  { transform:translateX(100vw); opacity:0; }
+    100% { transform:translateX(100vw); opacity:0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    header .pista { display:none; }
+  }
   header .env { display:flex; align-items:center; gap:32px; height:66px; }
   .marca-enlace {
     display:flex; align-items:center; text-decoration:none;
@@ -194,6 +223,7 @@
 <body>
 
 <header id="cabecera">
+  <span class="pista" aria-hidden="true"><span class="pulso"></span></span>
   <div class="env">
     <a class="marca-enlace" href="{{ inicio_url|default('/') }}" aria-label="{{ marca }}, ir al inicio">
       <img src="{{ marca_url }}/logo-negativo.svg" alt="{{ marca }}">

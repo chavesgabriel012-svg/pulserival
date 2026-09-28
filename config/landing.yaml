@@ -85,6 +85,65 @@ pasos:
         Ningún reporte sale sin que una persona lo lea. Un control automático
         marca antes lo que no se sostiene, y lo dudoso se corrige o se dice.
 
+# ── El ejemplo del reporte ───────────────────────────────────────────
+# Una muestra de cómo llega el correo, debajo de los pasos. Existe para que
+# se vea lo que más cuesta explicar con palabras: que el detalle va agrupado
+# por competidor y por plataforma, no en una lista plana.
+#
+# Los nombres y los anuncios son de muestra, y la página lo dice. Escribir
+# acá un competidor real, o una cifra que no salga de una corrida, sería
+# exactamente lo que el reporte promete no hacer.
+ejemplo:
+  titulo: "Así llega, todas las semanas"
+  nota: >-
+    El detalle va agrupado por competidor y, dentro de cada uno, por
+    plataforma. Cada anuncio lleva el enlace a su ficha pública, para que
+    cualquier afirmación se pueda comprobar en un clic.
+  pie: >-
+    Ejemplo con datos de muestra. En su reporte van sus competidores y los
+    anuncios que estén al aire esa semana.
+  asunto: "Competencia de su empresa"
+  periodo: "Del 21 al 27 de septiembre"
+  conteo:
+    - etiqueta: "Nuevos"
+      valor: "3"
+      destacado: true
+    - etiqueta: "Cambiaron"
+      valor: "1"
+    - etiqueta: "Se apagaron"
+      valor: "2"
+    - etiqueta: "Siguen"
+      valor: "6"
+  competidores:
+    - nombre: "Competidor A"
+      resumen: "3 anuncios en 7 piezas"
+      bloques:
+        - plataforma: "Meta (Facebook e Instagram)"
+          anuncios:
+            - referencia: "A1"
+              estado: "nuevo"
+              detalle: "3 piezas · desde el 22 de septiembre"
+              texto: "Financiamiento a doce meses, sin intereses"
+            - referencia: "A2"
+              estado: "cambiado"
+              detalle: "1 pieza · cambió el titular"
+              texto: "Bajó el precio de anzuelo respecto de la semana pasada"
+        - plataforma: "Google"
+          anuncios:
+            - referencia: "A3"
+              estado: "nuevo"
+              detalle: "3 piezas · búsqueda"
+              texto: "La plataforma no publica el texto de este anuncio."
+    - nombre: "Competidor B"
+      resumen: "1 anuncio en 1 pieza"
+      bloques:
+        - plataforma: "Meta (Facebook e Instagram)"
+          anuncios:
+            - referencia: "B1"
+              estado: "se apagó"
+              detalle: "dejó de aparecer el miércoles"
+              texto: "Promoción de temporada"
+
 # ── Por qué sirve ────────────────────────────────────────────────────
 argumentos:
   - titulo: "Cada afirmación tiene su enlace"

@@ -137,6 +137,44 @@ class TestPortada(CasoPaginas):
         self.assertIn("Recolectamos", h)
         self.assertIn(">01<", h.replace(" ", "").replace("\n", ""))
 
+    def test_el_ejemplo_del_reporte_va_agrupado_por_competidor(self):
+        # El ejemplo existe para mostrar lo que mas cuesta explicar con
+        # palabras: que el detalle va por competidor y, dentro, por
+        # plataforma. Si se aplana en una lista, deja de tener sentido.
+        h = self.portada(landing={"ejemplo": {
+            "titulo": "Asi llega", "nota": "n", "pie": "Datos de muestra.",
+            "asunto": "Competencia", "periodo": "Del 21 al 27",
+            "conteo": [{"etiqueta": "Nuevos", "valor": "3", "destacado": True}],
+            "competidores": [
+                {"nombre": "Competidor A", "resumen": "3 anuncios",
+                 "bloques": [{"plataforma": "Meta", "anuncios": [
+                     {"referencia": "A1", "estado": "nuevo", "detalle": "d",
+                      "texto": "Financiamiento a doce meses"}]}]},
+                {"nombre": "Competidor B", "resumen": "1 anuncio",
+                 "bloques": [{"plataforma": "Google", "anuncios": [
+                     {"referencia": "B1", "estado": "se apago", "detalle": "d",
+                      "texto": "Promocion"}]}]},
+            ]}})
+        self.assertIn("Competidor A", h)
+        self.assertIn("Competidor B", h)
+        # Cada competidor trae su propio bloque, no una lista suelta.
+        self.assertEqual(h.count('class="correo-competidor"'), 2)
+        self.assertIn("Meta", h)
+        self.assertIn("Google", h)
+
+    def test_el_ejemplo_dice_que_los_datos_son_de_muestra(self):
+        # Son nombres inventados en una pagina que promete no inventar nada.
+        # Sin el aviso, el ejemplo contradice al producto.
+        h = self.portada(landing={"ejemplo": {
+            "titulo": "t", "nota": "n", "pie": "Ejemplo con datos de muestra.",
+            "asunto": "a", "periodo": "p", "conteo": [], "competidores": []}})
+        self.assertIn("Ejemplo con datos de muestra.", h)
+
+    def test_sin_ejemplo_configurado_la_portada_no_se_rompe(self):
+        h = self.portada()
+        self.assertIn("<h1", h)
+        self.assertNotIn('class="correo-competidor"', h)
+
     def test_ya_no_lleva_la_barra_de_limites(self):
         h = self.portada(landing={"limites": {"titulo": "Lo que no hace",
                                               "lista": ["No dice la inversión"]}})
@@ -165,6 +203,14 @@ class TestAnimaciones(CasoPaginas):
         h = self.portada()
         self.assertIn("prefers-reduced-motion", h)
         self.assertIn("matchMedia('(prefers-reduced-motion: reduce)')", h)
+
+    def test_el_pulso_del_encabezado_para_con_menos_movimiento(self):
+        # Es el unico movimiento permanente de la pagina y esta siempre a la
+        # vista: si no se apaga con `prefers-reduced-motion`, a quien pidio
+        # menos movimiento le queda latiendo arriba de todo para siempre.
+        h = self.portada()
+        self.assertIn("cruza-el-pulso", h)
+        self.assertIn("header .pista { display:none; }", h)
 
     def test_el_logo_vuelve_al_inicio(self):
         h = self.portada()
