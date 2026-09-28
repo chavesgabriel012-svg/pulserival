@@ -139,6 +139,24 @@
   @media (max-width:760px) {
     header nav a.oculto { display:none; }
     .marca-enlace img { height:22px; }
+    header nav { gap:20px; }
+  }
+  /* Los blancos de toque van por tipo de puntero, no por ancho: una tableta
+     de 768px se toca con el dedo igual que un celular, y colgarlo de un
+     ancho la dejaba afuera. El logo y los enlaces median 22, 29 y 39px: se
+     le atinaba al lado tan seguido como encima. */
+  @media (pointer: coarse) {
+    .marca-enlace { min-height:44px; }
+    header nav a { min-height:44px; display:inline-flex; align-items:center; }
+    header nav a.cta { padding:0 18px; }
+  }
+  /* En pantallas angostas el encabezado no entra: el logo, "Planes" y el
+     boton sumaban 21px mas que la ventana y aparecia barra horizontal. */
+  @media (max-width:420px) {
+    header .env { gap:14px; }
+    header nav { gap:14px; }
+    .marca-enlace img { height:20px; }
+    header nav a.cta { padding:0 14px; }
   }
 
   /* -- botones ------------------------------------------------- */
@@ -169,6 +187,9 @@
   /* -- secciones ----------------------------------------------- */
   section { padding:88px 0; }
   section + section { border-top:1px solid var(--linea); }
+  /* El encabezado es pegajoso y tapa 66px: sin este margen de salto, llegar a
+     #planes desde el menu deja el titulo de la seccion escondido detras. */
+  section[id] { scroll-margin-top:84px; }
   .rotulo {
     font-family:var(--mono); font-size:12px; text-transform:uppercase;
     letter-spacing:.1em; color:var(--pulso-texto); margin:0 0 16px; font-weight:500;

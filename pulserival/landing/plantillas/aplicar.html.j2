@@ -68,6 +68,19 @@
     .cabeza h1 { font-size:33px; }
     .cabeza { padding:48px 0 32px; }
   }
+  @media (max-width:640px) {
+    /* El boton que manda la solicitud es la accion de toda la pagina: al
+       ancho completo, como los de la portada. */
+    form > .sube > .btn { display:block; width:100%; text-align:center; }
+    .grupo { padding:22px 20px 24px; }
+  }
+  /* Dos enlaces de texto que median 20px de alto. Con el dedo eso es
+     apuntarle a una linea, y pasa igual en una tableta que en un celular:
+     va por tipo de puntero, no por ancho. */
+  @media (pointer: coarse) {
+    .volver, .resumen .cambiar { padding:12px 0; }
+    .volver { margin-bottom:12px; }
+  }
 {% endblock %}
 
 {% block navegacion %}

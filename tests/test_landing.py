@@ -212,10 +212,46 @@ class TestAnimaciones(CasoPaginas):
         self.assertIn("cruza-el-pulso", h)
         self.assertIn("header .pista { display:none; }", h)
 
+    def test_el_latido_del_fondo_para_con_menos_movimiento(self):
+        # El trazo se queda: el adorno sirve igual quieto. Lo que se apaga es
+        # el segmento que lo recorre.
+        h = self.portada()
+        self.assertIn("recorre-el-latido", h)
+        self.assertIn(".latido .viva { display:none; }", h)
+
     def test_el_logo_vuelve_al_inicio(self):
         h = self.portada()
         self.assertIn('class="marca-enlace" href="index.html"', h)
         self.assertIn("ir al inicio", h)
+
+
+class TestMovil(CasoPaginas):
+    """Lo que se rompia en celular y no se ve en el escritorio."""
+
+    def test_los_blancos_de_toque_van_por_puntero_y_no_por_ancho(self):
+        # Colgarlos de `max-width` dejaba afuera a una tableta de 768px, que
+        # se toca con el dedo igual que un celular. `pointer: coarse` es la
+        # pregunta correcta: como se apunta, no cuanto mide la pantalla.
+        for h in (self.portada(), self.aplicar()):
+            self.assertIn("@media (pointer: coarse)", h)
+
+    def test_el_encabezado_entra_en_pantallas_angostas(self):
+        # A 360px el logo, "Planes" y el boton sumaban 21px mas que la
+        # ventana y aparecia barra de desplazamiento horizontal.
+        h = self.portada()
+        self.assertIn("@media (max-width:420px)", h)
+
+    def test_el_latido_le_deja_sitio_a_la_promesa_en_celular(self):
+        # El trazo mide 72px de alto en celular y se apoya abajo del todo:
+        # con los 56px de relleno de antes le pasaba por encima a la linea
+        # de "Datos publicos, verificables uno por uno".
+        h = self.portada()
+        self.assertIn(".latido { height:72px; }", h)
+        self.assertIn(".hero { padding:68px 0 112px; }", h)
+
+    def test_las_secciones_no_quedan_tapadas_por_el_encabezado_pegajoso(self):
+        h = self.portada()
+        self.assertIn("section[id] { scroll-margin-top:", h)
 
 
 class TestAplicar(CasoPaginas):

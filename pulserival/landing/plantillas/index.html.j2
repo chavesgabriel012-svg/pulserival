@@ -3,7 +3,35 @@
 
 {% block estilos %}
   /* -- portada ------------------------------------------------- */
-  .hero { padding:104px 0 88px; }
+  /* El latido del fondo. Va abajo del todo, donde no hay texto: cruzarlo por
+     detras del titular no molestaria por el color —la linea es la misma de
+     los divisores— pero si le quita el aire que el titular necesita.
+     `preserveAspectRatio=none` lo estira a lo ancho de la ventana y
+     `non-scaling-stroke` mantiene el trazo fino aunque se estire. */
+  .hero-marco { position:relative; overflow:hidden; }
+  .latido {
+    position:absolute; left:0; right:0; bottom:0; width:100%; height:112px;
+    pointer-events:none; z-index:0;
+    /* La mascara desvanece las dos puntas: sin ella el trazo choca contra el
+       borde de la ventana y se ve cortado, no continuo. */
+    -webkit-mask-image:linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+            mask-image:linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+  }
+  .latido path { fill:none; stroke-width:1.5; vector-effect:non-scaling-stroke;
+                 stroke-linecap:round; stroke-linejoin:round; }
+  .latido .base { stroke:var(--linea); }
+  .latido .viva {
+    stroke:var(--pulso); stroke-dasharray:72 928; stroke-dashoffset:1000;
+    animation:recorre-el-latido 9s linear 1s infinite;
+  }
+  @keyframes recorre-el-latido { to { stroke-dashoffset:0; } }
+  @media (prefers-reduced-motion: reduce) {
+    /* Queda el trazo quieto: el adorno sirve igual y deja de moverse. */
+    .latido .viva { display:none; }
+  }
+  /* El relleno de abajo le deja aire al latido: con los 88px de antes el
+     trazo pasaba pegado a la linea de la promesa. */
+  .hero { padding:104px 0 150px; position:relative; z-index:1; }
   .hero .etiqueta {
     font-family:var(--mono); font-size:12px; text-transform:uppercase;
     letter-spacing:.1em; color:var(--pulso-texto); margin:0 0 24px; font-weight:500;
@@ -209,23 +237,37 @@
 
   @media (max-width:980px) {
     .pasos { grid-template-columns:1fr 1fr; gap:34px; }
+    /* El latido se achata: estirar 1200 unidades de ancho dentro de una
+       pantalla de celular deja los picos como agujas. Menos alto, menos
+       aguja. Y el relleno de abajo tiene que dejarle sitio, o el trazo pasa
+       por encima de la linea de la promesa. */
+    .latido { height:72px; }
     .muestra { grid-template-columns:1fr; gap:32px; }
     .muestra-texto { position:static; }
     .muestra-texto h3, .muestra-texto p { max-width:none; }
     .planes { grid-template-columns:1fr 1fr; }
     .plan .quien { min-height:3.2em; }
     .hero h1 { font-size:42px; }
-    .hero { padding:68px 0 56px; }
+    .hero { padding:68px 0 112px; }
     .cierre h2 { font-size:32px; } .cierre { padding:72px 0; }
   }
   @media (max-width:640px) {
     .fuentes, .ventajas, .pasos, .planes { grid-template-columns:1fr; }
     .correo-conteo { grid-template-columns:1fr 1fr; }
     .correo-conteo > div:nth-child(2) { border-right:0; }
+    /* Los rotulos del ejemplo bajan a 9,5px en pantalla grande porque ahi la
+       maqueta es chica al lado del texto. En el celular ocupa todo el ancho
+       y no hay razon para achicarlos. */
+    .correo-conteo span, .correo-plataforma { font-size:10.5px; }
     .hero h1 { font-size:33px; }
     .hero .bajada { font-size:18px; }
+    /* Los dos botones al ancho completo: apilados y de distinto largo se ven
+       desprolijos, y de paso el blanco de toque queda comodo. */
+    .acciones { display:grid; grid-template-columns:1fr; gap:12px; }
+    .acciones .btn { text-align:center; }
     .plan .quien { min-height:0; }
     .cierre { padding:64px 0; }
+    .cierre h2 { font-size:28px; }
   }
 {% endblock %}
 
@@ -237,7 +279,27 @@
 {% endblock %}
 
 {% block contenido %}
-<div class="env">
+{# El marco existe para que el latido del fondo cruce de borde a borde: si
+   viviera dentro de `.env` se cortaria a los 1080px y dejaria de leerse como
+   un trazo continuo. #}
+<div class="hero-marco">
+  {# El latido: el nombre del producto dibujado. La linea de base es un
+     divisor mas —del mismo color que los de toda la pagina— y por encima
+     viaja un segmento naranja. `pathLength` normaliza el largo del trazo a
+     1000 sin importar la geometria, asi el dasharray cierra exacto y el
+     ciclo no da un salto al reiniciar. #}
+  <svg class="latido" viewBox="0 0 1200 120" preserveAspectRatio="none"
+       aria-hidden="true" focusable="false">
+    <path class="base" pathLength="1000"
+          d="M0,60 H240 l18,0 l10,-34 l9,58 l9,-40 l8,16 l14,0
+             H560 l16,0 l9,-26 l8,44 l8,-30 l7,12 l13,0
+             H900 l18,0 l10,-40 l9,66 l9,-46 l8,20 l14,0 H1200"/>
+    <path class="viva" pathLength="1000"
+          d="M0,60 H240 l18,0 l10,-34 l9,58 l9,-40 l8,16 l14,0
+             H560 l16,0 l9,-26 l8,44 l8,-30 l7,12 l13,0
+             H900 l18,0 l10,-40 l9,66 l9,-46 l8,20 l14,0 H1200"/>
+  </svg>
+  <div class="env">
   <div class="hero">
     <p class="etiqueta sube">Inteligencia publicitaria</p>
     <h1 class="sube" style="transition-delay:.08s">{{ titulo }}</h1>
@@ -248,6 +310,7 @@
     </div>
     {% if promesa_corta %}
     <p class="promesa sube" style="transition-delay:.32s">{{ promesa_corta }}</p>{% endif %}
+  </div>
   </div>
 </div>
 
