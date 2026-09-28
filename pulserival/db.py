@@ -44,6 +44,8 @@ MIGRACIONES = (
     ("clientes", "precio_mensual_usd", "REAL"),
     ("clientes", "pago_proveedor", "TEXT"),
     ("clientes", "pago_referencia", "TEXT"),
+    # De dónde salió el cliente, según la encuesta del formulario de alta.
+    ("clientes", "origen", "TEXT"),
     # Por qué se descartó un reporte. Sin esto, `estado = 'descartado'` no dice
     # nada dentro de seis meses, y es justamente el dato que explica qué tuvo
     # de malo el borrador: el insumo de la Fase 2 para los descartes, igual que

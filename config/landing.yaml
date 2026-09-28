@@ -199,3 +199,37 @@ aplicar:
   cierre: >-
     Al enviar le mostramos un resumen para confirmar. No se activa nada ni se
     cobra nada hasta que usted lo confirme.
+
+  # Los nombres de los pasos. Solo el primero es obligatorio: el resto mejora
+  # el reporte pero no impide pedirlo. El paso del cobro se agrega acá cuando
+  # haya proveedor conectado (ver docs/08-cobro-y-lanzamiento.md).
+  pasos:
+    - nombre: "Su empresa"
+      corto: "Empresa"
+    - nombre: "Contexto de su negocio"
+      corto: "Contexto"
+    - nombre: "Sus competidores"
+      corto: "Competencia"
+    - nombre: "Cómo nos conoció"
+      corto: "Cómo nos conoció"
+
+  # La encuesta del último paso. No cambia nada del reporte: sirve para saber
+  # dónde vale la pena poner el tiempo. Por eso es opcional y va al final,
+  # después de lo que sí importa para el producto.
+  origen:
+    titulo: "¿Cómo se enteró de PulseRival?"
+    opcional: "Opcional"
+    ayuda: >-
+      Nos ayuda a saber dónde vale la pena poner el tiempo. No cambia nada de
+      su reporte.
+    etiqueta: "Elija la que más se acerque"
+    opciones:
+      - "Búsqueda en Google"
+      - "Instagram o Facebook"
+      - "LinkedIn"
+      - "Alguien me lo recomendó"
+      - "Un correo o un mensaje de ustedes"
+      - "Un evento, una charla o un podcast"
+      - "Un artículo o una nota de prensa"
+    otro: "Otro"
+    otro_ayuda: "¿Dónde fue?"

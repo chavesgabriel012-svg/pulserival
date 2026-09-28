@@ -118,6 +118,7 @@ def preparar(
     whatsapp: str | None = None,
     industria: str | None = None,
     notas: str | None = None,
+    origen: str | None = None,
     estado: str | None = None,
 ) -> dict[str, Any]:
     """Valida y normaliza un alta, sin guardarla en ningún lado.
@@ -158,6 +159,7 @@ def preparar(
         "whatsapp": _texto(whatsapp) or None,
         "industria": _texto(industria) or None,
         "notas": _texto(notas) or None,
+        "origen": _texto(origen) or None,
         "plan": plan,
         "estado": estado,
         "periodicidad": datos_plan.get("periodicidad") or "semanal",
@@ -176,6 +178,7 @@ def crear(
     whatsapp: str | None = None,
     industria: str | None = None,
     notas: str | None = None,
+    origen: str | None = None,
     estado: str | None = None,
     cadencia_dias: int | None = None,
     precio: float | None = None,
@@ -189,7 +192,8 @@ def crear(
     que pagó.
     """
     listo = preparar(empresa, email, competidores, plan=plan, contacto=contacto,
-                     whatsapp=whatsapp, industria=industria, notas=notas, estado=estado)
+                     whatsapp=whatsapp, industria=industria, notas=notas,
+                     origen=origen, estado=estado)
     limpios = listo["competidores"]
 
     ya_usadas = {
@@ -210,6 +214,7 @@ def crear(
         "pago_referencia": pago_referencia,
         "industria": listo["industria"],
         "notas": listo["notas"],
+        "origen": listo["origen"],
     })
     for orden, comp in enumerate(limpios, start=1):
         db.insertar(con, "competidores_seguidos", {

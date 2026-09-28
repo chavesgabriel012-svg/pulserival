@@ -33,6 +33,10 @@ CREATE TABLE IF NOT EXISTS clientes (
     dia_envio         TEXT    DEFAULT 'martes',   -- día preferido de entrega
     industria         TEXT,
     notas             TEXT,                       -- contexto que mejora el reporte
+    -- Cómo llegó hasta nosotros, de la encuesta del formulario. Texto libre
+    -- y no un enum: las opciones viven en config/landing.yaml y van a
+    -- cambiar, y un CHECK obligaría a reconstruir la tabla cada vez.
+    origen            TEXT,
     activo            INTEGER NOT NULL DEFAULT 1,
     creado_en         TEXT    NOT NULL DEFAULT (datetime('now'))
 );

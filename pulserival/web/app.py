@@ -149,6 +149,19 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
         ctx["plan_elegido"] = (elegido or {}).get("clave")
         return render_template("aplicar.html.j2", **ctx)
 
+    def _origen(datos) -> str | None:
+        """Cómo nos conoció, de la encuesta del último paso.
+
+        Cuando eligió "Otro" vale lo que escribió, no la etiqueta: "Otro" a
+        secas no sirve para decidir dónde invertir el tiempo, que es lo único
+        para lo que existe esta pregunta.
+        """
+        elegido = (datos.get("origen") or "").strip()
+        otro = (datos.get("origen_otro") or "").strip()
+        if elegido == "otro":
+            return otro or None
+        return elegido or None
+
     # ── alta ─────────────────────────────────────────────────────────
     @app.post("/alta")
     def alta():
@@ -181,6 +194,7 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
                 "whatsapp": datos.get("whatsapp"),
                 "industria": datos.get("industria"),
                 "notas": datos.get("contexto"),
+                "origen": _origen(datos),
             })
         except altas.AltaInvalida as e:
             return _pagina("No pudimos completar el registro", str(e), volver=True), 400
