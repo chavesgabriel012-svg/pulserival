@@ -29,7 +29,7 @@ from typing import Any
 from flask import (Blueprint, Response, abort, current_app, g, redirect,
                    render_template, request, session, url_for)
 
-from .. import config, db, pipeline, util
+from .. import altas, config, db, pipeline, util
 from ..entrega import EnvioError, enviar_reporte, previsualizar
 from ..landing import generador
 from ..reporte import datos as datos_mod
@@ -280,6 +280,57 @@ def correo(rid: int):
     finally:
         con.close()
     return Response(vista["html"], mimetype="text/html")
+
+
+# Los formatos que se pueden bajar. El correo es lo que le llega al cliente;
+# el markdown es el texto editable, el mismo que deja `cli reporte exportar`.
+FORMATOS = {
+    "html": ("html", "text/html; charset=utf-8"),
+    "md": ("md", "text/markdown; charset=utf-8"),
+}
+
+
+@panel.get("/reporte/<int:rid>/descargar")
+def descargar(rid: int):
+    """Baja el reporte como archivo, sin pasar por la consola.
+
+    Existía la vista del correo y `cli reporte exportar`, pero las dos dejaban
+    el archivo del otro lado: la vista había que guardarla a mano desde el
+    navegador, y el CLI escribe en el disco del servidor, al que hay que
+    entrar por SSH. Para mandarle el reporte a alguien hacía falta una de esas
+    dos vueltas.
+    """
+    formato = (request.args.get("formato") or "html").lower()
+    if formato not in FORMATOS:
+        abort(404)
+    extension, tipo = FORMATOS[formato]
+
+    con = _conectar()
+    try:
+        fila = db.fila(con, "SELECT r.*, c.nombre_empresa FROM reportes_generados r "
+                            "JOIN clientes c ON c.id = r.cliente_id WHERE r.id = ?", (rid,))
+        if not fila:
+            abort(404)
+        if formato == "html":
+            try:
+                cuerpo = previsualizar(con, rid)["html"]
+            except EnvioError as e:
+                return _mensaje("No se pudo armar el correo", str(e), 400,
+                                volver=url_for("panel.ver", rid=rid))
+        else:
+            cuerpo = fila["final_md"] or fila["borrador_md"] or ""
+    finally:
+        con.close()
+
+    # El nombre del archivo tiene que decir de quién y de cuándo es: se van a
+    # juntar varios en la carpeta de descargas.
+    # `clave_desde` es la misma funcion que genera la clave del cliente: un
+    # nombre con tildes o espacios sale igual de limpio en las dos partes.
+    nombre = (f"pulserival-{altas.clave_desde(fila['nombre_empresa'] or 'cliente')}"
+              f"-{fila['periodo_fin']}.{extension}")
+    return Response(cuerpo, mimetype=tipo, headers={
+        "Content-Disposition": f'attachment; filename="{nombre}"',
+    })
 
 
 @panel.post("/reporte/<int:rid>/enviar")
