@@ -175,6 +175,7 @@ def _yaml_del_alta(listo: dict[str, Any], clave: str, ahora: datetime) -> str:
         "contacto_email": listo["email"],
         "contacto_whatsapp": listo["whatsapp"],
         "plan": listo["plan"],
+        "ciclo_facturacion": listo.get("ciclo_facturacion"),
         "periodicidad": listo["periodicidad"],
         "estado_suscripcion": listo["estado"],
         "industria": listo["industria"],

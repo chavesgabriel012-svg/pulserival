@@ -17,6 +17,7 @@ from pathlib import Path
 CLAVES_BLOQUEADAS = (
     "GROQ_API_KEY", "GEMINI_API_KEY", "APIFY_TOKEN",
     "RESEND_API_KEY", "SMTP_HOST", "META_AD_LIBRARY_TOKEN",
+    "PADDLE_WEBHOOK_SECRET", "PADDLE_CLIENT_TOKEN",
 )
 for _clave in CLAVES_BLOQUEADAS:
     os.environ[_clave] = ""

@@ -71,10 +71,92 @@ def tabla(filas: list, columnas: list[str]) -> None:
 
 # ── comandos ─────────────────────────────────────────────────────────
 def cmd_init(args) -> int:
-    ruta = db.inicializar()
-    ok(f"Base de datos lista en {ruta}")
+    informe = db.migrar()
+    _contar_migracion(informe)
+    ok(f"Base de datos lista en {informe['ruta']}")
     print("  Siguiente paso: python -m pulserival.cli clientes agregar --ayuda-datos")
     return 0
+
+
+def _contar_migracion(informe: dict, revision: bool = False) -> None:
+    """Lo que hizo la migración, dicho para una persona."""
+    if informe.get("columnas"):
+        print(f"  Columnas nuevas: {', '.join(informe['columnas'])}")
+    rec = informe.get("clientes")
+    if not rec:
+        return
+    ok(f"Tabla clientes reconstruida ({rec['filas']} filas, ninguna perdida)")
+    if not revision:
+        print(f"    Respaldo de antes: {rec['respaldo']}")
+    if rec["columnas_nuevas"]:
+        print(f"    Columnas nuevas: {', '.join(rec['columnas_nuevas'])}")
+    for c in rec["pasados_a_custom"]:
+        print(f"    #{c['id']} {c['nombre_empresa']}: pasa a 'custom' cada "
+              f"{c['cadencia_dias']} días (antes '{c['periodicidad']}' con esa cadencia aparte)")
+    for c in rec["custom_sin_cadencia"]:
+        aviso(f"#{c['id']} {c['nombre_empresa']} tiene plan 'custom' pero ninguna cadencia: "
+              "sigue con su periodicidad de antes. Cárguesela con: "
+              f"clientes editar --id {c['id']} --periodicidad custom --cadencia-dias N")
+
+
+def cmd_migrar(args) -> int:
+    """Pone la base al día con el esquema actual.
+
+    No hace falta correrlo a mano: el servidor y el cron lo hacen al arrancar.
+    Existe para mirar antes qué va a cambiar (`--revisar`, que trabaja sobre
+    una copia y no toca la base) y para correrlo a mano sobre una base suelta
+    (la de la rama `datos`, una bajada del servidor) con `--db`.
+    """
+    import shutil
+    import sqlite3
+    import tempfile
+
+    ruta = Path(args.db) if args.db else config.ruta_db()
+    if not ruta.exists():
+        return error(f"No existe la base {ruta}. Para crear una nueva: cli init")
+    if args.revisar:
+        with tempfile.TemporaryDirectory() as tmp:
+            copia = Path(tmp) / ruta.name
+            # Copia con la API de respaldo, no `cp`: si el servidor está
+            # escribiendo, un `cp` puede copiar una base a medio escribir.
+            origen = sqlite3.connect(ruta)
+            destino = sqlite3.connect(copia)
+            try:
+                origen.backup(destino)
+            finally:
+                destino.close()
+                origen.close()
+            informe = db.migrar(copia)
+            shutil.rmtree(Path(tmp) / "respaldos", ignore_errors=True)
+        print(f"  Revisión sobre una copia de {ruta}. La base no se tocó.\n")
+        if not informe["columnas"] and not informe["clientes"]:
+            ok("Ya está al día: no hay nada que migrar.")
+            return 0
+        _contar_migracion(informe, revision=True)
+        print("\n  Para aplicarlo: python -m pulserival.cli migrar"
+              + (f" --db {args.db}" if args.db else ""))
+        return 0
+    informe = db.migrar(ruta)
+    if not informe["columnas"] and not informe["clientes"]:
+        ok(f"{ruta} ya está al día.")
+        return 0
+    _contar_migracion(informe)
+    ok(f"{ruta} al día con el esquema {db.VERSION_ESQUEMA}.")
+    return 0
+
+
+def _cadencia_coherente(periodicidad: str | None, cadencia: int | None) -> str | None:
+    """El mismo control que el CHECK de la base, con un mensaje que se entienda."""
+    if periodicidad not in planes.PERIODICIDADES:
+        return f"Periodicidad '{periodicidad}' inválida: {', '.join(planes.PERIODICIDADES)}"
+    if periodicidad == "custom" and not cadencia:
+        return "Con --periodicidad custom hace falta --cadencia-dias (cada cuántos días)"
+    if periodicidad == "custom" and cadencia < 1:
+        return "--cadencia-dias tiene que ser 1 o más"
+    if periodicidad != "custom" and cadencia:
+        return (f"--cadencia-dias es solo para periodicidad custom; '{periodicidad}' ya "
+                "dice cada cuánto. Pase también --periodicidad custom")
+    return None
 
 
 def cmd_clientes(args) -> int:
@@ -82,14 +164,29 @@ def cmd_clientes(args) -> int:
         if args.accion == "agregar":
             if not args.empresa or not args.email:
                 return error("Para agregar un cliente hacen falta --empresa y --email")
-            plan = args.plan or "semanal"
+            plan = args.plan or "autoservicio"
             datos_plan = planes.plan(plan)
             if not datos_plan:
                 return error(f"El plan '{plan}' no está en config/planes.yaml. "
                              f"Disponibles: {', '.join(planes.PLANES_VALIDOS)}")
-            # La periodicidad sale del plan salvo que se pida otra: el enum
-            # viejo sigue existiendo y tiene que quedar coherente.
+            # La periodicidad sale del plan salvo que se pida otra.
             periodicidad = args.periodicidad or datos_plan.get("periodicidad") or "semanal"
+            problema = _cadencia_coherente(periodicidad, args.cadencia_dias)
+            if problema:
+                return error(problema)
+            if plan == "custom" and args.precio is None:
+                # Es lo que define a un Custom: sin el precio acordado no hay
+                # cómo saber cuánto paga, y el panel de Paddle no lo dice.
+                return error("Un cliente custom necesita --precio (lo acordado, en USD por mes)")
+            ciclo = args.ciclo
+            if datos_plan.get("ciclos"):
+                ciclo = ciclo or next(iter(datos_plan["ciclos"]))
+                if ciclo not in datos_plan["ciclos"]:
+                    return error(f"El plan '{plan}' no se paga '{ciclo}'. "
+                                 f"Opciones: {', '.join(datos_plan['ciclos'])}")
+            elif ciclo:
+                return error(f"El plan '{plan}' no tiene ciclos de pago: --ciclo es solo "
+                             "para el de autoservicio")
             estado = args.estado or ("prueba_pendiente" if plan == "prueba"
                                      else "pendiente_pago")
             if estado not in planes.ESTADOS_VALIDOS:
@@ -103,23 +200,44 @@ def cmd_clientes(args) -> int:
                 "periodicidad": periodicidad,
                 "plan": plan,
                 "estado_suscripcion": estado,
-                "cadencia_dias": args.cadencia_dias,
+                "cadencia_dias": args.cadencia_dias if periodicidad == "custom" else None,
                 "precio_mensual_usd": args.precio,
-                "pago_proveedor": args.pago_proveedor,
+                "ciclo_facturacion": ciclo,
+                "pago_proveedor": args.pago_proveedor or (
+                    "paddle" if (args.paddle_transaccion or args.paddle_suscripcion) else None),
                 "pago_referencia": args.pago_referencia,
+                # El link de pago armado a mano en Paddle: es lo que permite que
+                # el webhook reconozca el pago de este cliente.
+                "paddle_transaccion_id": args.paddle_transaccion,
+                "paddle_suscripcion_id": args.paddle_suscripcion,
                 "dia_envio": args.dia or "martes",
                 "industria": args.industria,
                 "notas": args.notas,
             })
-            ok(f"Cliente #{cid}: {args.empresa} · plan {plan} · {estado}")
+            cadencia = (f"cada {args.cadencia_dias} días" if periodicidad == "custom"
+                        else periodicidad)
+            ok(f"Cliente #{cid}: {args.empresa} · plan {plan} · {cadencia} · {estado}")
+            if plan == "custom" and not (args.paddle_transaccion or args.paddle_suscripcion):
+                aviso("Sin --paddle-transaccion el webhook no va a reconocer el pago de este "
+                      "cliente. Cuando arme el link en Paddle, cárguelo con: "
+                      f"clientes editar --id {cid} --paddle-transaccion txn_...")
+            if plan == "custom" and args.cadencia_dias and args.cadencia_dias < 7:
+                aviso(f"Cadencia de {args.cadencia_dias} días: el ciclo corre cada "
+                      "PULSERIVAL_CICLO_CADA_DIAS (7 por defecto). Hasta que exista la cola "
+                      "de trabajos por cliente, este cliente recibe reportes con esa "
+                      "frecuencia, no con la suya. Ver docs/08-cobro-y-lanzamiento.md")
             if estado == "pendiente_pago":
-                print(f"    No se le van a generar reportes hasta confirmar el pago:")
-                print(f"      python3 -m pulserival.cli clientes activar --id {cid} "
-                      f"--referencia \"<comprobante>\"")
+                print("    No se le van a generar reportes hasta confirmar el pago.")
+                if args.paddle_transaccion or args.paddle_suscripcion:
+                    print("    Se activa solo cuando Paddle avise que el link se pagó.")
+                else:
+                    print(f"      python3 -m pulserival.cli clientes activar --id {cid} "
+                          f"--referencia \"<comprobante>\"")
             return 0
         if args.accion == "activar":
-            # El paso manual del flujo híbrido: usted confirma el pago en el
-            # panel de Tilopay/Onvopay y acá deja constancia de cuál fue.
+            # El paso manual: usted confirma un pago que no pasó por Paddle (una
+            # transferencia) y acá deja constancia de cuál fue. Lo que se cobra
+            # por Paddle lo activa el webhook solo.
             if args.id is None:
                 return error("Falta --id: qué cliente activar (los ves con: clientes lista)")
             fila = db.fila(con, "SELECT * FROM clientes WHERE id = ?", (args.id,))
@@ -144,19 +262,42 @@ def cmd_clientes(args) -> int:
                 return error("Falta --id: decime qué cliente editar (los ves con: clientes lista)")
             # Solo se escriben los campos que pasaste: sin --periodicidad no se
             # toca la cadencia del cliente.
+            fila = db.fila(con, "SELECT * FROM clientes WHERE id = ?", (args.id,))
+            if not fila:
+                return error(f"No existe el cliente {args.id}")
             cambios = {k: v for k, v in {
                 "contacto_email": args.email, "contacto_nombre": args.contacto,
                 "contacto_whatsapp": args.whatsapp, "periodicidad": args.periodicidad,
+                "cadencia_dias": args.cadencia_dias, "plan": args.plan,
+                "precio_mensual_usd": args.precio, "ciclo_facturacion": args.ciclo,
+                "paddle_transaccion_id": args.paddle_transaccion,
+                "paddle_suscripcion_id": args.paddle_suscripcion,
                 "dia_envio": args.dia, "industria": args.industria, "notas": args.notas,
                 "activo": None if args.activo is None else int(args.activo),
             }.items() if v is not None}
             if not cambios:
                 return error("No pasaste ningún campo para cambiar")
+            # Periodicidad y cadencia van juntas (un CHECK de la base lo
+            # exige): se revisan con el valor final de las dos.
+            periodicidad = cambios.get("periodicidad", fila["periodicidad"])
+            # Pasar de custom a semanal o mensual sin decir nada de la cadencia
+            # la borra: ya no tiene dónde vivir. Pasar una cadencia sin pasar a
+            # custom es un error que se explica abajo, no algo que se adivina.
+            if ("periodicidad" in cambios and periodicidad != "custom"
+                    and "cadencia_dias" not in cambios):
+                cambios["cadencia_dias"] = None
+            cadencia = cambios.get("cadencia_dias", db.valor(fila, "cadencia_dias"))
+            problema = _cadencia_coherente(periodicidad, cadencia)
+            if problema:
+                return error(problema)
+            if "paddle_transaccion_id" in cambios or "paddle_suscripcion_id" in cambios:
+                cambios.setdefault("pago_proveedor", "paddle")
             db.actualizar(con, "clientes", args.id, cambios)
             ok(f"Cliente #{args.id} actualizado: {', '.join(cambios)}")
             return 0
         tabla(db.filas(con, "SELECT * FROM clientes ORDER BY id"),
-              ["id", "nombre_empresa", "plan", "estado_suscripcion", "cadencia_dias",
+              ["id", "nombre_empresa", "plan", "periodicidad", "cadencia_dias",
+               "ciclo_facturacion", "estado_suscripcion", "paddle_estado",
                "contacto_email", "activo"])
         return 0
 
@@ -234,7 +375,7 @@ def cmd_reporte(args) -> int:
             if not cliente:
                 return error(f"No existe el cliente {args.cliente}")
             inicio, fin = (args.desde, args.hasta) if args.desde and args.hasta else \
-                util.periodo(cliente["periodicidad"] or "semanal")
+                planes.periodo_de(cliente)
             try:
                 rep = generar_mod.generar(con, cliente, inicio, fin,
                                           presupuesto=Presupuesto(), regenerar=args.regenerar)
@@ -793,6 +934,13 @@ def construir_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("init", help="crear la base de datos").set_defaults(func=cmd_init)
 
+    mg = sub.add_parser("migrar", help="poner la base al día con el esquema (lo hace solo "
+                                       "el servidor al arrancar; esto es para revisar antes)")
+    mg.add_argument("--revisar", action="store_true",
+                    help="mostrar qué cambiaría, probándolo sobre una copia")
+    mg.add_argument("--db", help="otra base que no sea la de PULSERIVAL_DB")
+    mg.set_defaults(func=cmd_migrar)
+
     # clientes
     c = sub.add_parser("clientes", help="administrar clientes")
     c.add_argument("accion", nargs="?", default="lista",
@@ -803,21 +951,28 @@ def construir_parser() -> argparse.ArgumentParser:
     c.add_argument("--email")
     c.add_argument("--whatsapp")
     c.add_argument("--plan", choices=list(planes.PLANES_VALIDOS),
-                   help="plan vendido (ver config/planes.yaml). Por defecto: semanal")
+                   help="plan vendido (ver config/planes.yaml). Por defecto: autoservicio")
     c.add_argument("--estado", choices=list(planes.ESTADOS_VALIDOS),
                    help="estado de la suscripción. Al agregar: pendiente_pago, "
                         "o prueba_pendiente si el plan es 'prueba'")
     c.add_argument("--cadencia-dias", dest="cadencia_dias", type=int,
-                   help="cada cuántos días toca reporte (plan a la medida). "
-                        "Le gana a --periodicidad")
+                   help="cada cuántos días toca reporte. Solo con periodicidad custom "
+                        "(el plan custom ya la trae)")
+    c.add_argument("--ciclo", choices=list(planes.CICLOS_VALIDOS),
+                   help="cómo paga el plan de autoservicio. Por defecto: mensual")
     c.add_argument("--precio", type=float,
                    help="lo acordado con ESTE cliente, en USD por mes")
     c.add_argument("--pago-proveedor", dest="pago_proveedor",
-                   choices=["tilopay", "onvopay", "manual"],
+                   choices=["paddle", "manual"],
                    help="por dónde paga")
+    c.add_argument("--paddle-transaccion", dest="paddle_transaccion",
+                   help="txn_... del link de pago armado en el panel de Paddle (plan "
+                        "custom): es lo que le permite al webhook reconocer el pago")
+    c.add_argument("--paddle-suscripcion", dest="paddle_suscripcion",
+                   help="sub_... si la suscripción ya existe en Paddle")
     c.add_argument("--referencia", dest="pago_referencia",
                    help="comprobante o id de suscripción contra el que se activa")
-    c.add_argument("--periodicidad", choices=["semanal", "mensual"],
+    c.add_argument("--periodicidad", choices=list(planes.PERIODICIDADES),
                    help="normalmente sale del plan; pasala solo para forzar otra")
     c.add_argument("--dia", help="día preferido de entrega (martes por defecto al agregar)")
     c.add_argument("--industria")

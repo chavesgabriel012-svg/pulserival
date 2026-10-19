@@ -5,19 +5,69 @@
 #
 #  Cómo lo usa el sistema:
 #    - `clave` es lo que se guarda en clientes.plan
-#    - `cadencia_dias` define cada cuántos días toca reporte
-#    - `periodicidad` es el valor heredado de la columna vieja
-#      (semanal|mensual). Se mantiene para no romper los clientes que ya
-#      existían y porque util.periodo() todavía lo entiende.
+#    - `visible: true` lo muestra en la landing. Un plan oculto sigue en el
+#      catálogo: los clientes que ya lo tienen conservan su precio y su
+#      cadencia, y volver a venderlo es cambiar esta línea.
+#    - `checkout: true` se cobra desde la web con Paddle. Sin esto el plan
+#      se vende a mano (Custom: link de pago armado en el panel de Paddle).
+#    - `periodicidad` es semanal | mensual | custom. Custom no tiene cadencia
+#      fija: la de cada cliente va en clientes.cadencia_dias.
+#    - `ciclos` son las formas de pagar el plan (mensual, anual). Cada una
+#      con su precio y, por entorno de Paddle, el id del precio (pri_...)
+#      que se crea en el panel de Paddle: Catálogo > Productos.
 #    - `recurrente: false` significa "un solo reporte y se acabó"
-#    - `enlace_pago` es el link de cobro que genera la pasarela desde su
-#      panel (Tilopay ruta "No-Code", u ONVO Link). Se crea una vez a mano,
-#      se pega acá y la landing lo usa tal cual. Mientras esté vacío, el
-#      botón del plan invita a escribir por WhatsApp en vez de cobrar.
+#
+#  Lanzamiento de octubre 2026: se vende solo el de autoservicio. La prueba
+#  gratis y el semanal quedan ocultos por decisión de producto, no porque
+#  falte algo técnico: volverlos visibles es `visible: true`.
 # ─────────────────────────────────────────────────────────────────────
 
 planes:
+  - clave: autoservicio
+    nombre: "Reporte mensual"
+    visible: true
+    checkout: true
+    # Precio de lista por mes. El anual equivale a $20 al mes: es el precio
+    # original del plan, y se conserva como incentivo para pagar el año de
+    # una vez (una comisión de Paddle al año en vez de doce).
+    precio_usd: 25
+    recurrente: true
+    periodicidad: mensual
+    cadencia_dias: 30
+    resumen: "Un reporte por mes con lo que hizo su competencia en Meta y Google."
+    para_quien: "Para seguir a los competidores que importan sin tener que mirarlos usted."
+    cadencia_texto: "Cada 30 días"
+    competidores_max: 4
+    ciclos:
+      mensual:
+        nombre: "Mes a mes"
+        precio_usd: 25
+        cobro_texto: "$25 al mes"
+      anual:
+        nombre: "Anual"
+        precio_usd: 240
+        # Lo que se ve al lado del precio: el ahorro, en plata y no en %.
+        equivale_mes_usd: 20
+        ahorro_usd: 60
+        cobro_texto: "$240 al año"
+    # Ids de los precios en Paddle (pri_...). Se crean en el panel, uno por
+    # ciclo y por entorno: los de sandbox no sirven en producción.
+    paddle:
+      sandbox:
+        mensual: ""
+        anual: ""
+      production:
+        mensual: ""
+        anual: ""
+    incluye:
+      - "Un reporte cada 30 días"
+      - "Hasta 4 competidores"
+      - "Meta (Facebook e Instagram) y Google"
+      - "Qué cambió respecto del mes anterior"
+      - "El enlace a cada anuncio, para comprobarlo"
+
   - clave: prueba
+    visible: false
     nombre: "Prueba gratis"
     precio_usd: 0
     # Un solo reporte, sin recurrencia. El periodo se calcula como el
@@ -29,14 +79,16 @@ planes:
     para_quien: "Para ver de qué se trata antes de decidir nada."
     cadencia_texto: "Una sola vez"
     competidores_max: 3
-    enlace_pago: ""
     incluye:
       - "Un reporte con hasta 3 competidores"
       - "Anuncios activos en Meta y Google, con enlace a la fuente"
       - "Interpretación y recomendaciones, no solo una lista"
 
   - clave: mensual
-    nombre: "Mensual"
+    visible: false
+    # El plan de antes de Paddle, a $20. Lo conservan los clientes que ya lo
+    # tenían; uno nuevo entra por `autoservicio`.
+    nombre: "Mensual (anterior)"
     precio_usd: 20
     recurrente: true
     periodicidad: mensual
@@ -45,13 +97,13 @@ planes:
     para_quien: "Para categorías estables, donde las campañas duran semanas."
     cadencia_texto: "Cada 30 días"
     competidores_max: 4
-    enlace_pago: ""
     incluye:
       - "Un reporte cada 30 días"
       - "Hasta 4 competidores"
       - "Qué cambió respecto del mes anterior"
 
   - clave: semanal
+    visible: false
     nombre: "Semanal"
     precio_usd: 100
     recurrente: true
@@ -61,7 +113,6 @@ planes:
     para_quien: "Para retail, servicios y todo lo que cambia de precio seguido."
     cadencia_texto: "Cada 7 días"
     competidores_max: 6
-    enlace_pago: ""
     incluye:
       - "Un reporte cada 7 días"
       - "Hasta 6 competidores"
@@ -69,19 +120,22 @@ planes:
       - "Prioridad en el soporte"
 
   - clave: custom
+    visible: false
     nombre: "A la medida"
     # Sin precio fijo: se acuerda por cliente y se guarda en
     # clientes.precio_mensual_usd.
     precio_usd: null
     recurrente: true
-    periodicidad: semanal
     # Sin cadencia fija: se define por cliente en clientes.cadencia_dias.
+    # Se registra con `cli clientes agregar --plan custom --cadencia-dias N`.
+    periodicidad: custom
     cadencia_dias: null
+    # No se vende desde la web: se cotiza por agencia y se cobra con un link
+    # de pago de Paddle armado a mano. La landing solo enlaza al contacto.
     resumen: "Cadencia, competidores y alcance definidos con usted."
     para_quien: "Para cadenas, agencias y quien siga más de seis competidores."
     cadencia_texto: "La que necesite"
     competidores_max: null
-    enlace_pago: ""
     incluye:
       - "La cadencia que necesite (cada N días)"
       - "Los competidores que pida, sin tope"

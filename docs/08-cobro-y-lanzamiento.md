@@ -1,175 +1,374 @@
-# 08 · Cobro y lanzamiento
+# 08 · Cobro y lanzamiento (Paddle)
 
 Este documento es la lista de lo que falta antes de cobrarle a una persona
 real, y de lo que **no** se puede dar por probado porque todavía no pasó
 plata de verdad por el sistema.
 
-## La decisión: arranque híbrido
+**Estado: el cobro con Paddle está construido y probado solo contra eventos
+de prueba firmados por los tests. Ninguna transacción, ni de sandbox ni
+real, pasó todavía por el sistema.** El código arranca en modo `simulado` y,
+aunque se active Paddle, usa el entorno `sandbox` salvo que se pida
+`production` de forma explícita. No active `production` sin haber completado
+la lista de la sección 6.
 
-Hay tres formas de cobrar, y se eligió la del medio:
+## 1. Qué se lanza
 
-| | Manual | **Híbrido (elegido)** | Autoservicio |
+Dos planes, nada más:
+
+| | Plan | Cómo se compra | Precio |
 |---|---|---|---|
-| Landing pública | opcional | **sí** | sí |
-| Checkout en línea | no | **sí, alojado por la pasarela** | sí |
-| Quién activa al cliente | usted | **usted, a mano** | el webhook, solo |
-| Servidor propio | no | **no** | sí |
-| Costo de infraestructura | $0 | **$0** | ~$5-20/mes |
+| 1 | **Reporte mensual** (`autoservicio`) | landing + checkout de Paddle | $25/mes o $240/año |
+| 2 | **Custom** (`custom`), para agencias | conversación + link de pago hecho a mano en Paddle | cotizado: cada 2 días desde $300/mes, diario desde $500/mes |
 
-**Por qué el híbrido no necesita servidor.** El Hosted Payment Page de
-Tilopay exige backend: su servidor pide la URL de pago a la API y recibe el
-resultado en un callback. Pero las dos pasarelas tienen además un producto
-de enlaces de cobro que se crean **una vez desde el panel** y son URLs
-reutilizables: la ruta *No-Code* de Tilopay y *ONVO Link*. Esos enlaces se
-pegan en `config/planes.yaml` y la landing los usa tal cual.
+El anual cuesta $240 ($20/mes) para que el cliente pague **una** comisión de
+Paddle al año en vez de doce. La landing lo explica como "Ahorra $60".
 
-Lo que queda manual es el paso de después del pago: la pasarela le avisa a
-usted (correo, su panel), usted confirma, y activa al cliente con un comando.
-Automatizar ese paso es lo único que obliga a tener un servidor encendido,
-porque un webhook necesita algo escuchando las 24 horas.
+La prueba gratis (`prueba`) y el plan semanal (`semanal`) siguen en
+`config/planes.yaml` con `visible: false`. **Agregarlos después no requiere
+migración**: el esquema ya acepta las periodicidades `semanal`, `mensual` y
+`custom`, los ciclos `mensual` y `anual`, y cualquier nombre de plan. Para
+publicar uno basta con ponerle `visible: true`, `checkout: true`, sus
+`ciclos` y los ids de precio de Paddle en el YAML. Lo único que habría que
+escribir es la regla de negocio que hoy no existe (por ejemplo, que la prueba
+no pase por el checkout).
 
-## Lo que ya está construido
+## 2. La tensión de arquitectura, y qué se eligió
 
-- Los cuatro planes, en `config/planes.yaml`: prueba gratis, mensual ($20),
-  semanal ($100) y a la medida.
-- La base de datos guarda plan, estado de suscripción, cadencia en días,
-  precio acordado, pasarela y referencia del pago.
-- La prueba gratis genera **un** reporte y no vuelve a generar. Tampoco
-  gasta scraper después de usarla.
-- El plan a la medida acepta cualquier cadencia (`--cadencia-dias 10`).
-- Un cliente en `pendiente_pago` no recibe reportes ni consume Apify.
-- La landing (`python3 -m pulserival.cli landing`), con el formulario de
-  alta que llega por WhatsApp.
+El sistema nació con este modelo:
 
-## Lo que falta antes de cobrar
+- un **cron de GitHub Actions** corre una vez por semana,
+- trabaja sobre una base SQLite que vive **versionada en la rama `datos`**,
+- y al terminar hace commit de la base.
 
-### 1. Elegir la pasarela y crear los enlaces
+Eso funciona porque **nadie más escribe en la base**: el cron es el único
+escritor y corre de a uno.
 
-Todavía no está decidido entre Tilopay y ONVO. Para el híbrido lo único que
-importa es que ambas permiten enlaces de cobro sin código:
+Un webhook rompe las dos premisas. Paddle avisa de un pago **en cualquier
+momento**, espera respuesta en **5 segundos** y, si no la recibe, reintenta
+(en producción, hasta 60 veces en 3 días). Eso necesita algo **escuchando las
+24 horas**, y ese algo **escribe en la base fuera del horario del cron**.
 
-- **Tilopay** — ruta No-Code: <https://tilopay.com/developers/sin-codigo>
-- **ONVO** — ONVO Link: <https://onvopay.com/en/onvo-link>
+Las opciones que hay:
 
-Cree un enlace por plan de pago (mensual y semanal), péguelo en
-`config/planes.yaml` en el campo `enlace_pago`, y regenere la landing.
-Mientras el campo esté vacío el botón dice "Hablemos" en vez de cobrar.
+| | Opción | Problema |
+|---|---|---|
+| A | **Webhook en la app Flask que ya corre en Railway** (elegida) | Ninguno nuevo: el servidor ya está siempre encendido, ya tiene la base en un disco persistente y ya tiene el cron adentro. |
+| B | Webhook en una función serverless (Vercel) que escriba en la rama `datos` | Dos escritores sobre un archivo binario en git: un pago que entra mientras corre el cron produce un commit en conflicto que git no puede fusionar. Además las funciones de Vercel no tienen disco. |
+| C | Sin webhook: el cron le pregunta a la API de Paddle quién pagó | Un cliente que paga un lunes espera hasta una semana para que lo activen. Y sigue faltando la clave de la API. |
+| D | Pasar a una base de datos alojada (Postgres) | Resuelve los dos escritores, pero es una migración de todo el sistema para un problema que la opción A ya resuelve. |
 
-**Importante para suscripciones:** verifique al crear el enlace que sea de
-**cobro recurrente** y no de pago único. Un enlace de pago único le cobra al
-cliente una sola vez y el segundo mes no llega nada — y usted se entera
-cuando el cliente ya recibió cuatro reportes gratis.
+**Se eligió A.** El webhook es `POST /webhooks/paddle` en
+`pulserival/web/app.py`, escribe en la misma SQLite del disco `/datos`, y el
+cron que corre dentro del mismo proceso (`pulserival/web/planificador.py`) es
+el único otro escritor. Dos escritores sobre el mismo archivo, en el mismo
+servidor, SQLite los ordena solo; lo que no puede ordenar es dos copias de la
+base en lugares distintos.
 
-### 2. Configurar el contacto
+Un detalle de esa convivencia: si un pago llega justo mientras el ciclo tiene
+la base tomada para escribir, el webhook espera hasta 5 segundos y, si no
+alcanza, responde 500. Paddle toma el 500 como "no llegó" y reintenta más
+tarde, así que el pago no se pierde, solo se activa con atraso. El evento
+queda registrado en `eventos_pago` cuando por fin entra.
 
-En `config/landing.yaml`, el WhatsApp (solo dígitos con código de país) o el
-correo. Sin uno de los dos el formulario no tiene a dónde mandar los datos.
+**La consecuencia que hay que respetar:** desde que Paddle está activo, **la
+base de la verdad es la del disco de Railway, no la de la rama `datos`.** Si
+el cron de GitHub Actions vuelve a correr, trabaja sobre la copia de git, que
+no tiene los pagos, y esa copia diverge. Por eso, antes de activar Paddle:
 
-### 3. Probar con una transacción real
+- en GitHub, **Settings → Secrets and variables → Actions → Variables**,
+  `PULSERIVAL_CRON_EN_SERVIDOR = 1` (apaga el cron de Actions; ver
+  `docs/11-servidor.md`);
+- y confirmar en `/salud` que el planificador del servidor está encendido.
 
-Nada de lo de abajo está probado: **ninguna transacción pasó por el sistema
-todavía.** Antes del primer cliente que pague:
+Ninguna de estas dos cosas la puede verificar el código por usted.
 
-- [ ] Hacer una compra real de $1 (o el mínimo que permita la pasarela) con
-      una tarjeta propia, usando el enlace tal como queda en la landing.
-- [ ] Confirmar que el cobro llega al panel de la pasarela.
-- [ ] Confirmar que **el segundo cobro se ejecuta solo** al mes siguiente.
-      Esto no se puede verificar el mismo día: es la única prueba que
-      requiere esperar un ciclo completo, y es la que distingue una
-      suscripción de un pago único.
-- [ ] Verificar cuánto cobra la pasarela por transacción y si hay mínimo
-      mensual. Con el plan de $20, una comisión alta se come el margen.
-- [ ] Probar el reembolso de esa compra, para saber cómo se hace antes de
-      necesitarlo con un cliente molesto.
-- [ ] Confirmar qué pasa cuando una tarjeta es rechazada: si la pasarela
-      reintenta, cuántas veces, y cómo se entera usted.
+### La migración del esquema
 
-### 4. El paso 5 del formulario: el checkout
+El cambio de esquema (periodicidad `custom`, ciclo de facturación, columnas
+de Paddle y la tabla `eventos_pago`) **no se aplica en caliente sobre la base
+de la rama `datos`**. Se corre una vez, a mano, con estos pasos:
 
-El formulario de `/aplicar` va por pasos: 1 empresa, 2 contexto, 3
-competencia, 4 cómo nos conoció. **El cobro es el paso 5 y todavía no
-existe.** Hoy el formulario termina en "Enviar solicitud", la solicitud
-queda sin activar y el pago se coordina a mano.
+```bash
+# 1. Ver qué cambiaría, sobre una copia. No toca la base.
+python -m pulserival.cli migrar --revisar --db ruta/a/pulserival.db
 
-Cuando haya pasarela, agregarlo es:
+# 2. Aplicarlo.
+python -m pulserival.cli migrar --db ruta/a/pulserival.db
+```
 
-1. Un bloque más en `pulserival/landing/plantillas/aplicar.html.j2`, con la
-   forma `<div class="grupo paso" data-paso="5">`. El guion de los pasos no
-   tiene la lista escrita: la lee del DOM, así que toma el paso nuevo sin
-   tocar JavaScript.
-2. Una entrada más en `aplicar.pasos` de `config/landing.yaml`, para que la
-   barra de arriba lo muestre.
-3. Decidir qué pasa con el plan de prueba, que no cobra: lo más simple es
-   saltarse el paso 5 cuando `precio_usd` es 0.
+Qué hace:
 
-**Nada de esto está probado con una transacción real.** La lista de la
-sección 3 sigue siendo la que bloquea el lanzamiento: el paso 5 es la
-interfaz del cobro, no el cobro.
+- Antes de tocar nada, guarda una copia completa en
+  `respaldos/migraciones/antes-de-migrar-<fecha>.db`, al lado de la base.
+  Esa carpeta queda fuera de la rotación de 7 respaldos, así que no se
+  borra sola.
+- Para cambiar el `CHECK` de `periodicidad`, SQLite obliga a reconstruir la
+  tabla `clientes`. Se hace con las claves foráneas apagadas: con ellas
+  prendidas, borrar la tabla vieja borraría en cascada todo el historial de
+  anuncios, reportes y competidores. Al final verifica que la cantidad de
+  clientes sea la misma y que no haya referencias rotas; si algo no cuadra,
+  deshace todo.
+- Un cliente que tenía `plan: custom`, o una cadencia distinta de la de su
+  periodicidad, pasa a `periodicidad = 'custom'`.
+- Es idempotente: correrla dos veces no hace nada la segunda.
 
-### 5. Lo legal y lo fiscal
+Se probó sobre una copia de la base real de la rama `datos`: las 7 tablas
+quedaron con la misma cantidad de filas y sin referencias rotas.
+
+En Railway no hace falta correrla: el servidor la corre al arrancar, con el
+mismo respaldo previo. Igual conviene bajar una copia de la base antes del
+deploy (ver `docs/11-servidor.md`).
+
+## 3. Configurar Paddle (primero en sandbox)
+
+Todo esto se hace dos veces: una en
+[sandbox-vendors.paddle.com](https://sandbox-vendors.paddle.com) y otra en
+la cuenta real. Los ids de un entorno no sirven en el otro.
+
+1. **Producto y precios.** Un producto "Reporte mensual" con dos precios
+   recurrentes: $25 cada mes y $240 cada año. Copie los ids (`pri_...`) en
+   `config/planes.yaml`:
+
+   ```yaml
+   autoservicio:
+     paddle:
+       sandbox:    { mensual: "pri_...", anual: "pri_..." }
+       production: { mensual: "",        anual: ""        }
+   ```
+
+2. **Client-side token.** *Developer tools → Authentication*. En sandbox
+   empieza con `test_`, en producción con `live_`. Va en
+   `PADDLE_CLIENT_TOKEN`.
+
+3. **Destino de notificaciones.** *Developer tools → Notifications → New
+   destination*:
+   - URL: `https://<su-dominio>/webhooks/paddle`
+   - Eventos: `subscription.created`, `subscription.updated`,
+     `subscription.activated`, `subscription.past_due`,
+     `subscription.paused`, `subscription.resumed`,
+     `subscription.canceled`, `transaction.completed`,
+     `transaction.payment_failed`.
+   - Copie el *secret key* del destino en `PADDLE_WEBHOOK_SECRET`.
+
+4. **Link de pago por defecto.** *Checkout → Checkout settings → Default
+   payment link*: `https://<su-dominio>/pagar`. Paddle lo exige para los
+   links de pago que se arman a mano (los del plan Custom): cuando el
+   cliente abre el link, Paddle lo manda a esa página con `?_ptxn=txn_...` y
+   la página abre el checkout.
+
+5. **Aprobación del dominio** (solo en producción). Paddle revisa el sitio
+   antes de dejarlo cobrar, y pide que tenga **precios visibles, Términos y
+   condiciones, Política de reembolso y Política de privacidad.** Esas tres
+   páginas **no existen todavía** en la landing, y son las que bloquean el
+   lanzamiento aunque todo lo demás funcione. El sandbox no pide aprobación.
+
+### Variables del servidor
+
+```
+PULSERIVAL_COBRO=paddle            # 'simulado' mientras tanto
+PADDLE_ENTORNO=sandbox             # 'production' solo después de la sección 6
+PADDLE_CLIENT_TOKEN=test_...
+PADDLE_WEBHOOK_SECRET=...          # el secret key del destino de notificaciones
+PULSERIVAL_SECRET=...              # ya existe; ahora también firma los links del checkout
+```
+
+Con `PULSERIVAL_COBRO=paddle`, `/salud` responde 500 y lista lo que falte
+(token, secreto, ids de precio, un token de un entorno usado en el otro)
+hasta que todo esté. Es la forma de saber que la configuración está completa
+sin probar un pago.
+
+## 4. Cómo funciona el cobro, de punta a punta
+
+**Plan mensual (autoservicio):**
+
+1. La persona llena el formulario de `/aplicar` y elige mes a mes o anual.
+2. Se crea el cliente en `pendiente_pago` y se la manda a
+   `/checkout/<id>?t=<firma>`. La firma impide que alguien cambie el número
+   y vea o pague el checkout de otro cliente.
+3. Esa página abre el checkout de Paddle con el precio del ciclo elegido y
+   manda el id del cliente (firmado) en `customData`.
+4. Paddle cobra y avisa al webhook. El cliente pasa a `activa` y desde ese
+   momento el ciclo lo incluye.
+5. La persona vuelve a `/gracias/<id>`, que se recarga sola hasta que llegue
+   la confirmación de Paddle.
+
+**Qué hace cada evento:**
+
+| Evento | Efecto |
+|---|---|
+| `transaction.completed` | Pago exitoso (alta o renovación): `pendiente_pago` o `vencida` → `activa`. |
+| `subscription.*` | El estado de la suscripción manda: `active` → `activa`, `past_due` → `vencida`, `paused` → `pausada`, `canceled` → `cancelada`. |
+| `transaction.payment_failed` | No cambia nada. En el checkout es una tarjeta rechazada que la persona reintenta; en una renovación Paddle avisa aparte con `subscription.past_due`. |
+
+Solo `activa` recibe reportes y consume scraper. Una cancelación "al final
+del periodo" no corta el servicio de inmediato: Paddle mantiene la
+suscripción `active` hasta la fecha y recién ahí manda `canceled`.
+
+**Cosas que el webhook resuelve solo:**
+
+- Paddle puede mandar el mismo evento dos veces: se registra cada `event_id`
+  en `eventos_pago` y el repetido se ignora.
+- Paddle no garantiza el orden: un evento que ocurrió antes que el último
+  aplicado no pisa el estado.
+- Un evento sin firma válida se rechaza con 400. Un evento que no se puede
+  asociar a un cliente se guarda en `eventos_pago` como `sin_cliente` para
+  revisarlo a mano.
+
+Todo lo que entra queda en la tabla `eventos_pago`, con el cuerpo completo.
+Es lo primero que hay que mirar si un cliente dice que pagó y no le llega
+nada:
+
+```bash
+sqlite3 /datos/pulserival.db \
+  "SELECT recibido_en, tipo, cliente_id, resultado, detalle FROM eventos_pago ORDER BY recibido_en DESC LIMIT 20"
+```
+
+**`clientes.yaml` ya no manda sobre los que pagan por Paddle.** Para un
+cliente con suscripción de Paddle, `aplicar-config` no toca su estado, su
+ciclo ni su pasarela, y no lo desactiva por no estar en el YAML.
+
+## 5. El plan Custom, a mano
+
+No tiene checkout ni automatización de alta. El flujo es:
+
+1. Conversación con la agencia (el botón "Conversemos" de la landing lleva a
+   WhatsApp o al correo de `config/landing.yaml`).
+2. En el panel de Paddle, cree un precio recurrente con el monto y la
+   frecuencia de cobro acordados, y una transacción con ese precio. Paddle
+   le da un link de pago con la forma
+   `https://<su-dominio>/pagar?_ptxn=txn_...`. Guarde el `txn_...`.
+3. Registrar al cliente:
+
+   ```bash
+   python -m pulserival.cli clientes agregar \
+     --empresa "Agencia Norte" --email cuentas@agencia.test \
+     --plan custom --cadencia-dias 2 --precio 300 \
+     --paddle-transaccion txn_01abc...
+   ```
+
+   Queda en `pendiente_pago`. Cuando la agencia paga el link, Paddle avisa
+   con ese `txn_...`, el webhook lo encuentra y lo activa. Las renovaciones
+   siguen solas.
+
+4. Cargar sus competidores con `competidores agregar`, como siempre. Un
+   cliente sin competidores no genera reporte aunque esté pagando.
+
+Si el link se arma después, se agrega con
+`clientes editar --id <id> --paddle-transaccion txn_...`. Sin ese id el
+webhook no sabe que el pago es de este cliente: queda como `sin_cliente` en
+`eventos_pago` y hay que activarlo con `clientes activar`.
+
+### Limitación conocida: la cadencia del Custom
+
+**Hoy el sistema no cumple una cadencia menor a 7 días.** El ciclo corre
+cada `PULSERIVAL_CICLO_CADA_DIAS` (7 por defecto) para **todos** los
+clientes juntos. Un Custom "cada 2 días" registrado hoy recibe un reporte
+por semana.
+
+La única forma de cumplirlo sin código nuevo es `PULSERIVAL_CICLO_CADA_DIAS=1`,
+que recolecta **todos** los clientes todos los días: unas 7 veces el gasto de
+Apify. La solución real es la cola de trabajos por cliente con fecha límite,
+que quedó fuera de este cambio. **No venda un Custom de menos de 7 días hasta
+que exista.** El CLI avisa cuando se registra uno.
+
+## 6. Lo que falta probar antes de cobrar de verdad
+
+Nada de esto está probado. Los tests usan eventos armados a mano con la
+misma firma que usa Paddle, pero **ningún evento real de Paddle llegó todavía
+al servidor.** En este orden:
+
+**En sandbox** (tarjeta de prueba de Paddle, no se cobra nada):
+
+- [ ] `/salud` en 200 con `PULSERIVAL_COBRO=paddle` y `PADDLE_ENTORNO=sandbox`.
+- [ ] Mandar un evento de prueba al destino desde el panel de Paddle (la
+      sección de notificaciones permite simular eventos). Tiene que aparecer
+      en `eventos_pago` (como `sin_cliente`, porque es un cliente inventado).
+      Si el servidor responde 400, el secreto está mal.
+- [ ] Alta completa por la web con el plan **mes a mes**: formulario →
+      checkout → pago → `/gracias` pasa a "activo" sola. Confirmar en
+      `clientes lista` el estado `activa`, ciclo `mensual` y el `sub_...`.
+- [ ] Lo mismo con el **anual**: ciclo `anual`, $240.
+- [ ] Una **tarjeta rechazada** (busque en la documentación de Paddle las
+      tarjetas de prueba del sandbox que se rechazan): el cliente tiene que
+      quedar en `pendiente_pago`.
+- [ ] **Cancelar** la suscripción desde el panel de Paddle, efectiva de
+      inmediato: el cliente pasa a `cancelada` y deja de entrar al ciclo.
+- [ ] Un **Custom** con link de pago hecho a mano y `--paddle-transaccion`:
+      al pagarlo, se activa solo.
+- [ ] Una **renovación**: confirmar que llega `transaction.completed` y el
+      cliente sigue `activa`. Con el precio mensual eso es esperar un mes; para
+      no esperar, cree en sandbox un precio de prueba que cobre cada día.
+- [ ] Un **cobro fallido en la renovación**: tiene que pasar a `vencida`.
+      Mismo truco: un precio diario y una tarjeta que se rechace.
+
+**En producción**, con el dominio ya aprobado:
+
+- [ ] Una compra real con una tarjeta propia, en el plan mensual, usando la
+      landing tal como queda publicada.
+- [ ] Confirmar que el dinero llega a la cuenta de Paddle y cuánto se queda
+      Paddle de comisión en un cobro de $25 y en uno de $240. El argumento
+      del anual depende de esa diferencia.
+- [ ] **El segundo cobro, un mes después.** Es la única prueba que no se
+      puede hacer el mismo día, y la única que distingue una suscripción de
+      un pago único.
+- [ ] Hacer el reembolso de esa compra desde Paddle, para saber cómo se hace
+      antes de necesitarlo. Ojo: **un reembolso no desactiva al cliente**
+      (el webhook no escucha `adjustment.*`). Si se reembolsa, hay que
+      cancelar también la suscripción.
+- [ ] Bajar una copia de la base y confirmar que `eventos_pago` tiene los
+      eventos de esa compra.
+
+## 7. Lo legal y lo fiscal
 
 Fuera del alcance de este código, pero bloquea el lanzamiento igual:
-facturación electrónica, condiciones del servicio, y qué pasa con los datos
-del cliente si se da de baja.
 
-## Cómo se opera, día a día
+- Las tres páginas que Paddle pide para aprobar el dominio: **Términos y
+  condiciones, Política de reembolso, Política de privacidad.**
+- Qué pasa con los datos del cliente si se da de baja.
+- Cómo se declaran en Costa Rica los ingresos que Paddle le transfiere.
+  Eso es para su contador, no para este documento.
 
-**Cuando alguien pide la prueba gratis** (llega por WhatsApp desde la
-landing):
+## 8. Cómo se opera, día a día
+
+**Ver quién pagó y en qué estado está:**
 
 ```bash
-python3 -m pulserival.cli clientes agregar \
-  --empresa "Cafetería X" --email persona@ejemplo.com \
-  --plan prueba --industria "cafeterías" \
-  --notas "Contexto que mandó por WhatsApp, 3-4 líneas"
-
-python3 -m pulserival.cli competidores agregar --cliente <id> \
-  --nombre "Competidor 1" --meta-pagina "https://facebook.com/..." \
-  --google-dominio "competidor.co.cr"
+python -m pulserival.cli clientes lista
 ```
 
-Antes de confirmarle nada, verifique que el competidor sí esté pautando:
+Muestra plan, periodicidad, cadencia, ciclo, estado y el estado que reporta
+Paddle.
+
+**Activar a mano** (un pago que llegó por otra vía, o un evento `sin_cliente`):
 
 ```bash
-python3 -m pulserival.cli prueba-scraper --consulta "Competidor 1" --limite 10
+python -m pulserival.cli clientes activar --id <id> --referencia "txn_..."
 ```
 
-Si devuelve cero, avísele al cliente de entrada en vez de que se entere
-cuando le llegue un reporte vacío.
+**Dar de baja a alguien que paga por Paddle:** cancelar la suscripción en el
+panel de Paddle. El webhook lo pasa a `cancelada`. Desactivarlo solo en la
+base no detiene los cobros.
 
-**Cuando alguien paga:** la pasarela le avisa. Usted confirma en su panel y
-activa:
-
-```bash
-python3 -m pulserival.cli clientes activar --id <id> \
-  --referencia "ONVO sub_abc123" --pago-proveedor onvopay
-```
-
-Hasta que corra eso, el cliente queda en `pendiente_pago` y **no** recibe
-reportes ni consume scraper. Eso es a propósito: nadie recibe el producto
-antes de pagarlo.
-
-**Cuando alguien se da de baja:**
+**Dar de baja a alguien sin Paddle:**
 
 ```bash
-python3 -m pulserival.cli clientes editar --id <id> --activo 0
+python -m pulserival.cli clientes editar --id <id> --activo 0
 ```
 
 Se desactiva, no se borra: el historial de anuncios es lo que permite decir
 "esto es nuevo" si vuelve.
 
-## Cuándo conviene pasar al servidor
+## Fuentes
 
-Cuando activar a mano empiece a doler. Concretamente:
+Lo que este documento y el código dicen sobre Paddle sale de su
+documentación:
 
-- más de 10-15 clientes, o
-- varias altas por semana, o
-- alguien más además de usted operando el sistema.
-
-Ahí se levanta el servidor (Railway, ~$5/mes), se mueve la base al disco
-persistente, y se agregan las dos cosas que hoy no existen: el webhook que
-activa solo y el panel web. El pipeline no cambia: `config.ruta_db()` ya lee
-`PULSERIVAL_DB`, así que apunta al disco nuevo sin tocar código.
-
-Mientras tanto, el cron sigue en GitHub Actions, que funciona igual con 1
-cliente que con 50.
+- Firma de los webhooks: <https://developer.paddle.com/webhooks/signature-verification>
+- Responder a tiempo y reintentos: <https://developer.paddle.com/webhooks/about/respond-to-webhooks>
+- Entrega, duplicados y orden: <https://developer.paddle.com/webhooks/about/how-webhooks-work>
+- `subscription.created`: <https://developer.paddle.com/webhooks/subscriptions/subscription-created>
+- `customData`: <https://developer.paddle.com/build/transactions/custom-data/>
+- `Paddle.Checkout.open()`: <https://developer.paddle.com/paddle-js/methods/paddle-checkout-open/>
+- `Paddle.Environment.set()`: <https://developer.paddle.com/paddle-js/methods/paddle-environment-set/>
+- Link de pago por defecto: <https://developer.paddle.com/build/transactions/default-payment-link>
+- Aprobación del dominio: <https://www.paddle.com/help/start/account-verification/what-is-domain-verification>

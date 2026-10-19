@@ -15,21 +15,49 @@ CREATE TABLE IF NOT EXISTS clientes (
     contacto_nombre   TEXT,
     contacto_email    TEXT    NOT NULL,
     contacto_whatsapp TEXT,
+    -- 'custom' es cualquier cadencia que no sea semana o mes: la dice
+    -- `cadencia_dias`. Con eso este enum queda completo para siempre: una
+    -- cadencia nueva (quincenal, diaria) es 'custom' + N días, no un valor
+    -- nuevo acá. Importa porque SQLite no sabe cambiar un CHECK sin
+    -- reconstruir la tabla (ver db._reconstruir_clientes).
     periodicidad      TEXT    NOT NULL DEFAULT 'semanal'
-                              CHECK (periodicidad IN ('semanal','mensual')),
+                              CHECK (periodicidad IN ('semanal','mensual','custom')),
     -- Plan vendido. El catálogo (precios, qué incluye) vive en
     -- config/planes.yaml; acá solo queda la clave. Sin CHECK a propósito:
     -- agregar un plan nuevo no debería necesitar reconstruir la tabla, y
     -- los valores válidos se validan en Python (planes.PLANES_VALIDOS).
     plan              TEXT,                       -- prueba|mensual|semanal|custom
     estado_suscripcion TEXT,                      -- ver planes.ESTADOS_VALIDOS
-    -- Cada cuántos días toca reporte. Cuando está, manda sobre
-    -- `periodicidad`: es lo que hace posible el plan a la medida sin
-    -- tener que meter valores nuevos en el CHECK de arriba.
-    cadencia_dias     INTEGER,
+    -- Cada cuántos días toca reporte. Solo existe con periodicidad 'custom'
+    -- (lo exige el CHECK del final): en semanal y mensual la cadencia ya la
+    -- dice la periodicidad, y tener dos lugares que digan cada cuánto deja
+    -- la puerta abierta a que digan cosas distintas.
+    cadencia_dias     INTEGER CHECK (cadencia_dias IS NULL OR cadencia_dias >= 1),
     precio_mensual_usd REAL,                      -- lo acordado con ESTE cliente
-    pago_proveedor    TEXT,                       -- tilopay|onvopay|manual
-    pago_referencia   TEXT,                       -- id de suscripción o comprobante
+    pago_proveedor    TEXT,                       -- paddle|manual
+    pago_referencia   TEXT,                       -- comprobante a mano (transferencia, etc.)
+    -- Cómo paga el plan de autoservicio: mensual|anual. NULL en Custom (se
+    -- cobra con un link armado a mano) y en los clientes de antes de Paddle.
+    -- Sin CHECK a propósito, igual que `plan`: un ciclo nuevo (trimestral)
+    -- no debería obligar a reconstruir la tabla. Se valida en Python.
+    ciclo_facturacion TEXT,
+    -- ── Paddle ──────────────────────────────────────────────────────
+    -- Lo escribe el webhook, no una persona: ver pulserival/pagos.py.
+    -- El estado de Paddle se guarda tal cual (active, past_due, paused,
+    -- canceled, trialing) y aparte de `estado_suscripcion`, que es el
+    -- nuestro y el que decide si se reporta. Separarlos permite saber qué
+    -- dijo Paddle aunque la traducción cambie.
+    paddle_suscripcion_id TEXT UNIQUE,            -- sub_...
+    paddle_cliente_id     TEXT,                   -- ctm_...
+    -- txn_... del link de pago armado a mano (Custom) o del primer checkout.
+    -- Es lo que permite reconocer al cliente cuando el pago llega por un
+    -- link que no pasó por nuestro formulario.
+    paddle_transaccion_id TEXT UNIQUE,
+    paddle_estado         TEXT,
+    -- occurred_at del último evento aplicado. Paddle no garantiza el orden
+    -- de entrega: sin esto, un "activa" viejo que llega tarde pisaría un
+    -- "cancelada" nuevo.
+    paddle_actualizado_en TEXT,
     dia_envio         TEXT    DEFAULT 'martes',   -- día preferido de entrega
     industria         TEXT,
     notas             TEXT,                       -- contexto que mejora el reporte
@@ -38,7 +66,9 @@ CREATE TABLE IF NOT EXISTS clientes (
     -- cambiar, y un CHECK obligaría a reconstruir la tabla cada vez.
     origen            TEXT,
     activo            INTEGER NOT NULL DEFAULT 1,
-    creado_en         TEXT    NOT NULL DEFAULT (datetime('now'))
+    creado_en         TEXT    NOT NULL DEFAULT (datetime('now')),
+    CHECK ((periodicidad = 'custom' AND cadencia_dias IS NOT NULL)
+        OR (periodicidad <> 'custom' AND cadencia_dias IS NULL))
 );
 
 -- ── 2. COMPETIDORES SEGUIDOS ────────────────────────────────────────
@@ -186,3 +216,22 @@ CREATE TABLE IF NOT EXISTS uso_ia (
     exito          INTEGER DEFAULT 1,
     detalle        TEXT
 );
+
+-- ── EVENTOS DE PAGO ─────────────────────────────────────────────────
+-- Cada notificación de Paddle que llegó, se haya aplicado o no. Es lo que
+-- hace idempotente al webhook (Paddle entrega "al menos una vez": el mismo
+-- evento puede llegar dos veces) y lo que permite responder, meses después,
+-- por qué un cliente quedó vencido.
+CREATE TABLE IF NOT EXISTS eventos_pago (
+    event_id     TEXT PRIMARY KEY,                -- evt_... de Paddle
+    proveedor    TEXT NOT NULL DEFAULT 'paddle',
+    tipo         TEXT NOT NULL,                   -- subscription.canceled, ...
+    ocurrido_en  TEXT,                            -- occurred_at, según Paddle
+    recibido_en  TEXT NOT NULL DEFAULT (datetime('now')),
+    -- SET NULL y no CASCADE: el historial de cobros no se borra con el cliente.
+    cliente_id   INTEGER REFERENCES clientes(id) ON DELETE SET NULL,
+    resultado    TEXT NOT NULL,                   -- aplicado|viejo|sin_cliente|sin_efecto
+    detalle      TEXT,
+    payload      TEXT NOT NULL                    -- el cuerpo tal cual llegó
+);
+CREATE INDEX IF NOT EXISTS idx_eventos_pago_cliente ON eventos_pago(cliente_id);

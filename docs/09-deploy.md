@@ -82,7 +82,7 @@ PULSERIVAL_DB=/datos/pulserival.db     # dentro del disco persistente
 PULSERIVAL_PANEL_CLAVE=...             # sin esto el panel no se sirve
 PULSERIVAL_SECRET=...                  # firma la cookie de sesión del panel
 PULSERIVAL_HTTPS=1                     # la cookie solo viaja por HTTPS
-PULSERIVAL_COBRO=simulado              # 'real' cuando haya pasarela
+PULSERIVAL_COBRO=simulado              # 'paddle' para cobrar (docs/08)
 PULSERIVAL_VERIFICAR_ALTA=0            # 1 para verificar al dar de alta (gasta)
 
 APIFY_TOKEN=...                        # sin esto no hay datos reales
@@ -183,13 +183,11 @@ todavía**.
 
 ## Qué NO está hecho
 
-- **El webhook de la pasarela.** Hoy el cobro es simulado. Con
-  `PULSERIVAL_COBRO=real` el checkout manda al enlace de pago y la confirmación
-  por navegador queda bloqueada (403), pero todavía no existe el endpoint que
-  recibe la notificación y activa solo. Hasta que exista se activa a mano:
-  `cli clientes activar --id N --referencia "<comprobante>"`.
-  Ver `docs/08-cobro-y-lanzamiento.md` para qué falta probar con una transacción
-  real.
+- **El cobro no está probado con plata real.** El webhook de Paddle existe
+  (`POST /webhooks/paddle`) y activa solo, pero solo se probó con eventos
+  armados por los tests. Ver `docs/08-cobro-y-lanzamiento.md` para qué falta
+  probar antes de cobrar, y por qué el webhook necesita el servidor y no
+  Vercel.
 - **El panel no administra clientes ni dispara el ciclo.** Eso sigue por CLI, a
   propósito: un botón que gasta plata de Apify es un botón que se aprieta sin
   pensar.

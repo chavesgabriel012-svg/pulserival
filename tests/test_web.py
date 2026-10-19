@@ -1,4 +1,5 @@
-"""La capa web: landing, alta y cobro simulado.
+"""La capa web: landing, alta y cobro simulado. El webhook de Paddle tiene
+su propio archivo: tests/test_paddle.py.
 
 Lo que más importa probar acá no es que las páginas carguen, sino que un
 formulario público no pueda saltarse los seguros: activarse solo, gastar
@@ -30,7 +31,7 @@ class CasoWeb(CasoBase):
     def alta(self, **cambios):
         datos = {
             "empresa": "Ferretería El Tornillo", "contacto": "Ana",
-            "email": "ana@tornillo.test", "plan": "semanal",
+            "email": "ana@tornillo.test", "plan": "autoservicio", "ciclo": "mensual",
             "industria": "ferreterías", "contexto": "Tres sucursales.",
             "comp1": "EPA", "fb1": "facebook.com/EPACostaRica", "web1": "epa.cr",
         }
@@ -50,10 +51,34 @@ class TestLandingServida(CasoWeb):
         self.assertNotIn("<form", texto)
         self.assertIn("/aplicar", texto)
 
-    def test_la_pagina_de_aplicar_carga_con_el_plan_de_la_url(self):
-        r = self.cliente_web.get("/aplicar?plan=semanal")
+    def test_la_pagina_de_aplicar_carga_con_el_ciclo_de_la_url(self):
+        # El botón del anual de la portada lleva a ?ciclo=anual: si el
+        # formulario llegara con el mensual puesto, se pagaría otro precio.
+        r = self.cliente_web.get("/aplicar?ciclo=anual")
         self.assertEqual(r.status_code, 200)
-        self.assertIn('value="semanal" selected', r.get_data(as_text=True))
+        self.assertIn('value="anual" selected', r.get_data(as_text=True))
+
+    def test_un_plan_que_no_se_vende_en_la_web_no_se_puede_contratar(self):
+        # El POST lo arma cualquiera: sin este control, alguien se da de
+        # alta en el Custom o en la prueba gratis que ya no se ofrece.
+        for plan in ("custom", "prueba", "semanal"):
+            with self.subTest(plan=plan):
+                r = self.alta(plan=plan)
+                self.assertEqual(r.status_code, 400)
+        self.assertEqual(db.filas(self.con, "SELECT * FROM clientes"), [])
+
+    def test_no_acepta_mas_competidores_que_los_del_plan(self):
+        extra = {f"comp{n}": f"Competidor {n}" for n in range(1, 6)}
+        extra.update({f"web{n}": f"c{n}.cr" for n in range(1, 6)})
+        r = self.alta(**extra)
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("hasta 4", r.get_data(as_text=True))
+
+    def test_el_alta_guarda_el_ciclo_elegido(self):
+        self.alta(ciclo="anual")
+        fila = db.fila(self.con, "SELECT * FROM clientes ORDER BY id DESC LIMIT 1")
+        self.assertEqual(fila["ciclo_facturacion"], "anual")
+        self.assertEqual(fila["plan"], "autoservicio")
 
     def test_un_plan_inexistente_en_la_url_no_rompe(self):
         r = self.cliente_web.get("/aplicar?plan=inventado")
@@ -170,33 +195,39 @@ class TestAlta(CasoWeb):
 
 
 class TestCobroSimulado(CasoWeb):
-    def _dar_de_alta(self):
-        self.alta()
-        return int(db.fila(self.con, "SELECT id FROM clientes ORDER BY id DESC")["id"])
+    def _dar_de_alta(self) -> tuple[int, str]:
+        """El id del cliente y la URL firmada a la que lo manda el alta."""
+        r = self.alta()
+        cid = int(db.fila(self.con, "SELECT id FROM clientes ORDER BY id DESC")["id"])
+        return cid, r.headers["Location"]
+
+    def _firma(self, url: str) -> str:
+        return url.split("t=", 1)[1]
 
     def test_el_checkout_avisa_que_es_simulado(self):
         # Si no lo dijera, alguien podría creer que cobró de verdad.
-        cid = self._dar_de_alta()
-        h = self.cliente_web.get(f"/checkout/{cid}").get_data(as_text=True)
+        _, url = self._dar_de_alta()
+        h = self.cliente_web.get(url).get_data(as_text=True)
         self.assertIn("Cobro simulado", h)
 
     def test_confirmar_activa_la_suscripcion(self):
-        cid = self._dar_de_alta()
-        self.cliente_web.post(f"/checkout/{cid}/confirmar")
+        cid, url = self._dar_de_alta()
+        self.cliente_web.post(f"/checkout/{cid}/confirmar", data={"t": self._firma(url)})
         fila = db.fila(self.con, "SELECT * FROM clientes WHERE id = ?", (cid,))
         self.assertEqual(fila["estado_suscripcion"], "activa")
         self.assertEqual(fila["pago_referencia"], "SIMULADO")
 
     def test_con_cobro_real_el_navegador_no_puede_activar(self):
-        # Con la pasarela conectada, quien activa es su webhook. Si este POST
+        # Con Paddle conectado, quien activa es su webhook. Si este POST
         # siguiera funcionando, cualquiera se activaría solo escribiendo la
         # URL a mano.
         import os
 
-        cid = self._dar_de_alta()
-        os.environ["PULSERIVAL_COBRO"] = "real"
+        cid, url = self._dar_de_alta()
+        os.environ["PULSERIVAL_COBRO"] = "paddle"
         try:
-            r = self.cliente_web.post(f"/checkout/{cid}/confirmar")
+            r = self.cliente_web.post(f"/checkout/{cid}/confirmar",
+                                      data={"t": self._firma(url)})
             self.assertEqual(r.status_code, 403)
             fila = db.fila(self.con, "SELECT * FROM clientes WHERE id = ?", (cid,))
             self.assertEqual(fila["estado_suscripcion"], "pendiente_pago")
@@ -205,6 +236,25 @@ class TestCobroSimulado(CasoWeb):
 
     def test_un_cliente_que_no_existe_da_404(self):
         self.assertEqual(self.cliente_web.get("/checkout/9999").status_code, 404)
+
+    def test_sin_la_firma_no_se_ve_el_checkout_de_nadie(self):
+        # Antes era /checkout/1, /checkout/2...: cambiando el número se veían
+        # el correo y los competidores de otro cliente. 404 y no 403, para no
+        # confirmar que el id existe.
+        cid, url = self._dar_de_alta()
+        for ruta in (f"/checkout/{cid}", f"/checkout/{cid}?t=cualquiera",
+                     f"/gracias/{cid}", f"/gracias/{cid}?t=cualquiera"):
+            with self.subTest(ruta=ruta):
+                r = self.cliente_web.get(ruta)
+                self.assertEqual(r.status_code, 404)
+                self.assertNotIn("ana@tornillo.test", r.get_data(as_text=True))
+
+    def test_la_firma_de_un_cliente_no_abre_el_de_otro(self):
+        cid, url = self._dar_de_alta()
+        self.alta(empresa="Otra Ferretería", email="otro@ejemplo.test")
+        otro = int(db.fila(self.con, "SELECT id FROM clientes ORDER BY id DESC")["id"])
+        r = self.cliente_web.get(f"/checkout/{otro}?t={self._firma(url)}")
+        self.assertEqual(r.status_code, 404)
 
 
 class TestVerificacionDeCompetidores(CasoWeb):

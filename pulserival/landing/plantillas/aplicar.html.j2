@@ -99,6 +99,8 @@
   .resumen .dato:first-of-type { border-top:1px solid var(--linea); margin-top:18px; }
   .resumen .dato .clave { color:var(--gris-texto); }
   .resumen .dato .valor { font-family:var(--display); font-weight:600; text-align:right; }
+  .resumen .ahorro { font-size:14.5px; color:var(--pulso-texto); margin:8px 0 0;
+                     line-height:1.45; }
   .resumen .cambiar { display:inline-block; font-size:14px; color:var(--pulso-texto);
                       margin-top:18px; }
   .resumen .cobro { margin-top:20px; padding-top:18px; border-top:1px solid var(--linea);
@@ -134,7 +136,7 @@
 {% endblock %}
 
 {% block navegacion %}
-  <a href="{{ inicio_url }}#planes">Ver los planes</a>
+  <a href="{{ inicio_url }}#planes">Ver el plan</a>
 {% endblock %}
 
 {% block contenido %}
@@ -145,7 +147,12 @@
     <p>{{ aplicar.nota }}</p>
   </div>
 
-  <div class="columnas{% if not plan_elegido %} sola{% endif %}">
+  {# El plan que se contrata desde acá. Hoy es uno solo; si algún día hay más
+     de uno con checkout, aparece el selector de plan. #}
+  {% set plan_form = (planes_checkout | selectattr("clave", "equalto", plan_elegido) | first)
+                     or (planes_checkout | first) %}
+  {% set ciclos = (plan_form.ciclos if plan_form else {}) or {} %}
+  <div class="columnas{% if not plan_form %} sola{% endif %}">
     <form id="alta" novalidate{% if modo_servidor %} method="post" action="{{ accion_alta }}"{% endif %}>
 
       {# La barra de pasos. Sin JavaScript no se muestra: ahi el formulario es
@@ -175,21 +182,36 @@
           </div>
         </div>
         <div class="fila">
+          {% if planes_checkout | length > 1 %}
           <div class="campo">
             <label for="plan">Plan</label>
             <select id="plan" name="plan">
-              {% for p in planes %}
-              <option value="{{ p.clave }}"{% if p.clave == plan_elegido %} selected{% endif %}>
-                {{ p.nombre }}{% if p.precio_usd %} — ${{ p.precio_usd }}/mes
-                {%- elif p.precio_usd == 0 %} — sin costo{% endif %}
+              {% for p in planes_checkout %}
+              <option value="{{ p.clave }}"{% if plan_form and p.clave == plan_form.clave %} selected{% endif %}>
+                {{ p.nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% elif plan_form %}
+          <input type="hidden" name="plan" value="{{ plan_form.clave }}">
+          {% endif %}
+          {% if ciclos %}
+          <div class="campo">
+            <label for="ciclo">Cómo prefiere pagar</label>
+            <select id="ciclo" name="ciclo">
+              {% for clave, c in ciclos.items() %}
+              <option value="{{ clave }}"{% if clave == ciclo_elegido %} selected{% endif %}>
+                {{ c.nombre }} — {{ c.cobro_texto }}
+                {%- if c.equivale_mes_usd %} (${{ '%g' % c.equivale_mes_usd }} al mes){% endif %}
               </option>
               {% endfor %}
             </select>
           </div>
-          <div class="campo">
-            <label for="industria">Industria</label>
-            <input id="industria" name="industria" placeholder="En sus palabras">
-          </div>
+          {% endif %}
+        </div>
+        <div class="campo">
+          <label for="industria">Industria</label>
+          <input id="industria" name="industria" placeholder="En sus palabras">
         </div>
       </div>
 
@@ -215,7 +237,7 @@
           {{ aplicar.competidores.explicacion }}
         </div>
         <p class="bajada">{{ aplicar.competidores.ayuda }}</p>
-        {% for n in [1, 2, 3] %}
+        {% for n in range(1, ((plan_form.competidores_max if plan_form else 0) or 3) + 1) %}
         <div class="competidor">
           <div class="campo">
             <label for="comp{{ n }}">Competidor {{ n }}</label>
@@ -271,37 +293,44 @@
     </form>
 
     <div class="lado">
-      {% for p in planes %}
-      <aside class="resumen sube" data-plan="{{ p.clave }}"
-             {% if p.clave != plan_elegido %}hidden{% endif %}>
+      {% if plan_form %}
+      {% for clave, c in (ciclos.items() if ciclos else [(None, {})]) %}
+      <aside class="resumen sube" {% if clave %}data-ciclo="{{ clave }}"{% endif %}
+             {% if clave and clave != ciclo_elegido %}hidden{% endif %}>
         <p class="rotulo">Su plan</p>
-        <p class="nombre">{{ p.nombre }}</p>
-        {% if p.precio_usd is none %}
-          <p class="precio">A convenir</p>
-        {% elif p.precio_usd == 0 %}
-          <p class="precio">Sin costo</p>
-        {% else %}
-          <p class="precio">${{ p.precio_usd }}<span> / mes</span></p>
+        <p class="nombre">{{ plan_form.nombre }}</p>
+        {% if c.precio_usd is defined %}
+          <p class="precio">${{ '%g' % c.precio_usd }}<span> / {{ 'año' if clave == 'anual' else 'mes' }}</span></p>
+          {% if c.equivale_mes_usd %}
+          <p class="ahorro">Equivale a ${{ '%g' % c.equivale_mes_usd }} al mes:
+            ${{ '%g' % c.ahorro_usd }} menos al año que pagando mes a mes.</p>
+          {% endif %}
+        {% elif plan_form.precio_usd %}
+          <p class="precio">${{ '%g' % plan_form.precio_usd }}<span> / mes</span></p>
         {% endif %}
         <div class="dato">
           <span class="clave">Frecuencia</span>
-          <span class="valor">{{ p.cadencia_texto or '—' }}</span>
+          <span class="valor">{{ plan_form.cadencia_texto or '—' }}</span>
         </div>
         <div class="dato">
           <span class="clave">Competidores</span>
           <span class="valor">
-            {%- if p.competidores_max %}Hasta {{ p.competidores_max }}
+            {%- if plan_form.competidores_max %}Hasta {{ plan_form.competidores_max }}
             {%- else %}Sin tope{% endif -%}
           </span>
         </div>
-        <a class="cambiar" href="{{ inicio_url }}#planes">Comparar los planes</a>
+        <a class="cambiar" href="{{ inicio_url }}#planes">Ver el plan</a>
         <p class="cobro">
-          {% if p.precio_usd %}El cobro todavía no está conectado. Al
-          enviar la solicitud coordinamos el pago con usted antes de activar nada.
-          {% else %}No se le pide tarjeta ni datos de pago.{% endif %}
+          {% if not modo_servidor %}Al enviar coordinamos el pago con usted antes
+          de activar nada.
+          {% elif simulado %}El cobro todavía no está conectado. Al enviar la
+          solicitud coordinamos el pago con usted antes de activar nada.
+          {% else %}Al enviar pasa al pago, que procesa Paddle. Su cuenta se
+          activa cuando el pago se confirma.{% endif %}
         </p>
       </aside>
       {% endfor %}
+      {% endif %}
     </div>
   </div>
 </div>
@@ -457,20 +486,20 @@
 </script>
 
 <script>
-// El plan viaja en la URL desde el boton de cada plan de la portada. En el
-// servidor ya viene elegido de vuelta; en la version estatica no hay quien lea
-// la URL, asi que se lee aca: si no, la persona elige un plan en la portada y
-// llega al formulario con otro puesto, sin enterarse.
+// El ciclo de pago viaja en la URL desde los botones de la portada (mes a mes
+// o anual). En el servidor ya viene elegido de vuelta; en la version estatica
+// no hay quien lea la URL, asi que se lee aca: si no, la persona elige el
+// anual en la portada y llega al formulario con el mensual puesto.
 (function () {
   var columnas = document.querySelector('.columnas');
-  var seleccion = document.getElementById('plan');
-  var resumenes = document.querySelectorAll('.resumen[data-plan]');
+  var seleccion = document.getElementById('ciclo');
+  var resumenes = document.querySelectorAll('.resumen[data-ciclo]');
   if (!columnas || !seleccion) { return; }
 
   function mostrar(clave) {
     var visible = false;
     for (var i = 0; i < resumenes.length; i++) {
-      var coincide = resumenes[i].getAttribute('data-plan') === clave;
+      var coincide = resumenes[i].getAttribute('data-ciclo') === clave;
       resumenes[i].hidden = !coincide;
       if (coincide) { visible = true; }
     }
@@ -483,7 +512,7 @@
     var partes = consulta.substring(1).split('&');
     for (var j = 0; j < partes.length; j++) {
       var par = partes[j].split('=');
-      if (par[0] === 'plan') { pedido = decodeURIComponent(par[1] || ''); }
+      if (par[0] === 'ciclo') { pedido = decodeURIComponent(par[1] || ''); }
     }
   }
   if (pedido) {
@@ -518,7 +547,7 @@
     var l = [];
     l.push('Solicitud de reporte — ' + v('empresa'));
     l.push('');
-    l.push('Plan: ' + v('plan'));
+    l.push('Plan: ' + v('plan') + (v('ciclo') ? ' (pago ' + v('ciclo') + ')' : ''));
     l.push('Contacto: ' + v('contacto') + ' · ' + v('email'));
     if (v('industria')) { l.push('Industria: ' + v('industria')); }
     if (v('contexto')) { l.push(''); l.push('Contexto: ' + v('contexto')); }

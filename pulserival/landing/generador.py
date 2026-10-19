@@ -27,10 +27,17 @@ def contexto() -> dict[str, Any]:
 
     datos = dict(config.config_landing())
     datos["planes"] = list(config.config_planes().get("planes") or [])
+    # La landing muestra solo los visibles y el formulario ofrece solo los que
+    # se cobran desde la web. Los ocultos siguen en `planes`: los clientes
+    # que ya los tienen conservan precio y cadencia.
+    datos["planes_visibles"] = [p for p in datos["planes"] if p.get("visible", True)]
+    datos["planes_checkout"] = [p for p in datos["planes_visibles"] if p.get("checkout")]
     # El mismo plan que trae seleccionado el formulario: el resumen de al
     # lado tiene que decir lo mismo que el selector antes de que corra el JS.
-    if datos["planes"]:
-        datos.setdefault("plan_elegido", datos["planes"][0].get("clave"))
+    if datos["planes_checkout"]:
+        primero = datos["planes_checkout"][0]
+        datos.setdefault("plan_elegido", primero.get("clave"))
+        datos.setdefault("ciclo_elegido", next(iter(primero.get("ciclos") or {}), None))
     datos.setdefault("marca", "PulseRival")
     datos.setdefault("contacto", {})
     # El mismo wordmark que va en el correo: una sola fuente para el logo.
@@ -108,17 +115,14 @@ def pendientes() -> list[str]:
     faltan = []
     contacto = datos.get("contacto") or {}
     if not (contacto.get("whatsapp") or contacto.get("email")):
+        # El plan a la medida se vende por conversación y la landing solo
+        # enlaza a ella: sin contacto, ese enlace no aparece.
         faltan.append(
-            "config/landing.yaml: sin `contacto.whatsapp` ni `contacto.email`, "
-            "el formulario no tiene a dónde mandar los datos")
-    sin_enlace = [p["clave"] for p in datos["planes"]
-                  if p.get("precio_usd") and not p.get("enlace_pago")]
-    if sin_enlace:
-        faltan.append(
-            f"config/planes.yaml: los planes {', '.join(sin_enlace)} no tienen "
-            "`enlace_pago`, así que muestran 'Hablemos' en vez de cobrar. "
-            "El enlace se crea en el panel de Tilopay (ruta No-Code) o de ONVO "
-            "(ONVO Link) y se pega ahí")
+            "config/landing.yaml: sin `contacto.whatsapp` ni `contacto.email`, el "
+            "formulario estático no tiene a dónde mandar los datos y el enlace del "
+            "plan a la medida (agencias) no aparece")
+    if not datos["planes_visibles"]:
+        faltan.append("config/planes.yaml: no hay ningún plan con `visible: true`")
     if not datos.get("dominio"):
         faltan.append("config/landing.yaml: falta `dominio` (solo sale en el pie)")
     return faltan
