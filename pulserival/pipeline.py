@@ -279,6 +279,13 @@ def ciclo_completo(
                            f"'{db.valor(cliente, 'estado_suscripcion')}'",
             })
             continue
+        # Un cliente que pagó sin indicar competidores está esperando que se
+        # los investiguemos. Generarle el reporte igual daría uno que dice
+        # "no hubo movimiento" sin haber mirado a nadie, y cobraría la IA.
+        if not db.competidores_de(con, int(cliente["id"])):
+            reportes.append({"cliente": cliente["nombre_empresa"],
+                             "omitido": "no tiene competidores cargados todavía"})
+            continue
         if not solo_reporte and not _toca_reportar(
                 con, int(cliente["id"]), periodicidad, inicio,
                 recurrente=planes.es_recurrente(cliente)):

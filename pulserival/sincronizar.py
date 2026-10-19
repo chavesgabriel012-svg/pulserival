@@ -29,14 +29,22 @@ from typing import Any
 
 import yaml
 
-from . import config, db
+from . import config, db, planes
 
 CAMPOS_CLIENTE = (
     "nombre_empresa", "contacto_nombre", "contacto_email", "contacto_whatsapp",
     "periodicidad", "plan", "estado_suscripcion", "cadencia_dias",
     "precio_mensual_usd", "pago_proveedor", "pago_referencia",
-    "dia_envio", "industria", "notas", "origen", "activo",
+    "dia_envio", "industria", "notas", "origen", "ciclo_facturacion", "activo",
 )
+
+# Lo que escribe el webhook de Paddle. En un cliente que paga por Paddle,
+# clientes.yaml no lo pisa: el YAML lo escribe una persona una vez, y Paddle
+# sabe si la tarjeta de este mes pasó. Si `aplicar-config` volviera a poner
+# 'activa' a alguien que Paddle marcó vencido, se le seguiría reportando sin
+# que pague.
+CAMPOS_DE_PADDLE = ("estado_suscripcion", "ciclo_facturacion",
+                    "pago_proveedor", "pago_referencia")
 CAMPOS_COMPETIDOR = (
     "nombre", "meta_pagina_url", "meta_pagina_id", "meta_consulta",
     "google_dominio", "google_anunciante", "google_anunciante_id",
@@ -72,8 +80,22 @@ def validar(datos: dict[str, Any]) -> list[dict[str, Any]]:
             raise ConfigInvalida(f"El cliente '{clave}' no tiene 'empresa'")
         if not cliente.get("contacto_email"):
             raise ConfigInvalida(f"El cliente '{clave}' no tiene 'contacto_email'")
-        if cliente.get("periodicidad", "semanal") not in ("semanal", "mensual"):
-            raise ConfigInvalida(f"El cliente '{clave}': periodicidad debe ser semanal o mensual")
+        periodicidad = cliente.get("periodicidad", "semanal")
+        if periodicidad not in planes.PERIODICIDADES:
+            raise ConfigInvalida(f"El cliente '{clave}': periodicidad debe ser "
+                                 f"{', '.join(planes.PERIODICIDADES)}")
+        # Lo mismo que exige el CHECK de la base, dicho antes de llegar ahí.
+        cadencia = cliente.get("cadencia_dias")
+        if periodicidad == "custom" and not (isinstance(cadencia, int) and cadencia >= 1):
+            raise ConfigInvalida(f"El cliente '{clave}' es custom: necesita cadencia_dias "
+                                 "(cada cuántos días, 1 o más)")
+        if periodicidad != "custom" and cadencia is not None:
+            raise ConfigInvalida(f"El cliente '{clave}': cadencia_dias es solo para "
+                                 f"periodicidad custom ('{periodicidad}' ya dice cada cuánto)")
+        ciclo = cliente.get("ciclo_facturacion")
+        if ciclo is not None and ciclo not in planes.CICLOS_VALIDOS:
+            raise ConfigInvalida(f"El cliente '{clave}': ciclo_facturacion debe ser "
+                                 f"{', '.join(planes.CICLOS_VALIDOS)}")
         competidores = cliente.get("competidores") or []
         claves_comp = set()
         for competidor in competidores:
@@ -174,12 +196,20 @@ def aplicar(con: sqlite3.Connection, ruta: Path | None = None) -> dict[str, Any]
             # config/altas/ a config/clientes.yaml pierde la respuesta de la
             # encuesta sin que nadie se entere.
             "origen": (entrada.get("origen") or "").strip() or None,
+            "ciclo_facturacion": entrada.get("ciclo_facturacion"),
             "activo": 1 if entrada.get("activo", True) else 0,
         }
         existente = db.fila(con, "SELECT * FROM clientes WHERE clave = ?", (clave,))
         if existente:
+            de_paddle = bool(db.valor(existente, "paddle_suscripcion_id"))
             cambios = {c: deseado[c] for c in CAMPOS_CLIENTE
-                       if c in deseado and deseado[c] != existente[c]}
+                       if c in deseado and deseado[c] != existente[c]
+                       and not (de_paddle and c in CAMPOS_DE_PADDLE)}
+            if de_paddle and deseado["activo"] == 1:
+                # Activo lo decide el pago, no el YAML. Que el YAML diga
+                # activo: true no reactiva a alguien que Paddle dio de baja:
+                # eso ya lo cubre `estado_suscripcion`, que el YAML no toca.
+                cambios.pop("activo", None)
             if cambios:
                 db.actualizar(con, "clientes", int(existente["id"]), cambios)
                 resumen["actualizados"].append(f"{clave} ({', '.join(cambios)})")
@@ -191,7 +221,11 @@ def aplicar(con: sqlite3.Connection, ruta: Path | None = None) -> dict[str, Any]
         _aplicar_competidores(con, cliente_id, clave, entrada.get("competidores") or [], resumen)
 
     # Clientes que ya no están en el archivo: se desactivan, no se borran.
-    for fila in db.filas(con, "SELECT * FROM clientes WHERE clave IS NOT NULL AND activo = 1"):
+    # Menos los que pagan por Paddle: los que entran por la web nunca
+    # estuvieron en clientes.yaml, y desactivarlos los dejaría pagando sin
+    # recibir nada.
+    for fila in db.filas(con, "SELECT * FROM clientes WHERE clave IS NOT NULL AND activo = 1 "
+                              "AND paddle_suscripcion_id IS NULL"):
         if fila["clave"] not in claves_en_archivo:
             db.actualizar(con, "clientes", int(fila["id"]), {"activo": 0})
             resumen["desactivados"].append(fila["clave"])

@@ -17,16 +17,25 @@
 <table>
   <tr><th>Plan</th><td>{{ plan.nombre or cliente["plan"] }}</td></tr>
   <tr><th>Precio</th><td>
-    {% if precio %}${{ precio }} por mes{% elif precio == 0 %}Sin costo{% else %}A convenir{% endif %}
+    {% if ciclo and ciclo.cobro_texto %}{{ ciclo.cobro_texto }}
+      {%- if ciclo.equivale_mes_usd %} (equivale a ${{ '%g' % ciclo.equivale_mes_usd }} al mes){% endif %}
+    {% elif precio %}${{ '%g' % precio }} por mes{% elif precio == 0 %}Sin costo{% else %}A convenir{% endif %}
   </td></tr>
   <tr><th>Cadencia</th><td>
     {% if cliente["cadencia_dias"] %}Cada {{ cliente["cadencia_dias"] }} días
-    {% else %}{{ cliente["periodicidad"] }}{% endif %}
+    {% else %}{{ plan.cadencia_texto or cliente["periodicidad"] }}{% endif %}
   </td></tr>
   <tr><th>Reporte a</th><td>{{ cliente["contacto_email"] }}</td></tr>
 </table>
 
 <h2>Competidores que vamos a seguir</h2>
+{% if not competidores %}
+<div class="nota">
+  No nos indicó competidores: los investigamos nosotros a partir de su
+  industria y le escribimos con la lista antes del primer reporte. El primer
+  reporte sale cuando estén cargados, no antes.
+</div>
+{% endif %}
 <table>
   {% for c in competidores %}
   <tr>
@@ -63,16 +72,46 @@
 <h2>Confirmar</h2>
 {% if simulado %}
 <form method="post" action="/checkout/{{ cliente['id'] }}/confirmar">
+  <input type="hidden" name="t" value="{{ firma }}">
   <button class="btn" type="submit">Confirmar (simulado)</button>
 </form>
-{% elif enlace_pago %}
-<p><a class="btn" href="{{ enlace_pago }}">Ir a pagar</a></p>
+{% elif paddle and paddle.faltan %}
+{# Mejor no mostrar el botón que abrir un checkout que cobra y no activa:
+   sin el secreto del webhook el pago entra y nadie se entera. #}
 <div class="nota">
-  El pago se procesa en la pasarela. Su cuenta se activa cuando el pago se
-  confirma.
+  El cobro todavía no está disponible. Escríbanos y le activamos la cuenta a
+  mano; no se le cobró nada.
 </div>
+{% elif paddle and paddle.precio %}
+<p><button class="btn" type="button" id="pagar">Pagar con Paddle</button></p>
+<div class="nota">
+  El pago lo procesa Paddle, que además le emite la factura. Su cuenta se
+  activa apenas Paddle nos confirma el cobro; no hace falta que nos escriba.
+</div>
+<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+<script>
+  // El entorno se fija antes de Initialize. En sandbox nada cobra de verdad.
+  {% if paddle.entorno == "sandbox" %}Paddle.Environment.set("sandbox");{% endif %}
+  Paddle.Initialize({ token: {{ paddle.token|tojson }} });
+  document.getElementById("pagar").addEventListener("click", function () {
+    Paddle.Checkout.open({
+      items: [{ priceId: {{ paddle.precio|tojson }}, quantity: 1 }],
+      customer: { email: {{ paddle.email|tojson }} },
+      // Vuelve en el webhook: es lo que dice de qué cliente es el pago.
+      customData: {{ paddle.custom_data|tojson }},
+      settings: {
+        displayMode: "overlay",
+        locale: "es",
+        // Se arma en el navegador para que salga con el dominio y el https
+        // con que la persona entró, sin depender de cómo vea el servidor el
+        // proxy de Railway.
+        successUrl: window.location.origin + "/gracias/{{ cliente['id'] }}?t={{ firma }}"
+      }
+    });
+  });
+</script>
 {% else %}
-<div class="nota">Falta configurar el enlace de pago de este plan.</div>
+<div class="nota">Falta configurar el precio de este plan en Paddle.</div>
 {% endif %}
 
 {% endblock %}

@@ -16,6 +16,12 @@ from pulserival import marca
 from pulserival.landing import generador as construir_mod
 
 LANDING_BASE = {
+    "plan_seccion": {
+        "rotulo": "El plan", "titulo": "Un reporte al mes", "entrada": "Entrada.",
+        "cierre": "Un reporte al mes por $25.",
+        "medida": {"titulo": "¿Es una agencia?", "texto": "Armamos uno a la medida.",
+                   "boton": "Conversemos"},
+    },
     "marca": "PulseRival", "dominio": "", "contacto": {},
     "titulo": "Título", "subtitulo": "Subtítulo",
     "argumentos": [{"titulo": "A", "texto": "B"}],
@@ -40,13 +46,21 @@ LANDING_BASE = {
                    "otro": "Otro", "otro_ayuda": "¿Dónde fue?"},
     },
 }
+CICLOS_BASE = {
+    "mensual": {"nombre": "Mes a mes", "precio_usd": 25, "cobro_texto": "$25 al mes"},
+    "anual": {"nombre": "Anual", "precio_usd": 240, "equivale_mes_usd": 20,
+              "ahorro_usd": 60, "cobro_texto": "$240 al año"},
+}
+# El catálogo del lanzamiento: un plan que se vende en la web y el Custom,
+# que está en el catálogo pero no se muestra.
 PLANES_BASE = [
-    {"clave": "prueba", "nombre": "Prueba gratis", "precio_usd": 0, "resumen": "r",
-     "incluye": ["x"], "enlace_pago": "", "cadencia_texto": "Una sola vez",
-     "competidores_max": 3, "para_quien": "Para ver de qué se trata."},
-    {"clave": "semanal", "nombre": "Semanal", "precio_usd": 100, "resumen": "r",
-     "incluye": ["x"], "enlace_pago": "", "cadencia_texto": "Cada 7 días",
-     "competidores_max": 6, "para_quien": "Para retail."},
+    {"clave": "autoservicio", "nombre": "Reporte mensual", "visible": True,
+     "checkout": True, "precio_usd": 25, "resumen": "r", "incluye": ["x"],
+     "cadencia_texto": "Cada 30 días", "competidores_max": 4,
+     "para_quien": "Para seguir a la competencia.", "ciclos": CICLOS_BASE},
+    {"clave": "custom", "nombre": "A la medida", "visible": False, "precio_usd": None,
+     "resumen": "r", "incluye": ["x"], "periodicidad": "custom",
+     "cadencia_texto": "La que necesite", "competidores_max": None},
 ]
 
 
@@ -86,17 +100,43 @@ class CasoPaginas(unittest.TestCase):
 
 class TestPortada(CasoPaginas):
     def test_los_precios_salen_del_yaml(self):
-        h = self.portada(planes=[{"clave": "mensual", "nombre": "Mensual",
-                                  "precio_usd": 37, "resumen": "r", "incluye": ["x"],
-                                  "enlace_pago": ""}])
+        ciclos = {"mensual": dict(CICLOS_BASE["mensual"], precio_usd=37)}
+        h = self.portada(planes=[dict(PLANES_BASE[0], ciclos=ciclos)])
         self.assertIn("$37", h)
 
-    def test_el_plan_a_la_medida_no_inventa_un_precio(self):
-        h = self.portada(planes=[{"clave": "custom", "nombre": "A la medida",
-                                  "precio_usd": None, "resumen": "r", "incluye": ["x"],
-                                  "enlace_pago": ""}])
-        self.assertIn("A convenir", h)
+    def test_un_plan_oculto_no_aparece(self):
+        # El Custom, la prueba y el semanal siguen en el catálogo (los
+        # clientes que los tienen conservan precio y cadencia) pero no se
+        # venden desde la página.
+        h = self.portada()
+        self.assertNotIn("A la medida", h)
         self.assertNotIn("$None", h)
+
+    def test_el_anual_explica_el_ahorro_en_plata(self):
+        h = self.portada()
+        self.assertIn("$25", h)
+        self.assertIn("$240", h)
+        self.assertIn("$20 al mes", h)
+        self.assertIn("Ahorra $60", h)
+
+    def test_no_promete_lo_que_este_lanzamiento_no_vende(self):
+        # La prueba gratis y el plan semanal quedaron afuera. La portada
+        # decía "el primer reporte no tiene costo", "cada semana" en el
+        # titular y "más elegido" en un plan sin clientes todavía.
+        h = self.portada(landing={"titulo": "Mes a mes"})
+        for frase in ("no tiene costo", "Sin costo", "Probar sin costo",
+                      "Más elegido", "cada semana"):
+            with self.subTest(frase=frase):
+                self.assertNotIn(frase, h)
+
+    def test_el_plan_a_la_medida_lleva_al_contacto(self):
+        h = self.portada(landing={"contacto": {"whatsapp": "50688887777"}})
+        self.assertIn("https://wa.me/50688887777", h)
+        self.assertIn("Conversemos", h)
+
+    def test_sin_contacto_no_aparece_un_enlace_que_no_lleva_a_ningun_lado(self):
+        h = self.portada(landing={"contacto": {}})
+        self.assertNotIn("Conversemos", h)
 
     def test_la_portada_ya_NO_lleva_el_formulario(self):
         # El pedido fue sacarlo del todo: la portada explica y la página de
@@ -106,23 +146,20 @@ class TestPortada(CasoPaginas):
         self.assertNotIn("<form", h)
         self.assertNotIn('name="empresa"', h)
 
-    def test_cada_plan_lleva_a_la_pagina_de_aplicacion_con_su_plan(self):
+    def test_cada_forma_de_pago_lleva_a_aplicar_con_su_ciclo(self):
         h = self.portada()
-        self.assertIn('href="aplicar.html?plan=prueba"', h)
-        self.assertIn('href="aplicar.html?plan=semanal"', h)
+        self.assertIn('href="aplicar.html?plan=autoservicio&amp;ciclo=mensual"', h)
+        self.assertIn('href="aplicar.html?plan=autoservicio&amp;ciclo=anual"', h)
 
-    def test_explica_en_que_se_diferencian_los_planes(self):
-        # Es la pregunta que frena la compra: cada cuánto llega y a cuántos
-        # competidores cubre.
+    def test_dice_cada_cuanto_llega_y_a_cuantos_cubre(self):
+        # Es la pregunta que frena la compra.
         h = self.portada()
-        self.assertIn("Cada 7 días", h)
-        self.assertIn("Hasta 6", h)
+        self.assertIn("Cada 30 días", h)
+        self.assertIn("Hasta 4", h)
         self.assertIn("Frecuencia", h)
 
     def test_un_plan_sin_tope_de_competidores_lo_dice(self):
-        h = self.portada(planes=[{"clave": "custom", "nombre": "A la medida",
-                                  "precio_usd": None, "resumen": "r", "incluye": ["x"],
-                                  "enlace_pago": "", "competidores_max": None}])
+        h = self.portada(planes=[dict(PLANES_BASE[0], competidores_max=None)])
         self.assertIn("Sin tope", h)
 
     def test_nombra_las_dos_plataformas(self):
@@ -266,7 +303,8 @@ class TestMovil(CasoPaginas):
 class TestAplicar(CasoPaginas):
     def test_tiene_el_formulario_completo(self):
         h = self.aplicar()
-        for campo in ("empresa", "contacto", "email", "plan", "industria", "contexto"):
+        for campo in ("empresa", "contacto", "email", "plan", "ciclo", "industria",
+                      "contexto"):
             self.assertIn(f'name="{campo}"', h)
 
     def test_pide_el_contexto_del_negocio(self):
@@ -349,37 +387,39 @@ class TestAplicar(CasoPaginas):
         for campo in ("comp1", "fb1", "web1"):
             self.assertIn(f'name="{campo}"', h)
 
-    def test_el_plan_de_la_url_llega_preseleccionado(self):
-        h = self.aplicar(plan_elegido="semanal")
-        self.assertIn('value="semanal" selected', h)
-        self.assertIn("Cada 7 días", self.resumen_visible(h))
+    def test_el_ciclo_de_la_url_llega_preseleccionado(self):
+        h = self.aplicar(ciclo_elegido="anual")
+        self.assertIn('value="anual" selected', h)
+        self.assertIn("$240", self.resumen_visible(h))
 
-    def test_el_resumen_visible_es_el_del_plan_elegido(self):
+    def test_el_resumen_visible_es_el_del_ciclo_elegido(self):
         # El selector y el resumen de al lado tienen que decir lo mismo: si no,
-        # la persona lee un plan y envia otro.
-        h = self.aplicar(plan_elegido="prueba")
-        self.assertIn("Sin costo", self.resumen_visible(h))
-        self.assertNotIn("Cada 7 días", self.resumen_visible(h))
+        # la persona lee un precio y paga otro.
+        h = self.aplicar(ciclo_elegido="mensual")
+        self.assertIn("$25", self.resumen_visible(h))
+        self.assertNotIn("$240", self.resumen_visible(h))
 
-    def test_sin_plan_elegido_no_se_rompe(self):
-        # Un enlace viejo con un plan que ya no existe no puede dejar a
-        # alguien sin poder aplicar.
-        h = self.aplicar(plan_elegido=None)
+    def test_sin_plan_que_se_venda_por_la_web_no_se_rompe(self):
+        h = self.aplicar(planes=[PLANES_BASE[1]])
         self.assertIn("<form", h)
-        # Ninguna opcion viene marcada. Se busca en las <option> y no en el
-        # HTML entero porque el guion de la pagina dice `selectedIndex`.
-        self.assertNotRegex(h, r"<option[^>]*\sselected")
         self.assertEqual("", self.resumen_visible(h))
         # Sin resumen la columna se cierra en vez de dejar un hueco al lado.
         self.assertIn('class="columnas sola"', h)
 
-    def test_avisa_que_el_cobro_todavia_no_esta_conectado(self):
-        h = self.aplicar(plan_elegido="semanal")
-        self.assertIn("cobro todavía no está conectado", self.resumen_visible(h))
+    def test_muestra_tantos_competidores_como_incluye_el_plan(self):
+        h = self.aplicar()
+        self.assertIn('name="comp4"', h)
+        self.assertNotIn('name="comp5"', h)
 
-    def test_el_plan_sin_costo_no_pide_tarjeta(self):
-        h = self.aplicar(plan_elegido="prueba")
-        self.assertIn("No se le pide tarjeta", self.resumen_visible(h))
+    def test_dice_que_pasa_al_enviar_segun_como_se_cobra(self):
+        # En la página estática no hay cobro; en el servidor puede estar
+        # simulado o con Paddle, y cada uno se dice distinto.
+        casos = (({}, "coordinamos el pago"),
+                 ({"modo_servidor": True, "simulado": True}, "cobro todavía no está conectado"),
+                 ({"modo_servidor": True, "simulado": False}, "procesa Paddle"))
+        for extra, frase in casos:
+            with self.subTest(**{k: str(v) for k, v in extra.items()}):
+                self.assertIn(frase, self.resumen_visible(self.aplicar(**extra)))
 
     def test_el_whatsapp_configurado_llega_al_javascript(self):
         h = self.aplicar(landing={"contacto": {"whatsapp": "50688887777"}})
@@ -418,11 +458,10 @@ class TestGenerador(unittest.TestCase):
                                return_value={"contacto": {}, "dominio": ""}), \
              mock.patch.object(construir_mod.config, "config_planes",
                                return_value={"planes": [
-                                   {"clave": "semanal", "precio_usd": 100,
-                                    "enlace_pago": ""}]}):
+                                   {"clave": "semanal", "visible": False}]}):
             faltan = " ".join(construir_mod.pendientes())
         self.assertIn("contacto", faltan)
-        self.assertIn("enlace_pago", faltan)
+        self.assertIn("visible", faltan)
 
 
 if __name__ == "__main__":

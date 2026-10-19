@@ -120,6 +120,7 @@ def preparar(
     notas: str | None = None,
     origen: str | None = None,
     estado: str | None = None,
+    ciclo: str | None = None,
 ) -> dict[str, Any]:
     """Valida y normaliza un alta, sin guardarla en ningún lado.
 
@@ -148,6 +149,18 @@ def preparar(
             f"Son {len(competidores)} competidores y el máximo es {MAX_COMPETIDORES}")
     limpios = [normalizar_competidor(c) for c in competidores]
 
+    # Un plan con ciclos (mensual/anual) necesita saber cuál: es lo que
+    # decide qué precio de Paddle se cobra. Sin uno elegido va el primero,
+    # que es el que la landing muestra primero.
+    ciclos = datos_plan.get("ciclos") or {}
+    if ciclos:
+        ciclo = _texto(ciclo) or next(iter(ciclos))
+        if ciclo not in ciclos:
+            raise AltaInvalida(
+                f"El plan '{plan}' no se paga '{ciclo}'. Opciones: {', '.join(ciclos)}")
+    else:
+        ciclo = None
+
     estado = estado or ("prueba_pendiente" if plan == "prueba" else "pendiente_pago")
     if estado not in planes.ESTADOS_VALIDOS:
         raise AltaInvalida(f"Estado de suscripción inválido: {estado}")
@@ -160,6 +173,7 @@ def preparar(
         "industria": _texto(industria) or None,
         "notas": _texto(notas) or None,
         "origen": _texto(origen) or None,
+        "ciclo_facturacion": ciclo,
         "plan": plan,
         "estado": estado,
         "periodicidad": datos_plan.get("periodicidad") or "semanal",
@@ -180,6 +194,7 @@ def crear(
     notas: str | None = None,
     origen: str | None = None,
     estado: str | None = None,
+    ciclo: str | None = None,
     cadencia_dias: int | None = None,
     precio: float | None = None,
     pago_proveedor: str | None = None,
@@ -193,8 +208,17 @@ def crear(
     """
     listo = preparar(empresa, email, competidores, plan=plan, contacto=contacto,
                      whatsapp=whatsapp, industria=industria, notas=notas,
-                     origen=origen, estado=estado)
+                     origen=origen, estado=estado, ciclo=ciclo)
     limpios = listo["competidores"]
+    # La cadencia propia solo existe en periodicidad 'custom' (un CHECK de la
+    # base lo exige). Se avisa acá con un mensaje que se entienda, en vez de
+    # dejar que reviente el INSERT con un "CHECK constraint failed".
+    if listo["periodicidad"] == "custom" and not cadencia_dias:
+        raise AltaInvalida(f"El plan '{listo['plan']}' necesita una cadencia en días")
+    if listo["periodicidad"] != "custom" and cadencia_dias:
+        raise AltaInvalida(
+            f"El plan '{listo['plan']}' ya tiene cadencia ({listo['periodicidad']}); "
+            "una cadencia propia es solo para el plan custom")
 
     ya_usadas = {
         f["clave"] for f in db.filas(con, "SELECT clave FROM clientes WHERE clave IS NOT NULL")
@@ -215,6 +239,7 @@ def crear(
         "industria": listo["industria"],
         "notas": listo["notas"],
         "origen": listo["origen"],
+        "ciclo_facturacion": listo["ciclo_facturacion"],
     })
     for orden, comp in enumerate(limpios, start=1):
         db.insertar(con, "competidores_seguidos", {

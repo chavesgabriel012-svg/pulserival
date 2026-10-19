@@ -443,9 +443,10 @@ class TestPruebaGratisNoSeRepite(CasoBase):
 
 class TestMigracionDePlanes(CasoBase):
     """Antes de los planes, `clientes` solo tenía `periodicidad` con un CHECK
-    de ('semanal','mensual'). SQLite no sabe modificar un CHECK sin reconstruir
-    la tabla, y reconstruirla se llevaría por delante el historial de anuncios
-    y reportes. Por eso la cadencia arbitraria entra por una columna nueva.
+    de ('semanal','mensual'). La cadencia arbitraria entró primero por una
+    columna nueva para no reconstruir la tabla; con Paddle se reconstruyó
+    igual, con cuidado (ver tests/test_migracion.py), y ahora un cliente a la
+    medida es periodicidad 'custom' con su `cadencia_dias`.
     """
 
     def test_un_cliente_viejo_queda_activo_y_con_su_cadencia(self):
@@ -487,7 +488,8 @@ class TestMigracionDePlanes(CasoBase):
     def test_el_relleno_no_pisa_un_plan_elegido_a_mano(self):
         # La migración corre en cada `init`. Si el relleno se aplicara siempre,
         # un cliente al que le cambiaste el plan volvería a su periodicidad.
-        cid = self.cliente(plan="custom", estado_suscripcion="activa", cadencia_dias=10)
+        cid = self.cliente(plan="custom", estado_suscripcion="activa",
+                           periodicidad="custom", cadencia_dias=10)
         db.inicializar(self.ruta)
         fila = db.fila(self.con, "SELECT * FROM clientes WHERE id = ?", (cid,))
         self.assertEqual(fila["plan"], "custom")

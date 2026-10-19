@@ -113,6 +113,16 @@ PULSERIVAL_COBRO=simulado
 PULSERIVAL_VERIFICAR_ALTA=0
 ```
 
+Para cobrar con Paddle (ver `docs/08-cobro-y-lanzamiento.md` antes de
+tocarlas: el orden importa y hay que apagar el cron de GitHub Actions):
+
+```
+PULSERIVAL_COBRO=paddle
+PADDLE_ENTORNO=sandbox          # production solo después de probar con plata real
+PADDLE_CLIENT_TOKEN=test_...
+PADDLE_WEBHOOK_SECRET=...
+```
+
 Y los secretos:
 
 ```

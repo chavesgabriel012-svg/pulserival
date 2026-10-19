@@ -6,8 +6,10 @@ consultas de lectura muy específicas.
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -66,23 +68,220 @@ RELLENOS = {
 }
 
 
+# La versión del esquema, en `PRAGMA user_version`. Es informativa: lo que
+# decide si hay que reconstruir `clientes` es mirar su CHECK de verdad (ver
+# `_clientes_al_dia`), no confiar en un número que alguien pudo no subir.
+VERSION_ESQUEMA = 2
+
+
 def inicializar(ruta: Path | None = None) -> Path:
     """Crea las tablas si no existen y aplica las migraciones pendientes.
     Es seguro correrlo muchas veces."""
     destino = Path(ruta) if ruta else config.ruta_db()
-    con = conectar(destino)
-    with con:
-        # Las migraciones van ANTES del esquema: el esquema crea un índice
-        # sobre una columna nueva, y ese CREATE INDEX falla si la tabla ya
-        # existe sin esa columna.
-        aplicadas = _migrar(con)
-        con.executescript(ESQUEMA.read_text(encoding="utf-8"))
-        for columna in aplicadas:
-            relleno = RELLENOS.get(columna)
-            if relleno:
-                con.execute(relleno)
-    con.close()
+    migrar(destino)
     return destino
+
+
+def migrar(ruta: Path | None = None) -> dict[str, Any]:
+    """Lleva la base al esquema actual y cuenta qué hizo.
+
+    Tres pasos, en este orden y por una razón cada uno:
+      1. columnas nuevas por ALTER TABLE (MIGRACIONES), con sus rellenos;
+      2. reconstruir `clientes` si su CHECK de periodicidad es el viejo, que
+         es lo único que un ALTER TABLE de SQLite no sabe cambiar;
+      3. el esquema completo, que crea las tablas e índices que falten.
+    El 2 va antes del 3 porque el esquema crea índices sobre columnas que
+    solo existen después de reconstruir.
+    """
+    destino = Path(ruta) if ruta else config.ruta_db()
+    informe: dict[str, Any] = {"ruta": str(destino), "columnas": [], "clientes": None}
+    con = conectar(destino)
+    try:
+        with con:
+            aplicadas = _migrar(con)
+            for columna in aplicadas:
+                relleno = RELLENOS.get(columna)
+                if relleno:
+                    con.execute(relleno)
+        informe["columnas"] = aplicadas
+        informe["clientes"] = _reconstruir_clientes(con, destino)
+        with con:
+            con.executescript(ESQUEMA.read_text(encoding="utf-8"))
+            con.execute(f"PRAGMA user_version = {VERSION_ESQUEMA}")
+    finally:
+        con.close()
+    return informe
+
+
+def _ddl_clientes() -> str:
+    """El CREATE TABLE de `clientes`, sacado de esquema.sql.
+
+    De ahí y no copiado acá: la tabla reconstruida tiene que ser idéntica a
+    la de una base nueva, y la única forma de garantizarlo es que salgan del
+    mismo texto.
+    """
+    texto = ESQUEMA.read_text(encoding="utf-8")
+    hallado = re.search(r"CREATE TABLE IF NOT EXISTS clientes \(.*?\n\);", texto, re.S)
+    if not hallado:
+        raise RuntimeError("esquema.sql no tiene el CREATE TABLE de clientes")
+    return hallado.group(0)
+
+
+def _clientes_al_dia(con: sqlite3.Connection) -> bool | None:
+    """¿La tabla ya acepta 'custom'? None si la tabla no existe todavía."""
+    fila_ = con.execute(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'clientes'"
+    ).fetchone()
+    if fila_ is None:
+        return None
+    return "'custom'" in (fila_[0] or "")
+
+
+def _reconstruir_clientes(con: sqlite3.Connection, ruta: Path) -> dict[str, Any] | None:
+    """Reconstruye `clientes` con el CHECK nuevo. No hace nada si ya está.
+
+    SQLite no permite modificar un CHECK: hay que crear la tabla de nuevo,
+    copiar las filas, borrar la vieja y renombrar la nueva. Es el
+    procedimiento de 12 pasos de la documentación de SQLite
+    (sqlite.org/lang_altertable.html#otheralter), y cada detalle de abajo
+    está porque saltearlo rompe algo de forma silenciosa:
+
+      - Las claves foráneas se apagan ANTES de abrir la transacción. Las
+        tablas hijas (competidores, reportes, feedback) tienen ON DELETE
+        CASCADE: con las claves encendidas, el DROP TABLE de la tabla vieja
+        borraría en cascada todo el historial. Y el PRAGMA no tiene efecto
+        dentro de una transacción, así que el orden importa.
+      - Se crea la nueva, se copia y recién después se borra la vieja y se
+        renombra la nueva. Al revés (renombrar la vieja primero), SQLite
+        reescribe las claves foráneas de las hijas para que apunten a la
+        tabla renombrada, y quedan colgando de una tabla que después se borra.
+      - Las columnas se copian por nombre y no por posición: en una base
+        vieja las columnas agregadas por ALTER quedaron al final, en otro
+        orden que el del esquema.
+      - Se conserva el contador de AUTOINCREMENT. Copiar las filas lo deja en
+        el id más alto que quedó; si se habían borrado clientes del final, el
+        próximo alta reusaría el id de uno borrado, y Paddle guarda ids de
+        cliente en `custom_data`.
+      - Antes de confirmar se corre `foreign_key_check`: si algo quedó
+        colgando, se deshace todo y la base queda como estaba.
+
+    Antes de tocar nada se hace una copia de la base con la API de respaldo
+    (no `cp`, que copia a medias si hay alguien escribiendo).
+    """
+    al_dia = _clientes_al_dia(con)
+    if al_dia is None or al_dia:
+        return None
+
+    respaldo = _respaldar_antes_de_migrar(ruta)
+    viejas = [f[1] for f in con.execute("PRAGMA table_info(clientes)")]
+    nueva = _ddl_clientes().replace("CREATE TABLE IF NOT EXISTS clientes",
+                                    "CREATE TABLE clientes_nueva", 1)
+
+    # Qué filas pasan a 'custom'. Un cliente "a la medida" era plan 'custom'
+    # con periodicidad 'semanal' y la cadencia en `cadencia_dias`, porque el
+    # CHECK viejo no dejaba escribir otra cosa. Ahora se dice tal cual.
+    # También pasa a 'custom' cualquier fila cuya cadencia no coincida con su
+    # periodicidad: ese cliente ya se estaba reportando cada N días.
+    # Una cadencia igual a la de su periodicidad (7 en semanal, 30 en
+    # mensual) se borra: repite lo mismo y el CHECK nuevo no la admite.
+    tiene_cadencia = "cadencia_dias" in viejas
+    tiene_plan = "plan" in viejas
+    if tiene_cadencia:
+        es_custom = ("(cadencia_dias IS NOT NULL AND ("
+                     + ("plan = 'custom' OR " if tiene_plan else "")
+                     + "cadencia_dias <> (CASE periodicidad WHEN 'semanal' THEN 7 "
+                       "WHEN 'mensual' THEN 30 ELSE -1 END)))")
+    else:
+        es_custom = "0"
+    expresiones = {
+        "periodicidad": f"CASE WHEN {es_custom} THEN 'custom' ELSE periodicidad END",
+        "cadencia_dias": f"CASE WHEN {es_custom} THEN cadencia_dias ELSE NULL END",
+    }
+
+    nuevas_cols = None
+    filas_despues = 0
+    convertidos: list[dict[str, Any]] = []
+    sin_cadencia: list[dict[str, Any]] = []
+    con.commit()
+    con.execute("PRAGMA foreign_keys = OFF")
+    try:
+        con.execute("BEGIN IMMEDIATE")
+        if tiene_cadencia:
+            convertidos = [dict(f) for f in con.execute(
+                f"SELECT id, nombre_empresa, periodicidad, cadencia_dias FROM clientes "
+                f"WHERE {es_custom}")]
+        if tiene_plan:
+            sin_cadencia = [dict(f) for f in con.execute(
+                "SELECT id, nombre_empresa FROM clientes WHERE plan = 'custom' AND "
+                + ("cadencia_dias IS NULL" if tiene_cadencia else "1"))]
+        secuencia = con.execute(
+            "SELECT seq FROM sqlite_sequence WHERE name = 'clientes'").fetchone()
+        filas_antes = con.execute("SELECT COUNT(*) FROM clientes").fetchone()[0]
+
+        con.execute(nueva)
+        nuevas_cols = [f[1] for f in con.execute("PRAGMA table_info(clientes_nueva)")]
+        comunes = [c for c in nuevas_cols if c in viejas]
+        destino_cols = ", ".join(comunes)
+        origen_cols = ", ".join(expresiones.get(c, c) for c in comunes)
+        con.execute(f"INSERT INTO clientes_nueva ({destino_cols}) "
+                    f"SELECT {origen_cols} FROM clientes")
+        con.execute("DROP TABLE clientes")
+        con.execute("ALTER TABLE clientes_nueva RENAME TO clientes")
+        if secuencia is not None:
+            # El RENAME se lleva la fila de sqlite_sequence de clientes_nueva;
+            # acá se le devuelve el valor que tenía la tabla vieja si era mayor.
+            con.execute("UPDATE sqlite_sequence SET seq = MAX(seq, ?) WHERE name = 'clientes'",
+                        (secuencia[0],))
+            if con.execute("SELECT changes()").fetchone()[0] == 0:
+                con.execute("INSERT INTO sqlite_sequence (name, seq) VALUES ('clientes', ?)",
+                            (secuencia[0],))
+        filas_despues = con.execute("SELECT COUNT(*) FROM clientes").fetchone()[0]
+        if filas_despues != filas_antes:
+            raise sqlite3.IntegrityError(
+                f"clientes tenía {filas_antes} filas y quedó con {filas_despues}; "
+                "no se aplicó nada.")
+        colgando = con.execute("PRAGMA foreign_key_check").fetchall()
+        if colgando:
+            raise sqlite3.IntegrityError(
+                f"Quedaron {len(colgando)} filas con claves foráneas rotas tras "
+                f"reconstruir clientes; no se aplicó nada. Primera: {tuple(colgando[0])}")
+        con.execute("COMMIT")
+    except Exception:
+        con.execute("ROLLBACK")
+        raise
+    finally:
+        con.execute("PRAGMA foreign_keys = ON")
+
+    return {
+        "respaldo": str(respaldo),
+        # Comprobado antes del COMMIT: si no coincidían, no se aplicó nada.
+        "filas": filas_despues,
+        "columnas_nuevas": [c for c in (nuevas_cols or []) if c not in viejas],
+        "pasados_a_custom": convertidos,
+        # Plan 'custom' sin cadencia: no se puede inventar una, así que siguen
+        # con su periodicidad de siempre. Hay que cargarles la cadencia a mano.
+        "custom_sin_cadencia": sin_cadencia,
+    }
+
+
+def _respaldar_antes_de_migrar(ruta: Path) -> Path:
+    """Copia de la base antes de reconstruir. Va a su propia carpeta para
+    que la rotación de los respaldos diarios (que se quedan con los últimos
+    siete) no se la lleve: si la migración salió mal, se nota días después."""
+    carpeta = Path(ruta).parent / "respaldos" / "migraciones"
+    carpeta.mkdir(parents=True, exist_ok=True)
+    marca = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    archivo = carpeta / f"antes-de-migrar-{marca}.db"
+    origen = sqlite3.connect(ruta)
+    try:
+        copia = sqlite3.connect(archivo)
+        try:
+            origen.backup(copia)
+        finally:
+            copia.close()
+    finally:
+        origen.close()
+    return archivo
 
 
 def _migrar(con: sqlite3.Connection) -> list[str]:

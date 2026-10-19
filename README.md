@@ -106,7 +106,7 @@ cambiar de modelo o arreglar un campo de un scraper no requiere tocar código.
 | [05 · Qué necesito de vos](docs/05-que-necesito-de-vos.md) | la lista concreta antes de la primera corrida real |
 | [06 · Operación semanal](docs/06-operacion-semanal.md) | tu rutina de 20 minutos y qué hacer cuando algo falla |
 | [07 · Presupuesto](docs/07-presupuesto.md) | qué se paga y qué no, con precios verificados, y el dominio |
-| [08 · Cobro y lanzamiento](docs/08-cobro-y-lanzamiento.md) | los planes, cómo se cobra hoy y qué falta probar con una transacción real |
+| [08 · Cobro y lanzamiento](docs/08-cobro-y-lanzamiento.md) | los dos planes, el cobro con Paddle, por qué el webhook vive en el servidor, y **qué falta probar con una transacción real antes de cobrar** |
 | [09 · Deploy](docs/09-deploy.md) | dónde se publica, por qué un servidor con disco, y cómo se apaga el cron de Actions |
 | [10 · Panel](docs/10-panel.md) | el panel de revisión: bandeja, editar, aprobar, enviar, descartar, gasto |
 | [11 · Servidor](docs/11-servidor.md) | publicar el core en Railway o Fly: el disco, los secretos y el cron adentro del proceso |
@@ -114,7 +114,7 @@ cambiar de modelo o arreglar un campo de un scraper no requiere tocar código.
 ## Pruebas
 
 ```bash
-make prueba     # 108 tests, sin red, en un segundo
+make prueba     # 500+ tests, sin red, en unos segundos
 ```
 
 Cubren lo que más duele si se rompe: la detección de cambios, la clasificación

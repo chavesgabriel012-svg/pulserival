@@ -6,10 +6,11 @@ necesitar tocar Python. En este módulo solo queda la lógica de "qué
 significa" cada plan para el pipeline.
 
 La regla que resuelve la cadencia, en orden:
-  1. `clientes.cadencia_dias` — lo acordado con ESE cliente (plan a medida).
+  1. `clientes.cadencia_dias` — solo existe con periodicidad 'custom' (lo
+     exige un CHECK): lo acordado con ESE cliente.
   2. la `cadencia_dias` del plan en config/planes.yaml.
-  3. la columna vieja `periodicidad` (semanal|mensual), que sigue siendo la
-     verdad para los clientes cargados antes de que existieran los planes.
+  3. `periodicidad` (semanal|mensual), la verdad para los clientes cargados
+     antes de que existieran los planes.
 """
 from __future__ import annotations
 
@@ -20,14 +21,21 @@ from . import config, db, util
 # Valores que el código sabe manejar. Van acá y no en un CHECK de SQLite
 # porque agregar un plan no debería obligar a reconstruir la tabla, y
 # porque el mismo patrón ya se usa en revision.flujo.ETIQUETAS_VALIDAS.
-PLANES_VALIDOS = ("prueba", "mensual", "semanal", "custom")
+PLANES_VALIDOS = ("autoservicio", "prueba", "mensual", "semanal", "custom")
+
+PERIODICIDADES = ("semanal", "mensual", "custom")
+
+# Cómo se paga el plan de autoservicio. NULL para Custom y para los clientes
+# de antes de Paddle.
+CICLOS_VALIDOS = ("mensual", "anual")
 
 ESTADOS_VALIDOS = (
     "prueba_pendiente",   # pidió la prueba gratis, todavía no se le generó
     "prueba_usada",       # ya recibió su único reporte de prueba
     "pendiente_pago",     # se registró y todavía no se confirmó el pago
     "activa",             # paga y recibiendo reportes
-    "vencida",            # se le cayó el cobro
+    "vencida",            # se le cayó el cobro (Paddle está reintentando)
+    "pausada",            # la suscripción está en pausa en Paddle
     "cancelada",          # se dio de baja
 )
 
@@ -38,6 +46,22 @@ ESTADOS_QUE_REPORTAN = ("prueba_pendiente", "activa")
 
 def catalogo() -> list[dict[str, Any]]:
     return list(config.config_planes().get("planes") or [])
+
+
+def visibles() -> list[dict[str, Any]]:
+    """Los planes que se muestran en la landing. Uno sin la marca se trata
+    como visible: así funcionaba el catálogo antes de que existiera."""
+    return [p for p in catalogo() if p.get("visible", True)]
+
+
+def con_checkout() -> list[dict[str, Any]]:
+    """Los que se pueden contratar desde el formulario de la web."""
+    return [p for p in visibles() if p.get("checkout")]
+
+
+def ciclo(datos_plan: dict[str, Any], clave: str | None) -> dict[str, Any]:
+    """El ciclo de pago de un plan ({} si no existe)."""
+    return dict((datos_plan.get("ciclos") or {}).get(clave or "", {}) or {})
 
 
 def plan(clave: str | None) -> dict[str, Any]:
@@ -85,10 +109,20 @@ def periodo_de(cliente: Any) -> tuple[str, str]:
 
 
 def precio_usd(cliente: Any) -> float | None:
-    """Lo que paga ESTE cliente. El precio acordado le gana al de lista:
-    es justamente lo que define al plan a medida."""
+    """Lo que paga ESTE cliente, por mes.
+
+    El precio acordado le gana al de lista: es justamente lo que define al
+    plan a medida. Después cuenta el ciclo: quien paga el año entero paga
+    menos por mes, y ese es el número que importa para saber cuánto entra.
+    """
     propio = db.valor(cliente, "precio_mensual_usd")
     if propio is not None:
         return float(propio)
-    de_lista = plan(db.valor(cliente, "plan")).get("precio_usd")
+    datos = plan(db.valor(cliente, "plan"))
+    del_ciclo = ciclo(datos, db.valor(cliente, "ciclo_facturacion"))
+    if del_ciclo.get("equivale_mes_usd") is not None:
+        return float(del_ciclo["equivale_mes_usd"])
+    if del_ciclo.get("precio_usd") is not None:
+        return float(del_ciclo["precio_usd"])
+    de_lista = datos.get("precio_usd")
     return float(de_lista) if de_lista is not None else None

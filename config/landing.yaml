@@ -21,11 +21,11 @@ contacto:
   whatsapp: ""                   # solo dígitos con código de país: 50688887777
   email: ""                      # respaldo si no hay WhatsApp
 
-titulo: "Qué está anunciando su competencia en Meta y Google, cada semana"
+titulo: "Qué está anunciando su competencia en Meta y Google, mes a mes"
 subtitulo: >-
   Revisamos los anuncios activos de sus competidores en Facebook, Instagram y
-  Google, los comparamos contra la semana anterior y le explicamos qué cambió y
-  qué conviene hacer. No una lista de anuncios: un análisis, con el enlace a
+  Google todas las semanas, y una vez al mes le explicamos qué cambió y qué
+  conviene hacer. No una lista de anuncios: un análisis, con el enlace a
   cada anuncio para que lo compruebe.
 
 # Frase corta bajo el botón. Lo que alguien necesita saber antes de decidir.
@@ -41,7 +41,9 @@ plataformas:
   titulo: "Las dos bibliotecas públicas, leídas todas las semanas"
   nota: >-
     Las dos son públicas y cualquiera puede abrirlas. Casi nadie lo hace todas
-    las semanas, ni compara contra la semana pasada, ni saca conclusiones.
+    las semanas, ni compara contra lo que había antes, ni saca conclusiones.
+    Leerlas cada semana es lo que hace que un anuncio que corrió diez días a
+    mitad de mes no se le escape al reporte del mes.
   fuentes:
     - nombre: "Meta"
       donde: "Facebook e Instagram"
@@ -82,8 +84,9 @@ pasos:
         industria. Agrupado por competidor, no en una lista plana.
     - nombre: "Revisamos y enviamos"
       texto: >-
-        Ningún reporte sale sin que una persona lo lea. Un control automático
-        marca antes lo que no se sostiene, y lo dudoso se corrige o se dice.
+        Una vez al mes le llega el reporte. Ninguno sale sin que una persona
+        lo lea: un control automático marca antes lo que no se sostiene, y lo
+        dudoso se corrige o se dice.
 
 # ── El ejemplo del reporte ───────────────────────────────────────────
 # Una muestra de cómo llega el correo, debajo de los pasos. Existe para que
@@ -94,16 +97,16 @@ pasos:
 # acá un competidor real, o una cifra que no salga de una corrida, sería
 # exactamente lo que el reporte promete no hacer.
 ejemplo:
-  titulo: "Así llega, todas las semanas"
+  titulo: "Así llega, todos los meses"
   nota: >-
     El detalle va agrupado por competidor y, dentro de cada uno, por
     plataforma. Cada anuncio lleva el enlace a su ficha pública, para que
     cualquier afirmación se pueda comprobar en un clic.
   pie: >-
     Ejemplo con datos de muestra. En su reporte van sus competidores y los
-    anuncios que estén al aire esa semana.
+    anuncios que estuvieron al aire ese mes.
   asunto: "Competencia de su empresa"
-  periodo: "Del 21 al 27 de septiembre"
+  periodo: "Del 1 al 30 de septiembre"
   conteo:
     - etiqueta: "Nuevos"
       valor: "3"
@@ -127,7 +130,7 @@ ejemplo:
             - referencia: "A2"
               estado: "cambiado"
               detalle: "1 pieza · cambió el titular"
-              texto: "Bajó el precio de anzuelo respecto de la semana pasada"
+              texto: "Bajó el precio de anzuelo respecto del mes pasado"
         - plataforma: "Google"
           anuncios:
             - referencia: "A3"
@@ -141,8 +144,29 @@ ejemplo:
           anuncios:
             - referencia: "B1"
               estado: "se apagó"
-              detalle: "dejó de aparecer el miércoles"
+              detalle: "dejó de aparecer el 18 de septiembre"
               texto: "Promoción de temporada"
+
+# ── El plan ──────────────────────────────────────────────────────────
+# Los precios no van acá: salen de config/planes.yaml. Esto es el texto que
+# los rodea. El plan a la medida (agencias, cadencias más cortas) no se vende
+# desde la página: el enlace lleva al contacto de arriba, y si no hay contacto
+# configurado no aparece.
+plan_seccion:
+  rotulo: "El plan"
+  titulo: "Un reporte al mes, con lo que hizo su competencia"
+  entrada: >-
+    Hasta cuatro competidores, en Meta y Google, con el enlace a cada anuncio.
+    Elija cómo pagarlo: mes a mes, o el año completo a un precio menor. Sin
+    permanencia: puede cancelar cuando quiera.
+  medida:
+    titulo: "¿Es una agencia o necesita reportes más seguidos?"
+    texto: >-
+      Armamos un plan a la medida, con la cadencia y los competidores que
+      necesite.
+    boton: "Conversemos"
+  cierre: >-
+    Un reporte al mes por $25, o $240 si paga el año completo. Sin permanencia.
 
 # ── Por qué sirve ────────────────────────────────────────────────────
 argumentos:
@@ -158,7 +182,7 @@ argumentos:
       estimar: el reporte dice lo que se puede comprobar y marca lo que no.
   - titulo: "Le avisamos cuando no hay nada"
     texto: >-
-      Si un competidor no está pautando esta semana, se lo decimos. Un reporte
+      Si un competidor no está pautando este mes, se lo decimos. Un reporte
       relleno para justificar el mes es la forma más rápida de que deje de
       leerlo.
   - titulo: "Revisión humana antes de cada envío"

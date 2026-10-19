@@ -171,62 +171,74 @@
     text-decoration:underline; text-underline-offset:2px;
   }
 
-  /* -- planes -------------------------------------------------- */
-  .planes { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; align-items:stretch; }
+  /* -- el plan ------------------------------------------------- */
+  /* Un plan, dos formas de pagarlo. La tarjeta se parte en dos: a la izquierda
+     qué incluye, a la derecha cuánto cuesta. Si algún día hay más de un plan
+     visible, cada uno es una tarjeta igual, una debajo de la otra. */
   .plan {
+    display:grid; grid-template-columns:1.1fr 1fr; gap:0;
     background:var(--blanco); border:1px solid var(--linea); border-radius:var(--radio);
-    padding:30px 26px; display:flex; flex-direction:column;
-    transition:border-color .3s var(--curva), transform .3s var(--curva),
-               box-shadow .3s var(--curva);
+    overflow:hidden;
   }
-  .plan:hover { border-color:var(--piedra); transform:translateY(-4px);
-                box-shadow:0 12px 32px rgba(20,19,18,.09); }
-  .plan.destacado { border:1.5px solid var(--pulso); }
-  .plan.destacado:hover { border-color:var(--pulso); 
-                          box-shadow:0 12px 32px rgba(221,65,21,.16); }
-  .plan .insignia {
-    font-family:var(--mono); font-size:10.5px; text-transform:uppercase;
-    letter-spacing:.1em; font-weight:500; background:var(--pulso); color:var(--blanco);
-    padding:4px 10px; align-self:flex-start; margin-bottom:14px;
-    border-radius:3px;
-  }
-  .plan .insignia.vacia { visibility:hidden; }
+  .plan + .plan { margin-top:24px; }
+  .plan .que { padding:36px 34px; }
   .plan .nombre { font-family:var(--mono); font-size:11.5px; text-transform:uppercase;
-                  letter-spacing:.1em; color:var(--piedra); margin-bottom:12px; }
-  .plan .precio { font-family:var(--display); font-size:42px; font-weight:700;
-                  line-height:1.05; letter-spacing:-.03em; }
-  .plan .precio.texto { font-size:30px; }
-  .plan .precio span { font-family:var(--cuerpo); font-size:15px; font-weight:400;
-                       color:var(--gris-texto); letter-spacing:0; }
-  /* El alto fijo es para que la tabla Frecuencia/Competidores arranque a la
-     misma altura en las cuatro tarjetas: si cada texto ocupa las lineas que
-     le toquen, las filas quedan escalonadas y se leen como si compararan
-     cosas distintas. A cuatro columnas el texto mas largo son tres lineas. */
-  .plan .quien { font-size:16px; color:var(--tinta); margin:16px 0 20px;
-                 min-height:4.4em; line-height:1.45; }
+                  letter-spacing:.1em; color:var(--pulso-texto); margin:0 0 12px;
+                  font-weight:500; }
+  .plan .titular { font-family:var(--display); font-size:28px; font-weight:700;
+                   letter-spacing:-.02em; line-height:1.15; margin:0 0 18px; }
   .plan .datos { border-top:1px solid var(--linea); margin-bottom:18px; }
   .plan .dato {
-    display:flex; justify-content:space-between; gap:12px; font-size:13.5px;
-    padding:10px 0; border-bottom:1px solid var(--linea);
+    display:flex; justify-content:space-between; gap:12px; font-size:14px;
+    padding:11px 0; border-bottom:1px solid var(--linea);
   }
   .plan .dato .clave { color:var(--gris-texto); }
   .plan .dato .valor { font-family:var(--display); font-weight:600; text-align:right; }
-  .plan ul { list-style:none; padding:0; margin:0 0 26px; }
+  .plan ul { list-style:none; padding:0; margin:0; }
   .plan li {
     display:grid; grid-template-columns:16px 1fr; gap:9px; align-items:start;
-    font-size:15px; padding:7px 0; color:var(--gris-texto);
+    font-size:15.5px; padding:7px 0; color:var(--tinta);
   }
-  .plan li:before { content:""; width:12px; height:1.5px; background:var(--piedra);
+  .plan li:before { content:""; width:12px; height:2px; background:var(--pulso);
                     margin-top:.66em; }
-  .plan .pie { margin-top:auto; }
-  .plan .btn { width:100%; text-align:center; padding:13px 8px; font-size:14.5px; }
 
-  .comparador {
-    margin-top:36px; padding:24px 26px; background:var(--blanco);
-    border-left:3px solid var(--pulso); border-radius:0 var(--radio) var(--radio) 0;
-    font-size:16px; color:var(--gris-texto); line-height:1.6;
+  .plan .pagos { background:var(--papel); border-left:1px solid var(--linea);
+                 padding:28px 26px; display:grid; gap:14px; align-content:start; }
+  .pago {
+    background:var(--blanco); border:1px solid var(--linea); border-radius:var(--radio);
+    padding:22px 22px 20px; position:relative;
+    transition:border-color .3s var(--curva), transform .3s var(--curva),
+               box-shadow .3s var(--curva);
   }
-  .comparador strong { color:var(--tinta); font-family:var(--display); }
+  .pago:hover { border-color:var(--piedra); transform:translateY(-3px);
+                box-shadow:0 10px 26px rgba(20,19,18,.08); }
+  .pago.destacado { border:1.5px solid var(--pulso); }
+  .pago.destacado:hover { border-color:var(--pulso);
+                          box-shadow:0 10px 26px rgba(221,65,21,.14); }
+  .pago .forma { font-family:var(--display); font-size:15px; font-weight:700; margin:0; }
+  .pago .insignia {
+    position:absolute; top:-11px; right:18px; font-family:var(--mono); font-size:10.5px;
+    text-transform:uppercase; letter-spacing:.1em; font-weight:500;
+    background:var(--pulso); color:var(--blanco); padding:4px 10px; border-radius:3px;
+  }
+  .pago .precio { font-family:var(--display); font-size:40px; font-weight:700;
+                  line-height:1.05; letter-spacing:-.03em; margin:8px 0 2px; }
+  .pago .precio span { font-family:var(--cuerpo); font-size:15px; font-weight:400;
+                       color:var(--gris-texto); letter-spacing:0; }
+  .pago .detalle { font-size:14.5px; color:var(--gris-texto); margin:0 0 16px;
+                   line-height:1.45; min-height:2.9em; }
+  .pago .btn { width:100%; text-align:center; padding:13px 8px; font-size:15px; }
+
+  /* El plan a la medida no se vende desde acá: es una conversación. */
+  .medida {
+    margin-top:28px; padding:24px 26px; background:var(--blanco);
+    border-left:3px solid var(--pulso); border-radius:0 var(--radio) var(--radio) 0;
+    display:flex; gap:24px; align-items:center; justify-content:space-between;
+  }
+  .medida p { margin:0; font-size:16px; color:var(--gris-texto); line-height:1.55;
+              max-width:62ch; }
+  .medida strong { color:var(--tinta); font-family:var(--display); }
+  .medida .btn { white-space:nowrap; flex-shrink:0; }
 
   /* -- llamada final ------------------------------------------- */
   .cierre { text-align:center; padding:104px 0; background:var(--tinta); }
@@ -245,14 +257,14 @@
     .muestra { grid-template-columns:1fr; gap:32px; }
     .muestra-texto { position:static; }
     .muestra-texto h3, .muestra-texto p { max-width:none; }
-    .planes { grid-template-columns:1fr 1fr; }
-    .plan .quien { min-height:3.2em; }
+    .plan { grid-template-columns:1fr; }
+    .plan .pagos { border-left:0; border-top:1px solid var(--linea); }
     .hero h1 { font-size:42px; }
     .hero { padding:68px 0 112px; }
     .cierre h2 { font-size:32px; } .cierre { padding:72px 0; }
   }
   @media (max-width:640px) {
-    .fuentes, .ventajas, .pasos, .planes { grid-template-columns:1fr; }
+    .fuentes, .ventajas, .pasos { grid-template-columns:1fr; }
     .correo-conteo { grid-template-columns:1fr 1fr; }
     .correo-conteo > div:nth-child(2) { border-right:0; }
     /* Los rotulos del ejemplo bajan a 9,5px en pantalla grande porque ahi la
@@ -265,7 +277,10 @@
        desprolijos, y de paso el blanco de toque queda comodo. */
     .acciones { display:grid; grid-template-columns:1fr; gap:12px; }
     .acciones .btn { text-align:center; }
-    .plan .quien { min-height:0; }
+    .plan .que { padding:26px 22px; }
+    .plan .pagos { padding:22px 18px; }
+    .medida { display:block; }
+    .medida .btn { margin-top:16px; display:block; text-align:center; }
     .cierre { padding:64px 0; }
     .cierre h2 { font-size:28px; }
   }
@@ -305,7 +320,7 @@
     <h1 class="sube" style="transition-delay:.08s">{{ titulo }}</h1>
     <p class="bajada sube" style="transition-delay:.16s">{{ subtitulo }}</p>
     <div class="acciones sube" style="transition-delay:.24s">
-      <a class="btn" href="{{ aplicar_url }}"><span>Pedir el primer reporte</span></a>
+      <a class="btn" href="#planes"><span>Ver el plan</span></a>
       <a class="btn alt" href="#como"><span>Ver cómo funciona</span></a>
     </div>
     {% if promesa_corta %}
@@ -318,11 +333,11 @@
   <div class="env sube">
     <p class="rotulo">El primer paso</p>
     <h2>Su competencia ya está anunciando. La pregunta es si usted lo sabe.</h2>
-    <p>
-      El primer reporte no tiene costo ni compromiso. Si no le sirve, no hay
-      nada que cancelar.
-    </p>
-    <a class="btn" href="{{ aplicar_url }}"><span>Pedir el primer reporte</span></a>
+    {# Antes decía que el primer reporte no tenía costo. La prueba gratis no
+       está en este lanzamiento: dejarlo habría sido prometer algo que el
+       checkout después cobra. #}
+    <p>{{ plan_seccion.cierre }}</p>
+    <a class="btn" href="#planes"><span>Ver el plan</span></a>
   </div>
 </section>
 
@@ -446,28 +461,15 @@
 <section id="planes">
   <div class="env">
     <div class="sube">
-      <p class="rotulo">Planes</p>
-      <h2>Elija cada cuánto quiere saber</h2>
-      <p class="entrada">
-        Lo único que cambia entre los planes es la frecuencia del reporte y
-        cuántos competidores cubre. El contenido y el cuidado son los mismos en
-        todos. Puede cambiar de plan o cancelar cuando quiera.
-      </p>
+      <p class="rotulo">{{ plan_seccion.rotulo }}</p>
+      <h2>{{ plan_seccion.titulo }}</h2>
+      <p class="entrada">{{ plan_seccion.entrada }}</p>
     </div>
-    <div class="planes">
-      {% for p in planes %}
-      <div class="plan{% if p.clave == 'semanal' %} destacado{% endif %} sube"
-           style="transition-delay:{{ loop.index0 * 0.09 }}s">
-        <span class="insignia{% if p.clave != 'semanal' %} vacia{% endif %}">Más elegido</span>
-        <div class="nombre">{{ p.nombre }}</div>
-        {% if p.precio_usd is none %}
-          <div class="precio texto">A convenir</div>
-        {% elif p.precio_usd == 0 %}
-          <div class="precio texto">Sin costo</div>
-        {% else %}
-          <div class="precio">${{ p.precio_usd }}<span> / mes</span></div>
-        {% endif %}
-        <p class="quien">{{ p.para_quien or p.resumen }}</p>
+    {% for p in planes_visibles %}
+    <div class="plan sube">
+      <div class="que">
+        <p class="nombre">{{ p.nombre }}</p>
+        <p class="titular">{{ p.para_quien or p.resumen }}</p>
         <div class="datos">
           <div class="dato">
             <span class="clave">Frecuencia</span>
@@ -482,24 +484,41 @@
           </div>
         </div>
         <ul>{% for i in p.incluye %}<li><span>{{ i }}</span></li>{% endfor %}</ul>
-        <div class="pie">
-          <a class="btn{% if p.clave != 'semanal' %} alt{% endif %}"
-             href="{{ aplicar_url }}?plan={{ p.clave }}">
-            <span>{% if p.precio_usd == 0 %}Probar sin costo
-                  {%- elif p.precio_usd is none %}Conversemos
-                  {%- else %}Elegir {{ p.nombre|lower }}{% endif %}</span>
-          </a>
-        </div>
       </div>
-      {% endfor %}
+      <div class="pagos">
+        {% for clave, c in (p.ciclos or {}).items() %}
+        <div class="pago{% if c.ahorro_usd %} destacado{% endif %}">
+          {# El ahorro en plata, que es un dato. Un "más elegido" sin clientes
+             todavía sería inventado. #}
+          {% if c.ahorro_usd %}<span class="insignia">Ahorra ${{ '%g' % c.ahorro_usd }}</span>{% endif %}
+          <p class="forma">{{ c.nombre }}</p>
+          <p class="precio">${{ '%g' % c.precio_usd }}<span> / {{ 'año' if clave == 'anual' else 'mes' }}</span></p>
+          <p class="detalle">
+            {%- if c.equivale_mes_usd %}Le queda en ${{ '%g' % c.equivale_mes_usd }} al mes:
+            ${{ '%g' % c.ahorro_usd }} menos que pagando mes a mes.
+            {%- else %}Se cobra cada mes. Sin permanencia.{% endif -%}
+          </p>
+          <a class="btn{% if not c.ahorro_usd %} alt{% endif %}"
+             href="{{ aplicar_url }}?plan={{ p.clave }}&amp;ciclo={{ clave }}">
+            <span>Empezar {{ c.nombre|lower }}</span></a>
+        </div>
+        {% else %}
+        <div class="pago">
+          {% if p.precio_usd %}<p class="precio">${{ '%g' % p.precio_usd }}<span> / mes</span></p>{% endif %}
+          <a class="btn" href="{{ aplicar_url }}?plan={{ p.clave }}"><span>Empezar</span></a>
+        </div>
+        {% endfor %}
+      </div>
     </div>
-    <div class="comparador sube">
-      <strong>¿Cuál le sirve?</strong> Si su categoría cambia de precio o de
-      promoción todas las semanas —retail, servicios, gastronomía—, el mensual
-      le va a llegar tarde. Si sus campañas duran un mes o más, el semanal le va
-      a repetir información. Ante la duda, empiece por la prueba sin costo: es
-      un reporte completo y le muestra cuánto se mueve su competencia.
+    {% endfor %}
+    {% set enlace_contacto = ('https://wa.me/' ~ contacto.whatsapp) if contacto.whatsapp
+                             else (('mailto:' ~ contacto.email) if contacto.email else '') %}
+    {% if enlace_contacto and plan_seccion.medida %}
+    <div class="medida sube">
+      <p><strong>{{ plan_seccion.medida.titulo }}</strong> {{ plan_seccion.medida.texto }}</p>
+      <a class="btn alt" href="{{ enlace_contacto }}"><span>{{ plan_seccion.medida.boton }}</span></a>
     </div>
+    {% endif %}
   </div>
 </section>
 {% endblock %}

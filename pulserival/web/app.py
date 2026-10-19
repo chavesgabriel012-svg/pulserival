@@ -4,9 +4,11 @@ Sirve tres cosas y nada más:
   1. la landing, con los planes que salen de config/planes.yaml;
   2. el alta: el formulario que antes había que cargar a mano con
      `cli clientes agregar`;
-  3. el cobro, HOY SIMULADO. No hay pasarela conectada: el checkout es una
-     pantalla que marca la suscripción como pagada sin mover plata. Está
-     marcado como simulación en la interfaz para que nadie lo confunda.
+  3. el cobro. Con PULSERIVAL_COBRO=paddle el checkout abre Paddle y quien
+     activa la suscripción es el webhook (/webhooks/paddle), nunca el
+     navegador. Sin esa variable el cobro es SIMULADO: una pantalla que marca
+     la suscripción como pagada sin mover plata, y lo dice en pantalla. El
+     detalle de qué significa cada evento de Paddle está en pulserival/pagos.py.
 
 Y el panel de revisión, en `panel.py`: la bandeja de reportes pendientes,
 editar, aprobar, enviar o descartar, y el gasto. El panel solo se sirve si hay
@@ -21,6 +23,7 @@ lo que permite correr en un hosting serverless como Vercel. El detalle está en
 """
 from __future__ import annotations
 
+import json
 import os
 import secrets
 import sqlite3
@@ -33,17 +36,17 @@ from flask import (Flask, abort, redirect, render_template, request,
                    send_from_directory, url_for)
 from jinja2 import ChoiceLoader, FileSystemLoader
 
-from .. import altas, config, db, marca as marca_mod, planes
+from .. import altas, config, db, marca as marca_mod, pagos, planes
 from ..landing import generador
 from . import deposito as deposito_mod
 from . import planificador as plan_mod
 from .panel import PLANTILLAS as PLANTILLAS_PANEL
 from .panel import panel as plano_panel
 
-# El cobro real todavía no existe. Mientras esta bandera esté encendida, el
-# checkout es una simulación y lo dice en pantalla.
+# Sin PULSERIVAL_COBRO=paddle el checkout es una simulación y lo dice en
+# pantalla. La decisión vive en pagos.modo_cobro().
 def cobro_simulado() -> bool:
-    return (config.env("PULSERIVAL_COBRO") or "simulado").lower() != "real"
+    return pagos.modo_cobro() == "simulado"
 
 
 def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
@@ -87,8 +90,9 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
 
     # Crear el esquema si falta y correr las migraciones. En un servidor nuevo
     # el disco arranca vacío, y sin esto la primera petición se encuentra con
-    # una base sin tablas. Es idempotente (todo es CREATE TABLE IF NOT EXISTS
-    # y columnas aditivas), así que también sirve de migración en cada deploy.
+    # una base sin tablas. Es idempotente, así que también sirve de migración
+    # en cada deploy; si hay que reconstruir `clientes`, antes deja una copia
+    # en respaldos/migraciones/ (ver db.migrar).
     if deposito.nombre == "sqlite":
         db.inicializar(Path(app.config["RUTA_DB"]))
 
@@ -107,6 +111,7 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
     def _contexto_publico() -> dict[str, Any]:
         ctx = generador.contexto()
         ctx.update({
+            "simulado": cobro_simulado(),
             "modo_servidor": True,
             "accion_alta": url_for("alta"),
             "inicio_url": url_for("inicio"),
@@ -132,21 +137,20 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
 
     @app.get("/aplicar")
     def aplicar():
-        """El formulario, en su propia página. Más adelante acá va el cobro."""
+        """El formulario, en su propia página. Al enviarlo se pasa al cobro."""
         ctx = _contexto_publico()
-        # El plan llega por la URL desde el botón de cada plan. Si viene uno
-        # que no existe, se cae al primero en vez de romper: un enlace viejo
-        # compartido por ahí no puede dejar a alguien sin poder aplicar.
-        pedido = request.args.get("plan")
-        catalogo = ctx.get("planes") or []
-        elegido = next((p for p in catalogo if p.get("clave") == pedido), None)
-        # Sin plan en la URL, o con uno que ya no existe, queda el primero: el
-        # selector del formulario siempre muestra alguno, y si el resumen de al
-        # lado dijera otra cosa la persona estaría leyendo un plan que no es el
-        # que va a enviar.
-        if elegido is None and catalogo:
-            elegido = catalogo[0]
+        # El plan y el ciclo llegan por la URL desde los botones de la
+        # portada. Si viene uno que no existe se cae al primero en vez de
+        # romper: un enlace viejo compartido por ahí no puede dejar a alguien
+        # sin poder aplicar, y el resumen de al lado tiene que decir lo mismo
+        # que el selector.
+        vendibles = ctx.get("planes_checkout") or []
+        elegido = next((p for p in vendibles if p.get("clave") == request.args.get("plan")),
+                       vendibles[0] if vendibles else None)
         ctx["plan_elegido"] = (elegido or {}).get("clave")
+        ciclos = (elegido or {}).get("ciclos") or {}
+        pedido = request.args.get("ciclo")
+        ctx["ciclo_elegido"] = pedido if pedido in ciclos else next(iter(ciclos), None)
         return render_template("aplicar.html.j2", **ctx)
 
     def _origen(datos) -> str | None:
@@ -184,12 +188,27 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
                 "prioridad": 1 if n == 1 else 2,
             })
 
+        # Desde la web solo se contratan los planes con checkout. El POST lo
+        # puede armar cualquiera con curl: sin esto, alguien se da de alta en
+        # el plan Custom o en una prueba gratis que ya no se ofrece.
+        vendibles = {p["clave"]: p for p in planes.con_checkout()}
+        plan = datos.get("plan") or next(iter(vendibles), "")
+        if plan not in vendibles:
+            return _pagina("No pudimos completar el registro",
+                           "Ese plan no se contrata desde la página. Escríbanos y lo "
+                           "armamos con usted.", volver=True), 400
+        tope = vendibles[plan].get("competidores_max")
+        if tope and len(competidores) > int(tope):
+            return _pagina("No pudimos completar el registro",
+                           f"El plan incluye hasta {tope} competidores.", volver=True), 400
+
         try:
             resultado = deposito.guardar({
                 "empresa": datos.get("empresa", ""),
                 "email": datos.get("email", ""),
                 "competidores": competidores,
-                "plan": datos.get("plan") or "semanal",
+                "plan": plan,
+                "ciclo": datos.get("ciclo"),
                 "contacto": datos.get("contacto"),
                 "whatsapp": datos.get("whatsapp"),
                 "industria": datos.get("industria"),
@@ -217,54 +236,23 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
                 "gracias.html.j2", **generador.contexto(),
                 cliente=None, simulado=cobro_simulado(), alta=resultado,
                 empresa=datos.get("empresa", ""), email=datos.get("email", ""),
-                plan=planes.plan(datos.get("plan") or "semanal"))
-        return redirect(url_for("checkout", cliente_id=resultado["cliente_id"]))
+                plan=planes.plan(plan))
+        cid = resultado["cliente_id"]
+        return redirect(url_for("checkout", cliente_id=cid, t=_firma(cid)))
 
-    # ── cobro (simulado) ─────────────────────────────────────────────
-    @app.get("/checkout/<int:cliente_id>")
-    def checkout(cliente_id: int):
-        con = conectar()
-        try:
-            cliente = db.fila(con, "SELECT * FROM clientes WHERE id = ?", (cliente_id,))
-            if not cliente:
-                abort(404)
-            competidores = db.competidores_de(con, cliente_id)
-            verificaciones = _verificar(competidores)
-        finally:
-            con.close()
+    # ── cobro ────────────────────────────────────────────────────────
+    def _firma(cliente_id: int) -> str:
+        return pagos.firma_cliente(cliente_id, app.secret_key)
 
-        datos_plan = planes.plan(db.valor(cliente, "plan"))
-        return render_template(
-            "checkout.html.j2",
-            **generador.contexto(),
-            cliente=cliente,
-            plan=datos_plan,
-            precio=planes.precio_usd(cliente),
-            competidores=competidores,
-            verificaciones=verificaciones,
-            simulado=cobro_simulado(),
-            enlace_pago=(datos_plan or {}).get("enlace_pago") or "",
-        )
+    def _cliente_firmado(cliente_id: int) -> sqlite3.Row:
+        """El cliente de la URL, si la URL trae su firma. Si no, 404.
 
-    @app.post("/checkout/<int:cliente_id>/confirmar")
-    def confirmar(cliente_id: int):
-        if not cobro_simulado():
-            # Con cobro real, quien activa es el webhook de la pasarela, no
-            # un POST desde el navegador: si no, cualquiera se activa solo.
-            abort(403, "El cobro real se confirma desde la pasarela, no desde acá")
-        con = conectar()
-        try:
-            with con:
-                altas.activar(con, cliente_id, referencia="SIMULADO",
-                              proveedor="manual")
-        except altas.AltaInvalida:
+        Sin la firma estas páginas eran /checkout/1, /checkout/2...: cambiando
+        el número se veían el correo y los competidores de otro cliente.
+        Responde 404 y no 403 para no confirmar que ese id existe.
+        """
+        if not pagos.firma_valida(cliente_id, request.values.get("t"), app.secret_key):
             abort(404)
-        finally:
-            con.close()
-        return redirect(url_for("gracias", cliente_id=cliente_id))
-
-    @app.get("/gracias/<int:cliente_id>")
-    def gracias(cliente_id: int):
         con = conectar()
         try:
             cliente = db.fila(con, "SELECT * FROM clientes WHERE id = ?", (cliente_id,))
@@ -272,6 +260,73 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
             con.close()
         if not cliente:
             abort(404)
+        return cliente
+
+    def _datos_paddle(cliente: sqlite3.Row) -> dict[str, Any]:
+        """Lo que la página de checkout le pasa a Paddle.js."""
+        datos_plan = planes.plan(db.valor(cliente, "plan"))
+        return {
+            "entorno": pagos.entorno(),
+            "token": config.env("PADDLE_CLIENT_TOKEN") or "",
+            "precio": pagos.precio_paddle(datos_plan, db.valor(cliente, "ciclo_facturacion")),
+            "email": cliente["contacto_email"],
+            # Viaja por el navegador y vuelve en el webhook: es lo que dice de
+            # qué cliente es el pago. La firma impide cambiarle el id.
+            "custom_data": {"cliente_id": str(cliente["id"]),
+                            "firma": _firma(int(cliente["id"]))},
+            "faltan": pagos.pendientes(),
+        }
+
+    @app.get("/checkout/<int:cliente_id>")
+    def checkout(cliente_id: int):
+        cliente = _cliente_firmado(cliente_id)
+        con = conectar()
+        try:
+            competidores = db.competidores_de(con, cliente_id)
+            verificaciones = _verificar(competidores)
+        finally:
+            con.close()
+        datos_plan = planes.plan(db.valor(cliente, "plan"))
+        return render_template(
+            "checkout.html.j2",
+            **generador.contexto(),
+            cliente=cliente,
+            plan=datos_plan,
+            ciclo=planes.ciclo(datos_plan, db.valor(cliente, "ciclo_facturacion")),
+            precio=planes.precio_usd(cliente),
+            competidores=competidores,
+            verificaciones=verificaciones,
+            simulado=cobro_simulado(),
+            paddle=None if cobro_simulado() else _datos_paddle(cliente),
+            firma=_firma(cliente_id),
+        )
+
+    @app.post("/checkout/<int:cliente_id>/confirmar")
+    def confirmar(cliente_id: int):
+        if not cobro_simulado():
+            # Con cobro real, quien activa es el webhook de Paddle, no un POST
+            # desde el navegador: si no, cualquiera se activa solo.
+            abort(403, "El cobro real se confirma desde Paddle, no desde acá")
+        _cliente_firmado(cliente_id)
+        con = conectar()
+        try:
+            with con:
+                altas.activar(con, cliente_id, referencia="SIMULADO",
+                              proveedor="manual")
+        except altas.AltaInvalida as e:
+            return _pagina("No se pudo activar", str(e), volver=True), 409
+        finally:
+            con.close()
+        return redirect(url_for("gracias", cliente_id=cliente_id, t=_firma(cliente_id)))
+
+    @app.get("/gracias/<int:cliente_id>")
+    def gracias(cliente_id: int):
+        cliente = _cliente_firmado(cliente_id)
+        con = conectar()
+        try:
+            sin_competidores = not db.competidores_de(con, cliente_id)
+        finally:
+            con.close()
         return render_template(
             "gracias.html.j2",
             **generador.contexto(),
@@ -281,7 +336,76 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
             plan=planes.plan(db.valor(cliente, "plan")),
             empresa=cliente["nombre_empresa"],
             email=cliente["contacto_email"],
+            sin_competidores=sin_competidores,
         )
+
+    @app.get("/pagar")
+    def pagar():
+        """El "enlace de pago por defecto" que se configura en Paddle.
+
+        Los links de pago que se arman a mano en el panel de Paddle (el plan
+        Custom) son esta URL con `?_ptxn=txn_...`. La página no tiene que
+        hacer nada más que cargar Paddle.js: Paddle.js ve el parámetro y abre
+        solo el checkout de esa transacción. Sin esta página, esos links
+        llevan a un 404 y no se puede cobrar ningún Custom.
+
+        Va en Paddle > Checkout > Checkout settings > Default payment link, y
+        el dominio tiene que estar aprobado por Paddle (en sandbox no hace
+        falta).
+        """
+        return render_template(
+            "pagar.html.j2", **generador.contexto(),
+            paddle={"entorno": pagos.entorno(),
+                    "token": config.env("PADDLE_CLIENT_TOKEN") or ""},
+            transaccion=request.args.get("_ptxn"),
+        )
+
+    @app.post("/webhooks/paddle")
+    def webhook_paddle():
+        """Las notificaciones de Paddle. Lo único que activa o corta un cliente.
+
+        Paddle reintenta todo lo que no sea un 200 en menos de 5 segundos
+        (60 veces en 3 días en producción), así que:
+          - firma mala o sin secreto: no 200, para que no se pierda si es un
+            error de configuración que se arregla después;
+          - evento que no se sabe de quién es: 200 igual, queda guardado en
+            eventos_pago. Reintentarlo no lo va a resolver.
+        """
+        secreto = config.env("PADDLE_WEBHOOK_SECRET")
+        if not secreto:
+            app.logger.error("Llegó un webhook de Paddle y no hay PADDLE_WEBHOOK_SECRET")
+            return {"ok": False, "error": "webhook sin configurar"}, 503
+        if deposito.nombre != "sqlite":
+            # Sin base no hay a quién activar: este webhook escribe en SQLite.
+            return {"ok": False, "error": "el webhook necesita la base de datos"}, 503
+        # El cuerpo tal cual llegó, en bytes: la firma es sobre esos bytes, y
+        # leerlo como JSON y volver a serializarlo la rompe.
+        cuerpo = request.get_data(cache=True)
+        try:
+            pagos.verificar_firma(cuerpo, request.headers.get("Paddle-Signature"), secreto)
+        except pagos.FirmaInvalida as e:
+            app.logger.warning("Webhook de Paddle rechazado: %s", e)
+            return {"ok": False, "error": "firma inválida"}, 400
+        try:
+            evento = json.loads(cuerpo)
+        except ValueError:
+            return {"ok": False, "error": "el cuerpo no es JSON"}, 400
+        con = conectar()
+        try:
+            with con:
+                resultado = pagos.aplicar_evento(con, evento, cuerpo.decode("utf-8"))
+        except ValueError as e:
+            return {"ok": False, "error": str(e)}, 400
+        except sqlite3.Error as e:
+            # Error de nuestro lado: que Paddle reintente.
+            app.logger.error("No se pudo guardar el evento de Paddle: %s", e)
+            return {"ok": False, "error": "no se pudo guardar"}, 500
+        finally:
+            con.close()
+        if resultado["resultado"] == "sin_cliente":
+            app.logger.warning("Evento de Paddle sin cliente: %s %s",
+                               evento.get("event_type"), evento.get("event_id"))
+        return {"ok": True, **resultado}
 
     @app.get("/salud")
     def salud():
@@ -291,11 +415,17 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
         estado = {
             "ok": True,
             "deposito": deposito.nombre,
-            "cobro": "simulado" if cobro_simulado() else "real",
+            "cobro": ("simulado" if cobro_simulado()
+                      else f"paddle ({pagos.entorno()})"),
             "panel": "habilitado" if clave_configurada() else "sin PULSERIVAL_PANEL_CLAVE",
             "sesiones": "efímeras" if app.config["SECRETO_EFIMERO"] else "persistentes",
         }
         faltan = deposito.pendientes()
+        if not cobro_simulado():
+            # Un pago que entra con el webhook sin configurar no activa a
+            # nadie: el cliente pagó y no recibe nada. Mejor que el hosting lo
+            # marque caído antes de que pase.
+            faltan = faltan + pagos.pendientes()
         if faltan:
             # Configuración incompleta es un 500 a propósito: el formulario
             # está publicado y no puede guardar nada. Mejor que el hosting lo

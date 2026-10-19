@@ -1,0 +1,20 @@
+{% extends "_base.html.j2" %}
+{% block titulo %}Pago — {{ marca }}{% endblock %}
+{% block contenido %}
+{# El "enlace de pago por defecto" de Paddle. Los links de cobro del plan a la
+   medida apuntan acá con ?_ptxn=txn_...; Paddle.js ve el parámetro y abre
+   solo el checkout de esa transacción. La página no hace nada más. #}
+{% if transaccion %}
+  <h1>Su pago</h1>
+  <p>Se está abriendo el pago seguro de Paddle. Si no aparece en unos
+    segundos, recargue la página.</p>
+  <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+  <script>
+    {% if paddle.entorno == "sandbox" %}Paddle.Environment.set("sandbox");{% endif %}
+    Paddle.Initialize({ token: {{ paddle.token|tojson }} });
+  </script>
+{% else %}
+  <h1>Este enlace de pago no está completo</h1>
+  <p>Le falta la referencia del cobro. Escríbanos y se lo mandamos de nuevo.</p>
+{% endif %}
+{% endblock %}
