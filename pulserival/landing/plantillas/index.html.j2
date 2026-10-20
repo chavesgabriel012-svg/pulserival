@@ -4,14 +4,29 @@
 {% block estilos %}
   /* -- portada ------------------------------------------------- */
   /* Dos columnas: lo que es, a la izquierda, y por que sirve, a la derecha.
-     El hero es corto a proposito: la primera pantalla tiene que dejar ver
-     el comienzo de la seccion de abajo, para que se note que hay mas. */
-  .hero { padding:48px 0 52px; display:grid; grid-template-columns:1.2fr 1fr;
-          gap:48px; align-items:center; }
-  .hero h1 { font-size:42px; line-height:1.06; margin:0 0 18px; }
-  .hero .bajada { font-size:18px; color:var(--gris-texto); max-width:52ch;
-                  margin:0 0 30px; line-height:1.5; }
+     El hero ocupa la primera pantalla menos lo justo para que asome el
+     rotulo de la seccion de abajo ("El primer paso") y nada mas: se nota que
+     hay mas pagina sin que el titular de abajo le compita al de arriba.
+     --asoma es ese pedazo: el relleno de arriba de la seccion mas el rotulo.
+     Sale de la altura de la ventana, asi que vale igual en una laptop de
+     768px que en un monitor de 1080. */
+  .hero { --cabecera:66px; --asoma:96px; padding:56px 0; display:grid; grid-template-columns:1.2fr 1fr;
+          gap:56px; align-items:center;
+          min-height:calc(100vh - var(--cabecera) - var(--asoma));
+          min-height:calc(100svh - var(--cabecera) - var(--asoma)); }
+  .hero h1 { font-size:50px; line-height:1.05; margin:0 0 22px; }
+  .hero .bajada { font-size:19px; color:var(--gris-texto); max-width:52ch;
+                  margin:0 0 34px; line-height:1.5; }
   .acciones { display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
+  /* En laptops de poca altura (768, 720) el hero grande no entra en la
+     primera pantalla y el rotulo de abajo quedaba cortado. Se compacta solo
+     ahi; en pantallas altas se queda grande. */
+  @media (min-width:981px) and (max-height:820px) {
+    .hero { padding:28px 0; gap:48px; }
+    .hero h1 { font-size:42px; margin-bottom:16px; }
+    .hero .bajada { font-size:17.5px; margin-bottom:26px; }
+    .diapo { min-height:0; padding:24px 26px 22px; }
+  }
 
   /* -- la caja de por que -------------------------------------- */
   /* Un carrusel sin libreria. La base es una fila con scroll-snap: sin
@@ -25,27 +40,30 @@
     display:flex; align-items:center; justify-content:space-between; gap:12px;
     padding:16px 24px; border-bottom:1px solid var(--linea);
   }
-  .porque-cabeza .rotulo { margin:0; }
+  /* El titulo de la caja va con la letra de los titulares, no con la del
+     rotulo: es una pregunta que se lee, no una etiqueta. */
+  .porque-cabeza .titulo-caja { font-family:var(--display); font-weight:700;
+                                font-size:18px; letter-spacing:-.01em; margin:0; }
   .porque-cabeza .cuenta { font-family:var(--mono); font-size:12px; letter-spacing:.08em;
-                           color:var(--gris-texto); }
+                           color:var(--gris-texto); white-space:nowrap; }
   /* El avance: una linea naranja que se llena mientras corre cada diapositiva.
      Es el mismo pulso del encabezado, contando el tiempo. */
   .porque-avance { position:absolute; left:0; top:0; height:2px; width:100%;
-                   background:var(--pulso); transform:scaleX(0); transform-origin:left; }
-  .porque-avance.corre { transition:transform linear; transform:scaleX(1); }
+                   background:var(--pulso); transform:scaleX(0); transform-origin:left;
+                   transition-property:transform; transition-timing-function:linear; }
   .diapos {
     display:flex; overflow-x:auto; scroll-snap-type:x mandatory;
     scroll-behavior:smooth; scrollbar-width:none; -webkit-overflow-scrolling:touch;
     overscroll-behavior-x:contain;
   }
   .diapos::-webkit-scrollbar { display:none; }
-  .diapo { flex:0 0 100%; scroll-snap-align:start; padding:28px 28px 26px;
-           min-height:236px; display:flex; flex-direction:column; }
+  .diapo { flex:0 0 100%; scroll-snap-align:start; padding:30px 28px 28px;
+           min-height:200px; display:flex; flex-direction:column; }
   .diapo .n { font-family:var(--mono); font-size:13px; font-weight:500;
               letter-spacing:.1em; color:var(--pulso-texto); margin:0 0 14px; }
-  .diapo h3 { font-size:25px; margin:0 0 12px; max-width:20ch; }
-  .diapo p { font-size:16.5px; color:var(--gris-texto); line-height:1.55; margin:0;
-             max-width:46ch; }
+  .diapo h3 { font-size:26px; margin:0 0 12px; max-width:20ch; }
+  .diapo p { font-size:17px; color:var(--gris-texto); line-height:1.5; margin:0;
+             max-width:40ch; }
   .porque-pie {
     display:flex; align-items:center; justify-content:space-between; gap:12px;
     padding:12px 18px 14px 24px; border-top:1px solid var(--linea);
@@ -225,7 +243,7 @@
                 box-shadow:0 10px 28px rgba(20,19,18,.07); }
   .plan.principal { border:1.5px solid var(--tinta); }
   .plan.principal:hover { border-color:var(--tinta); }
-  .plan .nombre { font-family:var(--mono); font-size:11.5px; text-transform:uppercase;
+  .plan .nombre { font-family:var(--mono); font-size:12px; text-transform:uppercase;
                   letter-spacing:.1em; color:var(--pulso-texto); margin:0 0 12px;
                   font-weight:500; }
   .plan .precio { font-family:var(--display); font-size:46px; font-weight:700;
@@ -253,10 +271,11 @@
   .plan .sin-contacto { font-size:14px; color:var(--gris-texto); margin:0; }
 
   /* -- llamada final ------------------------------------------- */
-  /* Menos aire arriba que abajo: el rotulo tiene que asomar en la primera
-     pantalla de una laptop de 768px de alto, debajo del hero. */
-  .cierre { text-align:center; padding:64px 0 96px; background:var(--tinta); }
-  .cierre .rotulo { color:var(--pulso-oscuro); }
+  /* El relleno de arriba es parte de --asoma del hero: si cambia uno, cambia
+     el otro. El rotulo no se anima: es lo que asoma en la primera pantalla y
+     tiene que estar quieto ahi. Lo de abajo aparece al bajar. */
+  .cierre { text-align:center; padding:56px 0 96px; background:var(--tinta); }
+  .cierre .rotulo { color:var(--pulso-oscuro); margin-bottom:30px; }
   .cierre h2 { margin:0 auto 20px; max-width:20ch; font-size:42px; color:var(--papel); }
   .cierre p { font-size:18px; color:var(--texto-osc-2); max-width:54ch;
               margin:0 auto 36px; line-height:1.5; }
@@ -270,7 +289,7 @@
        columnas quedaban angostas y el titular partido en cinco lineas. */
     .hero { grid-template-columns:1fr; gap:36px; padding:48px 0 52px; }
     .hero h1 { font-size:40px; max-width:22ch; }
-    .cierre h2 { font-size:32px; } .cierre { padding:72px 0; }
+    .cierre h2 { font-size:32px; } .cierre { padding:56px 0 72px; }
   }
   @media (max-width:640px) {
     .fuentes, .ventajas, .pasos { grid-template-columns:1fr; }
@@ -279,13 +298,15 @@
     /* Los rotulos del ejemplo bajan a 9,5px en pantalla grande porque ahi la
        maqueta es chica al lado del texto. En el celular ocupa todo el ancho
        y no hay razon para achicarlos. */
-    .correo-conteo span, .correo-plataforma { font-size:10.5px; }
+    .correo-conteo span, .correo-plataforma, .correo-barra span { font-size:12px; }
+    .fuente .biblioteca, .muestra-texto .pie-muestra, .correo-anuncio .ref { font-size:12px; }
     .hero { padding:36px 0 44px; gap:28px; }
     .hero h1 { font-size:32px; }
     .hero .bajada { font-size:17px; margin-bottom:24px; }
     .diapo { padding:22px 20px 20px; min-height:0; }
     .diapo h3 { font-size:21px; }
     .porque-cabeza { padding:14px 20px; }
+    .porque-cabeza .titulo-caja { font-size:16.5px; }
     .porque-pie { padding:10px 12px 10px 16px; }
     /* Los dos botones al ancho completo: apilados y de distinto largo se ven
        desprolijos, y de paso el blanco de toque queda comodo. */
@@ -294,18 +315,19 @@
     .planes { grid-template-columns:1fr; }
     .plan { padding:26px 22px 24px; }
     .plan .titular { min-height:0; }
-    .cierre { padding:64px 0; }
+    .cierre { padding:56px 0 64px; }
     .cierre h2 { font-size:28px; }
   }
 {% endblock %}
 
 {% block guion %}
 <script>
-// La caja de por que. Avanza sola cada tantos segundos. Se pausa mientras el
-// mouse o el foco estan adentro, y se detiene del todo cuando la persona la
-// maneja (flechas, puntos, deslizar): leer algo que se va solo a mitad de
-// frase es peor que no tenerlo. Con menos movimiento pedido no avanza sola.
-// Sin JavaScript queda la fila deslizable.
+// La caja de por que. Avanza sola cada tantos segundos y no se detiene nunca
+// del todo: se pausa mientras el puntero está encima (o el foco del teclado
+// adentro) y sigue desde donde iba cuando sale. Usar las flechas, los puntos
+// o deslizar con el dedo cambia de diapositiva y vuelve a contar desde cero.
+// Con menos movimiento pedido no avanza sola. Sin JavaScript queda la fila
+// deslizable.
 (function () {
   var caja = document.getElementById('porque-caja');
   if (!caja) { return; }
@@ -315,12 +337,14 @@
   var actualTxt = caja.querySelector('[data-actual]');
   var avance = caja.querySelector('.porque-avance');
   if (diapos.length < 2) { return; }
-  var ESPERA = 7000;
+  var ESPERA = 6000;
+  var quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var actual = 0;
   var reloj = null;
-  var quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var detenido = quieto;
-  var pausado = false;
+  var restante = ESPERA;   // lo que le falta a la diapositiva de ahora
+  var desde = 0;           // cuándo arrancó el tramo que está corriendo
+  var encima = false;
+  var conFoco = false;
 
   function marcar(i) {
     actual = i;
@@ -331,66 +355,91 @@
     if (actualTxt) { actualTxt.textContent = (i < 9 ? '0' : '') + (i + 1); }
   }
 
+  function barra(escala, ms) {
+    if (!avance) { return; }
+    avance.style.transitionDuration = ms + 'ms';
+    avance.style.transform = 'scaleX(' + escala + ')';
+  }
+
+  function puedeCorrer() { return !quieto && !encima && !conFoco && !document.hidden; }
+
+  function correr() {
+    clearTimeout(reloj);
+    reloj = null;
+    if (!puedeCorrer()) { return; }
+    desde = Date.now();
+    barra(1, restante);
+    reloj = setTimeout(function () { ir(actual + 1); }, restante);
+  }
+
+  // Pausar congela la barra donde iba y guarda lo que falta.
+  function pausar() {
+    if (!reloj) { return; }
+    clearTimeout(reloj);
+    reloj = null;
+    restante = Math.max(0, restante - (Date.now() - desde));
+    var m = avance ? getComputedStyle(avance).transform : 'none';
+    var escala = m.indexOf('matrix') === 0 ? parseFloat(m.slice(7).split(',')[0]) : 0;
+    barra(escala, 0);
+  }
+
   function ir(i) {
     i = (i + diapos.length) % diapos.length;
-    fila.scrollTo({ left: diapos[i].offsetLeft - fila.offsetLeft, behavior: quieto ? 'auto' : 'smooth' });
+    fila.scrollTo({ left: diapos[i].offsetLeft - fila.offsetLeft,
+                    behavior: quieto ? 'auto' : 'smooth' });
     marcar(i);
-    programar();
-  }
-
-  function programar() {
     clearTimeout(reloj);
-    if (avance) {
-      avance.classList.remove('corre');
-      avance.style.transitionDuration = '0s';
-      void avance.offsetWidth;
-    }
-    if (detenido || pausado) { return; }
-    if (avance) {
-      avance.style.transitionDuration = ESPERA + 'ms';
-      avance.classList.add('corre');
-    }
-    reloj = setTimeout(function () { ir(actual + 1); }, ESPERA);
+    reloj = null;
+    restante = ESPERA;
+    barra(0, 0);
+    if (avance) { void avance.offsetWidth; }
+    correr();
   }
-
-  function detener() { detenido = true; programar(); }
 
   puntos.forEach(function (b, k) {
-    b.addEventListener('click', function () { detener(); ir(k); });
+    b.addEventListener('click', function () { ir(k); });
   });
   caja.querySelectorAll('[data-ir]').forEach(function (b) {
     b.addEventListener('click', function () {
-      detener(); ir(actual + parseInt(b.getAttribute('data-ir'), 10));
+      ir(actual + parseInt(b.getAttribute('data-ir'), 10));
     });
   });
-  // Deslizar con el dedo también cuenta: se sigue la diapositiva que quedó
-  // a la vista.
+  // Deslizar con el dedo: se sigue la diapositiva que quedó a la vista.
   var espera = null;
   fila.addEventListener('scroll', function () {
     clearTimeout(espera);
     espera = setTimeout(function () {
-      var i = Math.round(fila.scrollLeft / fila.clientWidth);
-      if (i !== actual) { marcar(Math.max(0, Math.min(i, diapos.length - 1))); }
-    }, 80);
+      var i = Math.max(0, Math.min(Math.round(fila.scrollLeft / fila.clientWidth),
+                                   diapos.length - 1));
+      if (i !== actual) { ir(i); }
+    }, 120);
   }, { passive: true });
-  fila.addEventListener('pointerdown', detener);
-  caja.addEventListener('mouseenter', function () { pausado = true; programar(); });
-  caja.addEventListener('mouseleave', function () { pausado = false; programar(); });
-  caja.addEventListener('focusin', function () { pausado = true; programar(); });
+  caja.addEventListener('pointerenter', function (e) {
+    if (e.pointerType === 'mouse') { encima = true; pausar(); }
+  });
+  caja.addEventListener('pointerleave', function (e) {
+    if (e.pointerType === 'mouse') { encima = false; correr(); }
+  });
+  // El foco pausa solo si viene del teclado: un clic con el mouse también
+  // deja el foco en el botón, y la caja quedaría pausada después de que el
+  // puntero se fue.
+  caja.addEventListener('focusin', function (e) {
+    if (e.target.matches && e.target.matches(':focus-visible')) { conFoco = true; pausar(); }
+  });
   caja.addEventListener('focusout', function (e) {
-    if (!caja.contains(e.relatedTarget)) { pausado = false; programar(); }
+    if (!caja.contains(e.relatedTarget)) { conFoco = false; correr(); }
   });
   fila.addEventListener('keydown', function (e) {
-    if (e.key === 'ArrowRight') { e.preventDefault(); detener(); ir(actual + 1); }
-    if (e.key === 'ArrowLeft') { e.preventDefault(); detener(); ir(actual - 1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); ir(actual + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); ir(actual - 1); }
   });
   // Fuera de la pantalla no tiene sentido que avance.
   document.addEventListener('visibilitychange', function () {
-    if (document.hidden) { clearTimeout(reloj); } else { programar(); }
+    if (document.hidden) { pausar(); } else { correr(); }
   });
 
   marcar(0);
-  programar();
+  correr();
 })();
 </script>
 {% endblock %}
@@ -420,7 +469,7 @@
          role="region" aria-roledescription="carrusel" aria-label="{{ por_que.rotulo }}">
       <span class="porque-avance" aria-hidden="true"></span>
       <div class="porque-cabeza">
-        <p class="rotulo">{{ por_que.rotulo }}</p>
+        <p class="titulo-caja">{{ por_que.rotulo }}</p>
         <span class="cuenta" aria-hidden="true"><span data-actual>01</span> / {{ "%02d"|format(diapos|length) }}</span>
       </div>
       <div class="diapos" tabindex="0" aria-live="off">
@@ -453,14 +502,18 @@
 </div>
 
 <section class="cierre">
-  <div class="env sube">
+  <div class="env">
     <p class="rotulo">El primer paso</p>
-    <h2>Su competencia ya está anunciando. La pregunta es si usted lo sabe.</h2>
+    <h2 class="sube">Su competencia ya está anunciando. La pregunta es si usted lo sabe.</h2>
     {# Antes decía que el primer reporte no tenía costo. La prueba gratis no
        está en este lanzamiento: dejarlo habría sido prometer algo que el
        checkout después cobra. #}
-    <p>{{ plan_seccion.cierre }}</p>
-    <a class="btn" href="#planes"><span>Ver los planes</span></a>
+    <p class="sube" style="transition-delay:.1s">{{ plan_seccion.cierre }}</p>
+    {# El botón va envuelto: la animación de aparición le fija el transform y
+       le quitaría el levantarse al pasar el mouse. #}
+    <div class="sube" style="transition-delay:.2s">
+      <a class="btn" href="#planes"><span>Ver los planes</span></a>
+    </div>
   </div>
 </section>
 
