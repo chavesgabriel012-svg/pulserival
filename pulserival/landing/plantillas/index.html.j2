@@ -3,45 +3,84 @@
 
 {% block estilos %}
   /* -- portada ------------------------------------------------- */
-  /* El latido del fondo. Va abajo del todo, donde no hay texto: cruzarlo por
-     detras del titular no molestaria por el color —la linea es la misma de
-     los divisores— pero si le quita el aire que el titular necesita.
-     `preserveAspectRatio=none` lo estira a lo ancho de la ventana y
-     `non-scaling-stroke` mantiene el trazo fino aunque se estire. */
-  .hero-marco { position:relative; overflow:hidden; }
-  .latido {
-    position:absolute; left:0; right:0; bottom:0; width:100%; height:112px;
-    pointer-events:none; z-index:0;
-    /* La mascara desvanece las dos puntas: sin ella el trazo choca contra el
-       borde de la ventana y se ve cortado, no continuo. */
-    -webkit-mask-image:linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
-            mask-image:linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
-  }
-  .latido path { fill:none; stroke-width:1.5; vector-effect:non-scaling-stroke;
-                 stroke-linecap:round; stroke-linejoin:round; }
-  .latido .base { stroke:var(--linea); }
-  .latido .viva {
-    stroke:var(--pulso); stroke-dasharray:72 928; stroke-dashoffset:1000;
-    animation:recorre-el-latido 9s linear 1s infinite;
-  }
-  @keyframes recorre-el-latido { to { stroke-dashoffset:0; } }
-  @media (prefers-reduced-motion: reduce) {
-    /* Queda el trazo quieto: el adorno sirve igual y deja de moverse. */
-    .latido .viva { display:none; }
-  }
-  /* El relleno de abajo le deja aire al latido: con los 88px de antes el
-     trazo pasaba pegado a la linea de la promesa. */
-  .hero { padding:104px 0 150px; position:relative; z-index:1; }
-  .hero .etiqueta {
-    font-family:var(--mono); font-size:12px; text-transform:uppercase;
-    letter-spacing:.1em; color:var(--pulso-texto); margin:0 0 24px; font-weight:500;
-  }
-  .hero h1 { font-size:60px; line-height:1.05; margin:0 0 26px; max-width:24ch; }
-  .hero .bajada { font-size:20px; color:var(--gris-texto); max-width:58ch;
-                  margin:0 0 36px; line-height:1.5; }
+  /* Dos columnas: lo que es, a la izquierda, y por que sirve, a la derecha.
+     El hero es corto a proposito: la primera pantalla tiene que dejar ver
+     el comienzo de la seccion de abajo, para que se note que hay mas. */
+  .hero { padding:48px 0 52px; display:grid; grid-template-columns:1.2fr 1fr;
+          gap:48px; align-items:center; }
+  .hero h1 { font-size:42px; line-height:1.06; margin:0 0 18px; }
+  .hero .bajada { font-size:18px; color:var(--gris-texto); max-width:52ch;
+                  margin:0 0 30px; line-height:1.5; }
   .acciones { display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
-  .promesa { font-family:var(--mono); font-size:12px; letter-spacing:.06em;
-             color:var(--piedra); margin:24px 0 0; }
+
+  /* -- la caja de por que -------------------------------------- */
+  /* Un carrusel sin libreria. La base es una fila con scroll-snap: sin
+     JavaScript se pasa de una a otra deslizando, y nada queda escondido.
+     Con JavaScript se suman las flechas, los puntos y el avance solo. */
+  .porque-caja {
+    background:var(--blanco); border:1px solid var(--linea); border-radius:var(--radio);
+    box-shadow:0 14px 40px rgba(20,19,18,.07); overflow:hidden; position:relative;
+  }
+  .porque-cabeza {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:16px 24px; border-bottom:1px solid var(--linea);
+  }
+  .porque-cabeza .rotulo { margin:0; }
+  .porque-cabeza .cuenta { font-family:var(--mono); font-size:12px; letter-spacing:.08em;
+                           color:var(--gris-texto); }
+  /* El avance: una linea naranja que se llena mientras corre cada diapositiva.
+     Es el mismo pulso del encabezado, contando el tiempo. */
+  .porque-avance { position:absolute; left:0; top:0; height:2px; width:100%;
+                   background:var(--pulso); transform:scaleX(0); transform-origin:left; }
+  .porque-avance.corre { transition:transform linear; transform:scaleX(1); }
+  .diapos {
+    display:flex; overflow-x:auto; scroll-snap-type:x mandatory;
+    scroll-behavior:smooth; scrollbar-width:none; -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;
+  }
+  .diapos::-webkit-scrollbar { display:none; }
+  .diapo { flex:0 0 100%; scroll-snap-align:start; padding:28px 28px 26px;
+           min-height:236px; display:flex; flex-direction:column; }
+  .diapo .n { font-family:var(--mono); font-size:13px; font-weight:500;
+              letter-spacing:.1em; color:var(--pulso-texto); margin:0 0 14px; }
+  .diapo h3 { font-size:25px; margin:0 0 12px; max-width:20ch; }
+  .diapo p { font-size:16.5px; color:var(--gris-texto); line-height:1.55; margin:0;
+             max-width:46ch; }
+  .porque-pie {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:12px 18px 14px 24px; border-top:1px solid var(--linea);
+  }
+  .puntos { display:flex; gap:6px; }
+  .puntos button {
+    width:26px; height:26px; border:0; background:none; padding:0; cursor:pointer;
+    display:grid; place-items:center; border-radius:50%;
+  }
+  .puntos button span { display:block; width:8px; height:8px; border-radius:50%;
+                        background:var(--linea);
+                        transition:background .25s var(--curva), width .25s var(--curva); }
+  .puntos button[aria-current="true"] span { background:var(--pulso); width:20px;
+                                             border-radius:4px; }
+  .flechas { display:flex; gap:8px; }
+  .flechas button {
+    width:38px; height:38px; border:1px solid var(--linea); background:var(--blanco);
+    border-radius:50%; cursor:pointer; color:var(--tinta); font-size:17px;
+    display:grid; place-items:center; transition:border-color .2s var(--curva),
+    background .2s var(--curva), color .2s var(--curva);
+  }
+  .flechas button:hover { border-color:var(--tinta); background:var(--tinta);
+                          color:var(--papel); }
+  .puntos button:focus-visible, .flechas button:focus-visible {
+    outline:2px solid var(--pulso); outline-offset:2px; }
+  /* Sin JavaScript no hay controles que funcionen: mejor no mostrarlos. */
+  html:not(.js) .porque-pie, html:not(.js) .porque-cabeza .cuenta { display:none; }
+  @media (pointer: coarse) {
+    .puntos button { width:44px; height:44px; }
+    .flechas button { width:44px; height:44px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .diapos { scroll-behavior:auto; }
+    .porque-avance { display:none; }
+  }
 
   /* -- las dos bibliotecas ------------------------------------- */
   .fuentes { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
@@ -171,77 +210,52 @@
     text-decoration:underline; text-underline-offset:2px;
   }
 
-  /* -- el plan ------------------------------------------------- */
-  /* Un plan, dos formas de pagarlo. La tarjeta se parte en dos: a la izquierda
-     qué incluye, a la derecha cuánto cuesta. Si algún día hay más de un plan
-     visible, cada uno es una tarjeta igual, una debajo de la otra. */
+  /* -- los planes --------------------------------------------- */
+  /* Dos tarjetas lado a lado: el mensual, que se compra desde la web, y el
+     Custom, que se conversa. Como pagar el mensual (mes a mes o el año) no
+     se elige aca: se elige en el checkout. */
+  .planes { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:stretch; }
   .plan {
-    display:grid; grid-template-columns:1.1fr 1fr; gap:0;
     background:var(--blanco); border:1px solid var(--linea); border-radius:var(--radio);
-    overflow:hidden;
+    padding:34px 32px 30px; display:flex; flex-direction:column;
+    transition:border-color .3s var(--curva), transform .3s var(--curva),
+               box-shadow .3s var(--curva);
   }
-  .plan + .plan { margin-top:24px; }
-  .plan .que { padding:36px 34px; }
+  .plan:hover { border-color:var(--piedra); transform:translateY(-3px);
+                box-shadow:0 10px 28px rgba(20,19,18,.07); }
+  .plan.principal { border:1.5px solid var(--tinta); }
+  .plan.principal:hover { border-color:var(--tinta); }
   .plan .nombre { font-family:var(--mono); font-size:11.5px; text-transform:uppercase;
                   letter-spacing:.1em; color:var(--pulso-texto); margin:0 0 12px;
                   font-weight:500; }
-  .plan .titular { font-family:var(--display); font-size:28px; font-weight:700;
-                   letter-spacing:-.02em; line-height:1.15; margin:0 0 18px; }
-  .plan .datos { border-top:1px solid var(--linea); margin-bottom:18px; }
+  .plan .precio { font-family:var(--display); font-size:46px; font-weight:700;
+                  line-height:1; letter-spacing:-.03em; margin:0 0 10px; }
+  .plan .precio span { font-family:var(--cuerpo); font-size:16px; font-weight:400;
+                       color:var(--gris-texto); letter-spacing:0; }
+  .plan .precio.cotizado { font-size:34px; padding:6px 0 4px; }
+  .plan .titular { font-size:16px; color:var(--gris-texto); line-height:1.5;
+                   margin:0 0 22px; min-height:3em; }
+  .plan .datos { border-top:1px solid var(--linea); margin-bottom:16px; }
   .plan .dato {
     display:flex; justify-content:space-between; gap:12px; font-size:14px;
     padding:11px 0; border-bottom:1px solid var(--linea);
   }
   .plan .dato .clave { color:var(--gris-texto); }
   .plan .dato .valor { font-family:var(--display); font-weight:600; text-align:right; }
-  .plan ul { list-style:none; padding:0; margin:0; }
+  .plan ul { list-style:none; padding:0; margin:0 0 26px; flex:1; }
   .plan li {
     display:grid; grid-template-columns:16px 1fr; gap:9px; align-items:start;
     font-size:15.5px; padding:7px 0; color:var(--tinta);
   }
   .plan li:before { content:""; width:12px; height:2px; background:var(--pulso);
                     margin-top:.66em; }
-
-  .plan .pagos { background:var(--papel); border-left:1px solid var(--linea);
-                 padding:28px 26px; display:grid; gap:14px; align-content:start; }
-  .pago {
-    background:var(--blanco); border:1px solid var(--linea); border-radius:var(--radio);
-    padding:22px 22px 20px; position:relative;
-    transition:border-color .3s var(--curva), transform .3s var(--curva),
-               box-shadow .3s var(--curva);
-  }
-  .pago:hover { border-color:var(--piedra); transform:translateY(-3px);
-                box-shadow:0 10px 26px rgba(20,19,18,.08); }
-  .pago.destacado { border:1.5px solid var(--pulso); }
-  .pago.destacado:hover { border-color:var(--pulso);
-                          box-shadow:0 10px 26px rgba(221,65,21,.14); }
-  .pago .forma { font-family:var(--display); font-size:15px; font-weight:700; margin:0; }
-  .pago .insignia {
-    position:absolute; top:-11px; right:18px; font-family:var(--mono); font-size:10.5px;
-    text-transform:uppercase; letter-spacing:.1em; font-weight:500;
-    background:var(--pulso); color:var(--blanco); padding:4px 10px; border-radius:3px;
-  }
-  .pago .precio { font-family:var(--display); font-size:40px; font-weight:700;
-                  line-height:1.05; letter-spacing:-.03em; margin:8px 0 2px; }
-  .pago .precio span { font-family:var(--cuerpo); font-size:15px; font-weight:400;
-                       color:var(--gris-texto); letter-spacing:0; }
-  .pago .detalle { font-size:14.5px; color:var(--gris-texto); margin:0 0 16px;
-                   line-height:1.45; min-height:2.9em; }
-  .pago .btn { width:100%; text-align:center; padding:13px 8px; font-size:15px; }
-
-  /* El plan a la medida no se vende desde acá: es una conversación. */
-  .medida {
-    margin-top:28px; padding:24px 26px; background:var(--blanco);
-    border-left:3px solid var(--pulso); border-radius:0 var(--radio) var(--radio) 0;
-    display:flex; gap:24px; align-items:center; justify-content:space-between;
-  }
-  .medida p { margin:0; font-size:16px; color:var(--gris-texto); line-height:1.55;
-              max-width:62ch; }
-  .medida strong { color:var(--tinta); font-family:var(--display); }
-  .medida .btn { white-space:nowrap; flex-shrink:0; }
+  .plan .btn { width:100%; text-align:center; }
+  .plan .sin-contacto { font-size:14px; color:var(--gris-texto); margin:0; }
 
   /* -- llamada final ------------------------------------------- */
-  .cierre { text-align:center; padding:104px 0; background:var(--tinta); }
+  /* Menos aire arriba que abajo: el rotulo tiene que asomar en la primera
+     pantalla de una laptop de 768px de alto, debajo del hero. */
+  .cierre { text-align:center; padding:64px 0 96px; background:var(--tinta); }
   .cierre .rotulo { color:var(--pulso-oscuro); }
   .cierre h2 { margin:0 auto 20px; max-width:20ch; font-size:42px; color:var(--papel); }
   .cierre p { font-size:18px; color:var(--texto-osc-2); max-width:54ch;
@@ -249,18 +263,13 @@
 
   @media (max-width:980px) {
     .pasos { grid-template-columns:1fr 1fr; gap:34px; }
-    /* El latido se achata: estirar 1200 unidades de ancho dentro de una
-       pantalla de celular deja los picos como agujas. Menos alto, menos
-       aguja. Y el relleno de abajo tiene que dejarle sitio, o el trazo pasa
-       por encima de la linea de la promesa. */
-    .latido { height:72px; }
     .muestra { grid-template-columns:1fr; gap:32px; }
     .muestra-texto { position:static; }
     .muestra-texto h3, .muestra-texto p { max-width:none; }
-    .plan { grid-template-columns:1fr; }
-    .plan .pagos { border-left:0; border-top:1px solid var(--linea); }
-    .hero h1 { font-size:42px; }
-    .hero { padding:68px 0 112px; }
+    /* La caja baja debajo del texto: al lado, en una tableta, las dos
+       columnas quedaban angostas y el titular partido en cinco lineas. */
+    .hero { grid-template-columns:1fr; gap:36px; padding:48px 0 52px; }
+    .hero h1 { font-size:40px; max-width:22ch; }
     .cierre h2 { font-size:32px; } .cierre { padding:72px 0; }
   }
   @media (max-width:640px) {
@@ -271,19 +280,119 @@
        maqueta es chica al lado del texto. En el celular ocupa todo el ancho
        y no hay razon para achicarlos. */
     .correo-conteo span, .correo-plataforma { font-size:10.5px; }
-    .hero h1 { font-size:33px; }
-    .hero .bajada { font-size:18px; }
+    .hero { padding:36px 0 44px; gap:28px; }
+    .hero h1 { font-size:32px; }
+    .hero .bajada { font-size:17px; margin-bottom:24px; }
+    .diapo { padding:22px 20px 20px; min-height:0; }
+    .diapo h3 { font-size:21px; }
+    .porque-cabeza { padding:14px 20px; }
+    .porque-pie { padding:10px 12px 10px 16px; }
     /* Los dos botones al ancho completo: apilados y de distinto largo se ven
        desprolijos, y de paso el blanco de toque queda comodo. */
     .acciones { display:grid; grid-template-columns:1fr; gap:12px; }
     .acciones .btn { text-align:center; }
-    .plan .que { padding:26px 22px; }
-    .plan .pagos { padding:22px 18px; }
-    .medida { display:block; }
-    .medida .btn { margin-top:16px; display:block; text-align:center; }
+    .planes { grid-template-columns:1fr; }
+    .plan { padding:26px 22px 24px; }
+    .plan .titular { min-height:0; }
     .cierre { padding:64px 0; }
     .cierre h2 { font-size:28px; }
   }
+{% endblock %}
+
+{% block guion %}
+<script>
+// La caja de por que. Avanza sola cada tantos segundos. Se pausa mientras el
+// mouse o el foco estan adentro, y se detiene del todo cuando la persona la
+// maneja (flechas, puntos, deslizar): leer algo que se va solo a mitad de
+// frase es peor que no tenerlo. Con menos movimiento pedido no avanza sola.
+// Sin JavaScript queda la fila deslizable.
+(function () {
+  var caja = document.getElementById('porque-caja');
+  if (!caja) { return; }
+  var fila = caja.querySelector('.diapos');
+  var diapos = [].slice.call(fila.querySelectorAll('.diapo'));
+  var puntos = [].slice.call(caja.querySelectorAll('.puntos button'));
+  var actualTxt = caja.querySelector('[data-actual]');
+  var avance = caja.querySelector('.porque-avance');
+  if (diapos.length < 2) { return; }
+  var ESPERA = 7000;
+  var actual = 0;
+  var reloj = null;
+  var quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var detenido = quieto;
+  var pausado = false;
+
+  function marcar(i) {
+    actual = i;
+    puntos.forEach(function (b, k) {
+      if (k === i) { b.setAttribute('aria-current', 'true'); }
+      else { b.removeAttribute('aria-current'); }
+    });
+    if (actualTxt) { actualTxt.textContent = (i < 9 ? '0' : '') + (i + 1); }
+  }
+
+  function ir(i) {
+    i = (i + diapos.length) % diapos.length;
+    fila.scrollTo({ left: diapos[i].offsetLeft - fila.offsetLeft, behavior: quieto ? 'auto' : 'smooth' });
+    marcar(i);
+    programar();
+  }
+
+  function programar() {
+    clearTimeout(reloj);
+    if (avance) {
+      avance.classList.remove('corre');
+      avance.style.transitionDuration = '0s';
+      void avance.offsetWidth;
+    }
+    if (detenido || pausado) { return; }
+    if (avance) {
+      avance.style.transitionDuration = ESPERA + 'ms';
+      avance.classList.add('corre');
+    }
+    reloj = setTimeout(function () { ir(actual + 1); }, ESPERA);
+  }
+
+  function detener() { detenido = true; programar(); }
+
+  puntos.forEach(function (b, k) {
+    b.addEventListener('click', function () { detener(); ir(k); });
+  });
+  caja.querySelectorAll('[data-ir]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      detener(); ir(actual + parseInt(b.getAttribute('data-ir'), 10));
+    });
+  });
+  // Deslizar con el dedo también cuenta: se sigue la diapositiva que quedó
+  // a la vista.
+  var espera = null;
+  fila.addEventListener('scroll', function () {
+    clearTimeout(espera);
+    espera = setTimeout(function () {
+      var i = Math.round(fila.scrollLeft / fila.clientWidth);
+      if (i !== actual) { marcar(Math.max(0, Math.min(i, diapos.length - 1))); }
+    }, 80);
+  }, { passive: true });
+  fila.addEventListener('pointerdown', detener);
+  caja.addEventListener('mouseenter', function () { pausado = true; programar(); });
+  caja.addEventListener('mouseleave', function () { pausado = false; programar(); });
+  caja.addEventListener('focusin', function () { pausado = true; programar(); });
+  caja.addEventListener('focusout', function (e) {
+    if (!caja.contains(e.relatedTarget)) { pausado = false; programar(); }
+  });
+  fila.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight') { e.preventDefault(); detener(); ir(actual + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); detener(); ir(actual - 1); }
+  });
+  // Fuera de la pantalla no tiene sentido que avance.
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { clearTimeout(reloj); } else { programar(); }
+  });
+
+  marcar(0);
+  programar();
+})();
+</script>
 {% endblock %}
 
 {% block navegacion %}
@@ -294,38 +403,52 @@
 {% endblock %}
 
 {% block contenido %}
-{# El marco existe para que el latido del fondo cruce de borde a borde: si
-   viviera dentro de `.env` se cortaria a los 1080px y dejaria de leerse como
-   un trazo continuo. #}
-<div class="hero-marco">
-  {# El latido: el nombre del producto dibujado. La linea de base es un
-     divisor mas —del mismo color que los de toda la pagina— y por encima
-     viaja un segmento naranja. `pathLength` normaliza el largo del trazo a
-     1000 sin importar la geometria, asi el dasharray cierra exacto y el
-     ciclo no da un salto al reiniciar. #}
-  <svg class="latido" viewBox="0 0 1200 120" preserveAspectRatio="none"
-       aria-hidden="true" focusable="false">
-    <path class="base" pathLength="1000"
-          d="M0,60 H240 l18,0 l10,-34 l9,58 l9,-40 l8,16 l14,0
-             H560 l16,0 l9,-26 l8,44 l8,-30 l7,12 l13,0
-             H900 l18,0 l10,-40 l9,66 l9,-46 l8,20 l14,0 H1200"/>
-    <path class="viva" pathLength="1000"
-          d="M0,60 H240 l18,0 l10,-34 l9,58 l9,-40 l8,16 l14,0
-             H560 l16,0 l9,-26 l8,44 l8,-30 l7,12 l13,0
-             H900 l18,0 l10,-40 l9,66 l9,-46 l8,20 l14,0 H1200"/>
-  </svg>
-  <div class="env">
+<div class="env">
   <div class="hero">
-    <p class="etiqueta sube">Inteligencia publicitaria</p>
-    <h1 class="sube" style="transition-delay:.08s">{{ titulo }}</h1>
-    <p class="bajada sube" style="transition-delay:.16s">{{ subtitulo }}</p>
-    <div class="acciones sube" style="transition-delay:.24s">
-      <a class="btn" href="#planes"><span>Ver el plan</span></a>
-      <a class="btn alt" href="#como"><span>Ver cómo funciona</span></a>
+    <div class="hero-texto">
+      <h1 class="sube">{{ titulo }}</h1>
+      <p class="bajada sube" style="transition-delay:.08s">{{ subtitulo }}</p>
+      <div class="acciones sube" style="transition-delay:.16s">
+        <a class="btn" href="#planes"><span>Ver los planes</span></a>
+        <a class="btn alt" href="#como"><span>Ver cómo funciona</span></a>
+      </div>
     </div>
-    {% if promesa_corta %}
-    <p class="promesa sube" style="transition-delay:.32s">{{ promesa_corta }}</p>{% endif %}
-  </div>
+
+    {% if por_que and por_que.diapositivas %}
+    {% set diapos = por_que.diapositivas[:4] %}
+    <div class="porque-caja sube" style="transition-delay:.24s" id="porque-caja"
+         role="region" aria-roledescription="carrusel" aria-label="{{ por_que.rotulo }}">
+      <span class="porque-avance" aria-hidden="true"></span>
+      <div class="porque-cabeza">
+        <p class="rotulo">{{ por_que.rotulo }}</p>
+        <span class="cuenta" aria-hidden="true"><span data-actual>01</span> / {{ "%02d"|format(diapos|length) }}</span>
+      </div>
+      <div class="diapos" tabindex="0" aria-live="off">
+        {% for d in diapos %}
+        <div class="diapo" role="group" aria-roledescription="diapositiva"
+             aria-label="{{ loop.index }} de {{ diapos|length }}">
+          <p class="n">{{ "%02d"|format(loop.index) }}</p>
+          <h3>{{ d.titulo }}</h3>
+          <p>{{ d.texto }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% if diapos|length > 1 %}
+      <div class="porque-pie">
+        <div class="puntos">
+          {% for d in diapos %}
+          <button type="button" aria-label="Ir a la {{ loop.index }}"
+                  {% if loop.first %}aria-current="true"{% endif %}><span></span></button>
+          {% endfor %}
+        </div>
+        <div class="flechas">
+          <button type="button" data-ir="-1" aria-label="Anterior">&larr;</button>
+          <button type="button" data-ir="1" aria-label="Siguiente">&rarr;</button>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
   </div>
 </div>
 
@@ -337,7 +460,7 @@
        está en este lanzamiento: dejarlo habría sido prometer algo que el
        checkout después cobra. #}
     <p>{{ plan_seccion.cierre }}</p>
-    <a class="btn" href="#planes"><span>Ver el plan</span></a>
+    <a class="btn" href="#planes"><span>Ver los planes</span></a>
   </div>
 </section>
 
@@ -465,10 +588,18 @@
       <h2>{{ plan_seccion.titulo }}</h2>
       <p class="entrada">{{ plan_seccion.entrada }}</p>
     </div>
-    {% for p in planes_visibles %}
-    <div class="plan sube">
-      <div class="que">
+    {% set enlace_contacto = ('https://wa.me/' ~ contacto.whatsapp) if contacto.whatsapp
+                             else (('mailto:' ~ contacto.email) if contacto.email else '') %}
+    <div class="planes">
+      {% for p in planes_visibles %}
+      <div class="plan sube{% if p.checkout %} principal{% endif %}"
+           style="transition-delay:{{ loop.index0 * 0.1 }}s">
         <p class="nombre">{{ p.nombre }}</p>
+        {% if p.checkout and p.precio_usd %}
+        <p class="precio">${{ '%g' % p.precio_usd }}<span> / mes</span></p>
+        {% else %}
+        <p class="precio cotizado">{{ plan_seccion.cotizado or 'A cotizar' }}</p>
+        {% endif %}
         <p class="titular">{{ p.para_quien or p.resumen }}</p>
         <div class="datos">
           <div class="dato">
@@ -479,46 +610,23 @@
             <span class="clave">Competidores</span>
             <span class="valor">
               {%- if p.competidores_max %}Hasta {{ p.competidores_max }}
-              {%- else %}Sin tope{% endif -%}
+              {%- else %}Los que necesite{% endif -%}
             </span>
           </div>
         </div>
         <ul>{% for i in p.incluye %}<li><span>{{ i }}</span></li>{% endfor %}</ul>
-      </div>
-      <div class="pagos">
-        {% for clave, c in (p.ciclos or {}).items() %}
-        <div class="pago{% if c.ahorro_usd %} destacado{% endif %}">
-          {# El ahorro en plata, que es un dato. Un "más elegido" sin clientes
-             todavía sería inventado. #}
-          {% if c.ahorro_usd %}<span class="insignia">Ahorra ${{ '%g' % c.ahorro_usd }}</span>{% endif %}
-          <p class="forma">{{ c.nombre }}</p>
-          <p class="precio">${{ '%g' % c.precio_usd }}<span> / {{ 'año' if clave == 'anual' else 'mes' }}</span></p>
-          <p class="detalle">
-            {%- if c.equivale_mes_usd %}Le queda en ${{ '%g' % c.equivale_mes_usd }} al mes:
-            ${{ '%g' % c.ahorro_usd }} menos que pagando mes a mes.
-            {%- else %}Se cobra cada mes. Sin permanencia.{% endif -%}
-          </p>
-          <a class="btn{% if not c.ahorro_usd %} alt{% endif %}"
-             href="{{ aplicar_url }}?plan={{ p.clave }}&amp;ciclo={{ clave }}">
-            <span>Empezar {{ c.nombre|lower }}</span></a>
-        </div>
+        {% if p.checkout %}
+        <a class="btn" href="{{ aplicar_url }}?plan={{ p.clave }}"><span>Empezar</span></a>
+        {% elif enlace_contacto %}
+        {# El Custom no tiene checkout: se cotiza conversando y se cobra con un
+           link de pago armado a mano en Paddle. #}
+        <a class="btn alt" href="{{ enlace_contacto }}"><span>{{ plan_seccion.boton_contacto or 'Conversemos' }}</span></a>
         {% else %}
-        <div class="pago">
-          {% if p.precio_usd %}<p class="precio">${{ '%g' % p.precio_usd }}<span> / mes</span></p>{% endif %}
-          <a class="btn" href="{{ aplicar_url }}?plan={{ p.clave }}"><span>Empezar</span></a>
-        </div>
-        {% endfor %}
+        <p class="sin-contacto">Escríbanos para cotizarlo.</p>
+        {% endif %}
       </div>
+      {% endfor %}
     </div>
-    {% endfor %}
-    {% set enlace_contacto = ('https://wa.me/' ~ contacto.whatsapp) if contacto.whatsapp
-                             else (('mailto:' ~ contacto.email) if contacto.email else '') %}
-    {% if enlace_contacto and plan_seccion.medida %}
-    <div class="medida sube">
-      <p><strong>{{ plan_seccion.medida.titulo }}</strong> {{ plan_seccion.medida.texto }}</p>
-      <a class="btn alt" href="{{ enlace_contacto }}"><span>{{ plan_seccion.medida.boton }}</span></a>
-    </div>
-    {% endif %}
   </div>
 </section>
 {% endblock %}

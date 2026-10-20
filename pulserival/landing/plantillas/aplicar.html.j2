@@ -1,4 +1,5 @@
 {% extends "_publico.html.j2" %}
+{% from "_legal_texto.html.j2" import texto %}
 {% block titulo %}Empezar — {{ marca }}{% endblock %}
 
 {% block estilos %}
@@ -69,6 +70,23 @@
   .por-pasos .paso.actual { display:block; }
 
   .navegacion { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+
+  /* -- aceptacion de terminos ---------------------------------- */
+  /* El aviso es largo porque la Ley 8968 pide decir todo eso en el mismo
+     formulario. Va en letra chica pero legible, y la casilla es grande: es
+     lo unico de este bloque que hay que tocar. */
+  .acepto { background:var(--blanco); border:1px solid var(--linea);
+            border-radius:var(--radio); padding:18px 20px; }
+  .acepto .aviso-datos { font-size:14px; color:var(--gris-texto); line-height:1.55;
+                         margin:0 0 14px; }
+  .acepto label { display:flex; gap:12px; align-items:flex-start; cursor:pointer;
+                  font-family:var(--display); font-size:15px; font-weight:500;
+                  line-height:1.45; }
+  .acepto input[type=checkbox] { width:22px; height:22px; flex:none; margin:0;
+                                 accent-color:var(--pulso); }
+  .acepto a { color:var(--tinta); }
+  .acepto.malo { border-color:var(--pulso); }
+  .acepto .error-campo { display:block; margin-top:10px; }
   .navegacion .btn[hidden] { display:none; }
   /* El mensaje de un campo que falta. Solo aparece cuando el guion lo pone:
      en el HTML no hay errores escritos de antemano. */
@@ -99,8 +117,6 @@
   .resumen .dato:first-of-type { border-top:1px solid var(--linea); margin-top:18px; }
   .resumen .dato .clave { color:var(--gris-texto); }
   .resumen .dato .valor { font-family:var(--display); font-weight:600; text-align:right; }
-  .resumen .ahorro { font-size:14.5px; color:var(--pulso-texto); margin:8px 0 0;
-                     line-height:1.45; }
   .resumen .cambiar { display:inline-block; font-size:14px; color:var(--pulso-texto);
                       margin-top:18px; }
   .resumen .cobro { margin-top:20px; padding-top:18px; border-top:1px solid var(--linea);
@@ -136,7 +152,7 @@
 {% endblock %}
 
 {% block navegacion %}
-  <a href="{{ inicio_url }}#planes">Ver el plan</a>
+  <a href="{{ inicio_url }}#planes">Ver los planes</a>
 {% endblock %}
 
 {% block contenido %}
@@ -151,6 +167,8 @@
      de uno con checkout, aparece el selector de plan. #}
   {% set plan_form = (planes_checkout | selectattr("clave", "equalto", plan_elegido) | first)
                      or (planes_checkout | first) %}
+  {# Cómo pagarlo (mes a mes o el año) no se elige acá: se elige en el
+     checkout, que es donde se decide cuánto se paga. #}
   {% set ciclos = (plan_form.ciclos if plan_form else {}) or {} %}
   <div class="columnas{% if not plan_form %} sola{% endif %}">
     <form id="alta" novalidate{% if modo_servidor %} method="post" action="{{ accion_alta }}"{% endif %}>
@@ -195,19 +213,6 @@
           {% elif plan_form %}
           <input type="hidden" name="plan" value="{{ plan_form.clave }}">
           {% endif %}
-          {% if ciclos %}
-          <div class="campo">
-            <label for="ciclo">Cómo prefiere pagar</label>
-            <select id="ciclo" name="ciclo">
-              {% for clave, c in ciclos.items() %}
-              <option value="{{ clave }}"{% if clave == ciclo_elegido %} selected{% endif %}>
-                {{ c.nombre }} — {{ c.cobro_texto }}
-                {%- if c.equivale_mes_usd %} (${{ '%g' % c.equivale_mes_usd }} al mes){% endif %}
-              </option>
-              {% endfor %}
-            </select>
-          </div>
-          {% endif %}
         </div>
         <div class="campo">
           <label for="industria">Industria</label>
@@ -237,7 +242,7 @@
           {{ aplicar.competidores.explicacion }}
         </div>
         <p class="bajada">{{ aplicar.competidores.ayuda }}</p>
-        {% for n in range(1, ((plan_form.competidores_max if plan_form else 0) or 3) + 1) %}
+        {% for n in range(1, forma_competidores + 1) %}
         <div class="competidor">
           <div class="campo">
             <label for="comp{{ n }}">Competidor {{ n }}</label>
@@ -276,6 +281,20 @@
       </div>
       {% endif %}
 
+      {# Consentimiento expreso y por escrito (Ley 8968, art. 5). Se muestra
+         junto al boton de enviar, no en un paso: tiene que estar a la vista
+         en el momento de aceptar. #}
+      <div class="acepto sube" data-al-enviar id="bloque-acepto">
+        {% if aviso_datos %}<p class="aviso-datos">{{ texto(aviso_datos) }}</p>{% endif %}
+        <label for="acepto">
+          <input type="checkbox" id="acepto" name="acepto" value="si" required>
+          <span>Leí y acepto los <a href="{{ legal_urls.terminos }}" target="_blank" rel="noopener">{{ legal_nombres.terminos }}</a>,
+            la <a href="{{ legal_urls.reembolsos }}" target="_blank" rel="noopener">{{ legal_nombres.reembolsos }}</a>
+            y la <a href="{{ legal_urls.privacidad }}" target="_blank" rel="noopener">{{ legal_nombres.privacidad }}</a>,
+            y autorizo el tratamiento de mis datos como ahí se describe.</span>
+        </label>
+      </div>
+
       <div class="navegacion sube">
         <button class="btn alt" type="button" data-atras hidden>
           <span>Atrás</span></button>
@@ -294,18 +313,10 @@
 
     <div class="lado">
       {% if plan_form %}
-      {% for clave, c in (ciclos.items() if ciclos else [(None, {})]) %}
-      <aside class="resumen sube" {% if clave %}data-ciclo="{{ clave }}"{% endif %}
-             {% if clave and clave != ciclo_elegido %}hidden{% endif %}>
+      <aside class="resumen sube">
         <p class="rotulo">Su plan</p>
         <p class="nombre">{{ plan_form.nombre }}</p>
-        {% if c.precio_usd is defined %}
-          <p class="precio">${{ '%g' % c.precio_usd }}<span> / {{ 'año' if clave == 'anual' else 'mes' }}</span></p>
-          {% if c.equivale_mes_usd %}
-          <p class="ahorro">Equivale a ${{ '%g' % c.equivale_mes_usd }} al mes:
-            ${{ '%g' % c.ahorro_usd }} menos al año que pagando mes a mes.</p>
-          {% endif %}
-        {% elif plan_form.precio_usd %}
+        {% if plan_form.precio_usd %}
           <p class="precio">${{ '%g' % plan_form.precio_usd }}<span> / mes</span></p>
         {% endif %}
         <div class="dato">
@@ -319,7 +330,7 @@
             {%- else %}Sin tope{% endif -%}
           </span>
         </div>
-        <a class="cambiar" href="{{ inicio_url }}#planes">Ver el plan</a>
+        <a class="cambiar" href="{{ inicio_url }}#planes">Ver los planes</a>
         <p class="cobro">
           {% if not modo_servidor %}Al enviar coordinamos el pago con usted antes
           de activar nada.
@@ -327,9 +338,10 @@
           solicitud coordinamos el pago con usted antes de activar nada.
           {% else %}Al enviar pasa al pago, que procesa Paddle. Su cuenta se
           activa cuando el pago se confirma.{% endif %}
+          {% if modo_servidor and not simulado and ciclos|length > 1 %}Ahí elige si paga mes a mes
+          o el año completo.{% endif %}
         </p>
       </aside>
-      {% endfor %}
       {% endif %}
     </div>
   </div>
@@ -338,6 +350,28 @@
 
 {% block guion %}
 <script>
+// La casilla de aceptacion. El formulario es `novalidate`, asi que el
+// navegador no la exige: se revisa aca, con el mismo estilo de error que el
+// resto de los campos, y el servidor la vuelve a exigir.
+function aceptoValido() {
+  var casilla = document.getElementById('acepto');
+  var bloque = document.getElementById('bloque-acepto');
+  if (!casilla || !bloque) { return true; }
+  var viejo = bloque.querySelector('.error-campo');
+  if (viejo) { viejo.remove(); }
+  bloque.classList.toggle('malo', !casilla.checked);
+  if (casilla.checked) { return true; }
+  var aviso = document.createElement('span');
+  aviso.className = 'error-campo';
+  aviso.textContent = 'Para enviar la solicitud hace falta que acepte los términos.';
+  bloque.appendChild(aviso);
+  casilla.focus();
+  return false;
+}
+document.addEventListener('change', function (e) {
+  if (e.target && e.target.id === 'acepto' && e.target.checked) { aceptoValido(); }
+});
+
 // El formulario, de a un paso. Solo el primero es obligatorio: los otros tres
 // mejoran el reporte pero no impiden pedirlo, asi que se puede seguir de largo
 // dejandolos en blanco. Sin JavaScript no corre nada de esto y el formulario
@@ -423,6 +457,7 @@
     // La nota de cierre habla de lo que pasa al enviar: mientras el boton
     // diga "Continuar" esta contando algo que todavia no va a pasar.
     if (cierre) { cierre.hidden = !ultimo; }
+    forma.querySelectorAll('[data-al-enviar]').forEach(function (b) { b.hidden = !ultimo; });
     if (navegacion) { navegacion.classList.toggle('con-atras', !atras.hidden); }
   }
 
@@ -457,6 +492,11 @@
   // Si el envio falla la validacion del paso 1, hay que volver a mostrarlo:
   // el error esta en un paso que no se esta viendo.
   forma.addEventListener('submit', function (e) {
+    if (!aceptoValido()) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
     for (var i = 0; i < pasos.length; i++) {
       if (!validar(i)) {
         e.preventDefault();
@@ -486,43 +526,17 @@
 </script>
 
 <script>
-// El ciclo de pago viaja en la URL desde los botones de la portada (mes a mes
-// o anual). En el servidor ya viene elegido de vuelta; en la version estatica
-// no hay quien lea la URL, asi que se lee aca: si no, la persona elige el
-// anual en la portada y llega al formulario con el mensual puesto.
+// El plan viaja en la URL desde los botones de la portada (?plan=...). En el
+// servidor ya viene elegido de vuelta; en la versión estática nadie lee la
+// consulta, así que se lee acá. Solo importa cuando hay más de un plan que
+// se compra en la web: con uno solo no hay selector.
 (function () {
-  var columnas = document.querySelector('.columnas');
-  var seleccion = document.getElementById('ciclo');
-  var resumenes = document.querySelectorAll('.resumen[data-ciclo]');
-  if (!columnas || !seleccion) { return; }
-
-  function mostrar(clave) {
-    var visible = false;
-    for (var i = 0; i < resumenes.length; i++) {
-      var coincide = resumenes[i].getAttribute('data-ciclo') === clave;
-      resumenes[i].hidden = !coincide;
-      if (coincide) { visible = true; }
-    }
-    columnas.classList.toggle('sola', !visible);
+  var seleccion = document.getElementById('plan');
+  if (!seleccion || seleccion.tagName !== 'SELECT') { return; }
+  var pedido = new URLSearchParams(window.location.search).get('plan');
+  for (var k = 0; pedido && k < seleccion.options.length; k++) {
+    if (seleccion.options[k].value === pedido) { seleccion.selectedIndex = k; break; }
   }
-
-  var pedido = null;
-  var consulta = window.location.search;
-  if (consulta) {
-    var partes = consulta.substring(1).split('&');
-    for (var j = 0; j < partes.length; j++) {
-      var par = partes[j].split('=');
-      if (par[0] === 'ciclo') { pedido = decodeURIComponent(par[1] || ''); }
-    }
-  }
-  if (pedido) {
-    for (var k = 0; k < seleccion.options.length; k++) {
-      if (seleccion.options[k].value === pedido) { seleccion.selectedIndex = k; break; }
-    }
-  }
-
-  mostrar(seleccion.value);
-  seleccion.addEventListener('change', function () { mostrar(seleccion.value); });
 })();
 </script>
 {% if not modo_servidor %}
@@ -543,17 +557,20 @@
       alert('Hacen falta el nombre de la empresa y el correo.');
       return;
     }
+    if (!aceptoValido()) { return; }
 
     var l = [];
     l.push('Solicitud de reporte — ' + v('empresa'));
     l.push('');
-    l.push('Plan: ' + v('plan') + (v('ciclo') ? ' (pago ' + v('ciclo') + ')' : ''));
+    l.push('Plan: ' + v('plan'));
     l.push('Contacto: ' + v('contacto') + ' · ' + v('email'));
     if (v('industria')) { l.push('Industria: ' + v('industria')); }
     if (v('contexto')) { l.push(''); l.push('Contexto: ' + v('contexto')); }
 
     var comps = [];
-    for (var i = 1; i <= 3; i++) {
+    // Tantos como casillas tiene el formulario. Estaba fijo en 3 y el plan
+    // admite 4: el cuarto competidor se perdia del mensaje sin aviso.
+    for (var i = 1; i <= {{ forma_competidores }}; i++) {
       var nombre = v('comp' + i);
       if (!nombre) { continue; }
       var partes = [nombre];
@@ -567,6 +584,9 @@
     // La encuesta del ultimo paso. Si eligio "Otro" vale lo que escribio.
     var origen = v('origen') === 'otro' ? v('origen_otro') : v('origen');
     if (origen) { l.push(''); l.push('Nos conocio por: ' + origen); }
+    l.push('');
+    l.push('Aceptó los términos y la política de privacidad del ' +
+           {{ legal_version | default('', true) | tojson }} + '.');
 
     var texto = l.join('\n');
     if (WHATSAPP) {

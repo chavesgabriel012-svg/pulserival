@@ -230,6 +230,13 @@
   footer a { color:var(--papel); }
   footer .pie-marca img { height:24px; width:auto; display:block; margin-bottom:20px; }
   footer p { margin:0 0 11px; max-width:74ch; line-height:1.6; }
+  footer .pie-legal { display:flex; flex-wrap:wrap; gap:8px 24px; margin:22px 0 0;
+                      font-family:var(--display); font-size:14px; }
+  footer .pie-legal a { color:var(--papel); text-decoration:none; opacity:.85; }
+  footer .pie-legal a:hover { opacity:1; text-decoration:underline; }
+  @media (pointer: coarse) {
+    footer .pie-legal a { min-height:44px; display:inline-flex; align-items:center; }
+  }
   footer .legal { font-family:var(--mono); font-size:11.5px; letter-spacing:.06em;
                   color:var(--piedra); margin-top:24px; text-transform:none; }
 
@@ -238,6 +245,10 @@
     .fila { grid-template-columns:1fr; }
     .env { padding:0 20px; }
   }
+  /* Un dato legal que falta cargar en config/legal.yaml. Se ve a proposito:
+     es mejor notarlo antes de publicar que despues. */
+  .pendiente { background:rgba(221,65,21,.12); color:var(--pulso-texto); font-family:var(--mono);
+               font-size:.82em; padding:1px 6px; border-radius:3px; }
   {% block estilos %}{% endblock %}
 </style>
 </head>
@@ -268,6 +279,9 @@
       Las plataformas no publican inversión, alcance ni clics de los anuncios
       comerciales, de modo que los reportes no los incluyen ni los estiman.
     </p>
+    <nav class="pie-legal" aria-label="Páginas legales">
+      {% for clave, url in legal_urls.items() %}<a href="{{ url }}">{{ legal_nombres[clave] }}</a>{% endfor %}
+    </nav>
     <p class="legal">{{ marca }}{% if dominio %} &middot; {{ dominio }}{% endif %}</p>
   </div>
 </footer>

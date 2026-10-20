@@ -15,6 +15,7 @@ from pulserival.reporte import render
 from pulserival.revision import flujo
 from tests.base import CLAVES_BLOQUEADAS, CasoBase
 from tests.test_panel import CasoPanel as CasoPanelBase
+from tests.test_web import CasoWeb
 
 
 def anuncio(**kw) -> AnuncioCrudo:
@@ -800,3 +801,30 @@ class TestOrigenDelAlta(CasoBase):
             sincronizar.aplicar(self.con, ruta)
         fila = db.fila(self.con, "SELECT * FROM clientes WHERE clave = 'roble'")
         self.assertEqual(fila["origen"], "Alguien me lo recomendó")
+
+
+
+# Regresión: Flask escapa solo las plantillas que terminan en .html, y las de
+# este proyecto terminan en .html.j2. Todo lo que se pintaba desde el servidor
+# salía sin escapar: un nombre de empresa con <script> escrito en el
+# formulario público se ejecutaba en el checkout y en el panel de
+# administración, con la sesión de quien lo revisa. La landing estática no
+# tenía el problema porque su generador sí pide autoescape, y los tests de la
+# landing la renderizaban por ahí. Lo encontró el test de las páginas legales.
+class TestElCheckoutEscapa(CasoWeb):
+    def test_el_nombre_de_empresa_no_se_pinta_como_html(self):
+        r = self.alta(empresa="<script>alert(1)</script>")
+        h = self.cliente_web.get(r.headers["Location"]).get_data(as_text=True)
+        self.assertNotIn("<script>alert(1)</script>", h)
+        self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", h)
+
+
+class TestElPanelEscapa(CasoPanelBase):
+    def test_el_nombre_de_empresa_no_se_pinta_como_html(self):
+        db.actualizar(self.con, "clientes", self.cid,
+                      {"nombre_empresa": "<img src=x onerror=alert(1)>"})
+        self.con.commit()
+        self.entrar()
+        h = self.web.get("/panel/").get_data(as_text=True)
+        self.assertNotIn("<img src=x onerror=alert(1)>", h)
+        self.assertIn("&lt;img src=x onerror=alert(1)&gt;", h)

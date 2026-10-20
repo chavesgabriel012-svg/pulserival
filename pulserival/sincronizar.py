@@ -36,6 +36,7 @@ CAMPOS_CLIENTE = (
     "periodicidad", "plan", "estado_suscripcion", "cadencia_dias",
     "precio_mensual_usd", "pago_proveedor", "pago_referencia",
     "dia_envio", "industria", "notas", "origen", "ciclo_facturacion", "activo",
+    "consentimiento_en", "consentimiento_version",
 )
 
 # Lo que escribe el webhook de Paddle. En un cliente que paga por Paddle,
@@ -199,6 +200,12 @@ def aplicar(con: sqlite3.Connection, ruta: Path | None = None) -> dict[str, Any]
             "ciclo_facturacion": entrada.get("ciclo_facturacion"),
             "activo": 1 if entrada.get("activo", True) else 0,
         }
+        # La constancia de que aceptó los términos viene del alta web. Se
+        # copia si el YAML la trae, pero un YAML sin ella no la borra: es la
+        # prueba del consentimiento y no se recupera.
+        for campo in ("consentimiento_en", "consentimiento_version"):
+            if entrada.get(campo):
+                deseado[campo] = str(entrada[campo])
         existente = db.fila(con, "SELECT * FROM clientes WHERE clave = ?", (clave,))
         if existente:
             de_paddle = bool(db.valor(existente, "paddle_suscripcion_id"))

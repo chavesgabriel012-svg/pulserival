@@ -17,9 +17,12 @@
 #      que se crea en el panel de Paddle: Catálogo > Productos.
 #    - `recurrente: false` significa "un solo reporte y se acabó"
 #
-#  Lanzamiento de octubre 2026: se vende solo el de autoservicio. La prueba
-#  gratis y el semanal quedan ocultos por decisión de producto, no porque
-#  falte algo técnico: volverlos visibles es `visible: true`.
+#  Lanzamiento de octubre 2026: la landing muestra dos tarjetas, el de
+#  autoservicio (se compra en la web) y el Custom (se conversa). El anual no
+#  es otro plan: es una forma de pagar el de autoservicio, y se elige en el
+#  checkout. La prueba gratis y el semanal quedan ocultos por decisión de
+#  producto, no porque falte algo técnico: volverlos visibles es
+#  `visible: true`.
 # ─────────────────────────────────────────────────────────────────────
 
 planes:
@@ -44,7 +47,7 @@ planes:
         precio_usd: 25
         cobro_texto: "$25 al mes"
       anual:
-        nombre: "Anual"
+        nombre: "Todo el año"
         precio_usd: 240
         # Lo que se ve al lado del precio: el ahorro, en plata y no en %.
         equivale_mes_usd: 20
@@ -120,8 +123,10 @@ planes:
       - "Prioridad en el soporte"
 
   - clave: custom
-    visible: false
-    nombre: "A la medida"
+    # Visible como tarjeta en la landing, sin checkout: el botón lleva a
+    # conversar, y se cobra con un link de pago armado a mano en Paddle.
+    visible: true
+    nombre: "Custom"
     # Sin precio fijo: se acuerda por cliente y se guarda en
     # clientes.precio_mensual_usd.
     precio_usd: null
@@ -132,11 +137,15 @@ planes:
     cadencia_dias: null
     # No se vende desde la web: se cotiza por agencia y se cobra con un link
     # de pago de Paddle armado a mano. La landing solo enlaza al contacto.
-    resumen: "Cadencia, competidores y alcance definidos con usted."
-    para_quien: "Para cadenas, agencias y quien siga más de seis competidores."
-    cadencia_texto: "La que necesite"
+    resumen: "Frecuencia, competidores y alcance definidos con usted."
+    para_quien: "Para agencias, cadenas y quien necesite seguir a más competidores."
+    # OJO al vender: hasta que exista la cola de trabajos por cliente, el
+    # ciclo corre cada 7 días (PULSERIVAL_CICLO_CADA_DIAS). Una frecuencia
+    # menor no se cumple. Ver docs/08-cobro-y-lanzamiento.md.
+    cadencia_texto: "La que acordemos"
     competidores_max: null
     incluye:
-      - "La cadencia que necesite (cada N días)"
-      - "Los competidores que pida, sin tope"
+      - "La frecuencia de reportes que acordemos"
+      - "Los competidores que necesite"
       - "Ajustes al formato del reporte"
+      - "Precio según frecuencia y cantidad de competidores"

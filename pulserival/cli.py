@@ -99,6 +99,58 @@ def _contar_migracion(informe: dict, revision: bool = False) -> None:
               f"clientes editar --id {c['id']} --periodicidad custom --cadencia-dias N")
 
 
+def _eliminar_cliente(con, args) -> int:
+    """Borra a un cliente y todo lo suyo: competidores, anuncios y reportes.
+
+    Existe por la Política de privacidad: quien pide que se borren sus datos
+    tiene derecho a que se borren (Ley 8968, art. 7), y desactivarlo no es
+    borrarlo. Sin --confirmar solo muestra qué se iría, porque no se deshace.
+    """
+    if args.id is None:
+        return error("Falta --id: qué cliente eliminar (los ves con: clientes lista)")
+    fila = db.fila(con, "SELECT * FROM clientes WHERE id = ?", (args.id,))
+    if not fila:
+        return error(f"No existe el cliente {args.id}")
+    # Borrarlo acá no le cancela nada en Paddle: seguiría pagando por un
+    # servicio que ya no existe para él.
+    if db.valor(fila, "paddle_suscripcion_id") and \
+            db.valor(fila, "paddle_estado") not in (None, "canceled"):
+        return error(
+            f"El cliente #{args.id} tiene una suscripción de Paddle en estado "
+            f"'{db.valor(fila, 'paddle_estado')}'. Cancélela primero en el panel de "
+            "Paddle (y reembolse si corresponde); cuando el webhook la marque "
+            "cancelada, vuelva a correr esto.")
+    reportes = [int(r["id"]) for r in db.filas(
+        con, "SELECT id FROM reportes_generados WHERE cliente_id = ?", (args.id,))]
+    # Los archivos que el pipeline deja fuera de la base: el borrador para
+    # revisar y la copia de lo que se envió.
+    archivos = []
+    for rid in reportes:
+        archivos += sorted(config.DIR_BORRADORES.glob(f"*-r{rid}.md"))
+        archivos += sorted(config.DIR_SALIDA.glob(f"*-reporte-{rid}.*"))
+        archivos += sorted(config.DIR_SALIDA.glob(f"*-reporte-{rid}-*"))
+    archivos = sorted(set(archivos))
+    competidores = len(db.filas(
+        con, "SELECT id FROM competidores_seguidos WHERE cliente_id = ?", (args.id,)))
+    print(f"  Cliente #{args.id}: {fila['nombre_empresa']} <{fila['contacto_email']}>")
+    print(f"    {competidores} competidores, {len(reportes)} reportes, "
+          f"{len(archivos)} archivos de reportes en disco")
+    if not args.confirmar:
+        print("\n  No se borró nada. Para borrarlo de verdad (no se deshace):")
+        print(f"    python3 -m pulserival.cli clientes eliminar --id {args.id} --confirmar")
+        return 0
+    con.execute("DELETE FROM clientes WHERE id = ?", (args.id,))
+    con.commit()
+    for archivo in archivos:
+        archivo.unlink(missing_ok=True)
+    ok(f"Cliente #{args.id} eliminado, con sus competidores, anuncios y reportes.")
+    print("    Los avisos de pago de Paddle se conservan sin el cliente, por las "
+          "obligaciones contables.")
+    print("    Las copias de respaldo de la base todavía lo tienen hasta que roten "
+          "(se guardan 7). Si le pidieron borrarlo, dígale cuándo sale de ellas.")
+    return 0
+
+
 def cmd_migrar(args) -> int:
     """Pone la base al día con el esquema actual.
 
@@ -234,6 +286,8 @@ def cmd_clientes(args) -> int:
                     print(f"      python3 -m pulserival.cli clientes activar --id {cid} "
                           f"--referencia \"<comprobante>\"")
             return 0
+        if args.accion == "eliminar":
+            return _eliminar_cliente(con, args)
         if args.accion == "activar":
             # El paso manual: usted confirma un pago que no pasó por Paddle (una
             # transferencia) y acá deja constancia de cuál fue. Lo que se cobra
@@ -944,8 +998,10 @@ def construir_parser() -> argparse.ArgumentParser:
     # clientes
     c = sub.add_parser("clientes", help="administrar clientes")
     c.add_argument("accion", nargs="?", default="lista",
-                   choices=["lista", "agregar", "editar", "activar"])
+                   choices=["lista", "agregar", "editar", "activar", "eliminar"])
     c.add_argument("--id", type=int)
+    c.add_argument("--confirmar", action="store_true",
+                   help="eliminar: borrar de verdad. Sin esto solo muestra qué se borraría")
     c.add_argument("--empresa")
     c.add_argument("--contacto")
     c.add_argument("--email")

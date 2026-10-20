@@ -59,6 +59,8 @@
   footer { background:var(--tinta); color:var(--texto-osc-2); padding:26px 0;
            font-family:var(--mono); font-size:11.5px; letter-spacing:.06em;
            margin-top:48px; }
+  footer .pie-legal { display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:12px; }
+  footer .pie-legal a { color:var(--texto-osc-2); }
 </style>
 {% block cabeza %}{% endblock %}
 </head>
@@ -67,6 +69,8 @@
   <img src="{{ marca_url }}/logo-negativo.svg" alt="{{ marca }}">
 </div></header>
 <div class="env cuerpo">{% block contenido %}{% endblock %}</div>
-<footer><div class="env">{{ marca }}{% if dominio %} &middot; {{ dominio }}{% endif %}</div></footer>
+<footer><div class="env">{{ marca }}{% if dominio %} &middot; {{ dominio }}{% endif %}
+  {% if legal_urls %}<span class="pie-legal">{% for clave, url in legal_urls.items() %}<a href="{{ url }}">{{ legal_nombres[clave] }}</a>{% endfor %}</span>{% endif %}
+</div></footer>
 </body>
 </html>

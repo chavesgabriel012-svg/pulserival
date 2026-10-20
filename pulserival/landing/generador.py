@@ -17,6 +17,7 @@ from typing import Any
 from jinja2 import Environment, FileSystemLoader
 
 from .. import config
+from . import legal
 
 PLANTILLAS = Path(__file__).parent / "plantillas"
 
@@ -45,7 +46,28 @@ def contexto() -> dict[str, Any]:
     # Por defecto las páginas apuntan a /marca/, que es donde las sirve Flask.
     # El generador estático lo reemplaza por la carpeta copiada al lado.
     datos.setdefault("marca_url", "/marca")
+    # Las tres páginas legales van enlazadas desde el pie de todas las
+    # páginas: Paddle pide que se lleguen navegando, no solo por URL.
+    datos["legal_urls"] = legal.enlaces(estatico=False)
+    datos["legal_nombres"] = {
+        clave: (legal.datos().get(clave) or {}).get("titulo") or texto
+        for clave, (_, _, texto) in legal.PAGINAS.items()}
+    datos["aviso_datos"] = legal.aviso_formulario()
+    datos["legal_version"] = legal.version()
+    datos["forma_competidores"] = competidores_del_formulario(datos)
     return datos
+
+
+def competidores_del_formulario(datos: dict[str, Any]) -> int:
+    """Cuántas casillas de competidor muestra el formulario: las del plan elegido.
+
+    Lo usan el HTML y el guion que arma el mensaje de WhatsApp. Tienen que
+    decir lo mismo: cuando el guion tenía un 3 fijo y el plan admitía 4, el
+    cuarto competidor se perdía del mensaje.
+    """
+    elegido = next((p for p in datos.get("planes_checkout") or []
+                    if p.get("clave") == datos.get("plan_elegido")), None)
+    return int((elegido or {}).get("competidores_max") or 3)
 
 
 # Las páginas públicas y el archivo estático de cada una. El formulario dejó
@@ -87,7 +109,7 @@ def construir(destino: Path | str | None = None) -> list[Path]:
     # En estático los enlaces son archivos, no rutas del servidor: la página
     # tiene que funcionar abierta con doble clic desde una carpeta.
     base.update({"inicio_url": "index.html", "aplicar_url": "aplicar.html",
-                 "marca_url": "marca"})
+                 "marca_url": "marca", "legal_urls": legal.enlaces(estatico=True)})
     # Los activos de marca se copian al lado del HTML: la página estática tiene
     # que funcionar abierta desde una carpeta, sin servidor.
     from .. import marca as marca_mod
@@ -102,6 +124,11 @@ def construir(destino: Path | str | None = None) -> list[Path]:
         ruta = carpeta / archivo
         ruta.write_text(render(plantilla, base), encoding="utf-8")
         escritas.append(ruta)
+    for clave, (_, archivo, _) in legal.PAGINAS.items():
+        ruta = carpeta / archivo
+        ruta.write_text(render("legal.html.j2", {**base, "legal": legal.pagina(clave)}),
+                        encoding="utf-8")
+        escritas.append(ruta)
     return escritas
 
 
@@ -115,14 +142,19 @@ def pendientes() -> list[str]:
     faltan = []
     contacto = datos.get("contacto") or {}
     if not (contacto.get("whatsapp") or contacto.get("email")):
-        # El plan a la medida se vende por conversación y la landing solo
-        # enlaza a ella: sin contacto, ese enlace no aparece.
+        # El Custom se vende por conversación: sin contacto, su tarjeta no
+        # tiene a dónde llevar.
         faltan.append(
             "config/landing.yaml: sin `contacto.whatsapp` ni `contacto.email`, el "
-            "formulario estático no tiene a dónde mandar los datos y el enlace del "
-            "plan a la medida (agencias) no aparece")
+            "formulario estático no tiene a dónde mandar los datos y la tarjeta del "
+            "plan Custom queda sin botón para conversar")
     if not datos["planes_visibles"]:
         faltan.append("config/planes.yaml: no hay ningún plan con `visible: true`")
+    for falta in legal.faltantes():
+        # Paddle no aprueba el dominio sin el nombre legal en los Términos, y
+        # la Ley 8968 pide identificar al responsable de los datos.
+        faltan.append(f"config/legal.yaml: falta {falta} (las páginas legales lo "
+                      "muestran como pendiente)")
     if not datos.get("dominio"):
         faltan.append("config/landing.yaml: falta `dominio` (solo sale en el pie)")
     return faltan

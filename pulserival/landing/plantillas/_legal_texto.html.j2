@@ -1,0 +1,7 @@
+{# Un texto legal en trozos (ver landing/legal.py:rellenar). Lo que falta
+   cargar en config/legal.yaml se ve marcado, no disimulado. #}
+{% macro texto(trozos) -%}
+{%- for t in trozos -%}
+{%- if t.falta %}<span class="pendiente">{{ t.texto }}</span>{% else %}{{ t.texto }}{% endif -%}
+{%- endfor -%}
+{%- endmacro %}

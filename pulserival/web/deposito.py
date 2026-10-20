@@ -181,6 +181,9 @@ def _yaml_del_alta(listo: dict[str, Any], clave: str, ahora: datetime) -> str:
         "industria": listo["industria"],
         "notas": listo["notas"],
         "origen": listo["origen"],
+        "consentimiento_version": listo.get("consentimiento"),
+        "consentimiento_en": (f"{ahora:%Y-%m-%d %H:%M:%S}"
+                              if listo.get("consentimiento") else None),
         # Las dos banderas que impiden que esto empiece a gastar solo. Hacen
         # falta las dos: `activo` lo saltea el pipeline entero, y
         # `estado_suscripcion` lo saltea la lógica de planes.

@@ -1,5 +1,48 @@
 {% extends "_base.html.j2" %}
 {% block titulo %}Confirmar — {{ marca }}{% endblock %}
+{% block cabeza %}
+<style>
+  /* La forma de pago. El anual no es otro plan: es pagar el mismo de una vez,
+     y por eso aparece recien aca. Se destaca con el borde y el ahorro en
+     plata, sin preseleccionarlo: elegirlo tiene que ser una decision, no
+     algo que se paso por alto. */
+  .formas { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:0 0 8px; }
+  .forma { position:relative; display:block; cursor:pointer; background:var(--blanco);
+           border:1.5px solid var(--linea); border-radius:var(--radio);
+           padding:20px 20px 18px; transition:border-color .2s, box-shadow .2s; }
+  .forma:hover { border-color:var(--piedra); }
+  .forma input { position:absolute; opacity:0; pointer-events:none; }
+  .forma .cabeza-forma { display:flex; align-items:center; gap:10px; margin:0 0 10px; }
+  .forma .marca-radio { width:18px; height:18px; border-radius:50%; flex:none;
+                        border:1.5px solid var(--piedra); display:grid; place-items:center; }
+  .forma .marca-radio:after { content:""; width:8px; height:8px; border-radius:50%;
+                              background:var(--pulso); transform:scale(0);
+                              transition:transform .15s; }
+  .forma .nombre-forma { font-family:var(--display); font-weight:700; font-size:16px; }
+  .forma .monto { font-family:var(--display); font-size:34px; font-weight:700;
+                  letter-spacing:-.03em; line-height:1.05; margin:0 0 4px; }
+  .forma .monto span { font-family:var(--cuerpo); font-size:15px; font-weight:400;
+                       color:var(--gris-texto); letter-spacing:0; }
+  .forma .explica { font-size:14.5px; color:var(--gris-texto); margin:0; line-height:1.45; }
+  .forma.anual { border-color:var(--pulso); }
+  .forma .ahorro { position:absolute; top:-11px; right:16px; background:var(--pulso);
+                   color:var(--blanco); font-family:var(--mono); font-size:11px;
+                   letter-spacing:.1em; text-transform:uppercase; padding:4px 10px;
+                   border-radius:3px; }
+  .forma .ahorro-linea { color:var(--pulso-texto); font-weight:600; }
+  .forma:has(input:checked) { border-color:var(--tinta);
+                              box-shadow:0 0 0 1px var(--tinta); }
+  .forma.anual:has(input:checked) { border-color:var(--pulso);
+                                    box-shadow:0 0 0 1px var(--pulso); }
+  .forma input:checked + .cabeza-forma .marca-radio { border-color:var(--tinta); }
+  .forma input:checked + .cabeza-forma .marca-radio:after { transform:scale(1); }
+  .forma input:focus-visible + .cabeza-forma .marca-radio {
+    outline:2px solid var(--pulso); outline-offset:2px; }
+  .total { font-family:var(--display); font-size:15px; margin:16px 0 18px; }
+  .total strong { font-size:18px; }
+  @media (max-width:560px) { .formas { grid-template-columns:1fr; gap:18px; } }
+</style>
+{% endblock %}
 {% block contenido %}
 
 {% if simulado %}
@@ -16,11 +59,13 @@
 <h2>Su plan</h2>
 <table>
   <tr><th>Plan</th><td>{{ plan.nombre or cliente["plan"] }}</td></tr>
+  {% if not formas %}
   <tr><th>Precio</th><td>
     {% if ciclo and ciclo.cobro_texto %}{{ ciclo.cobro_texto }}
       {%- if ciclo.equivale_mes_usd %} (equivale a ${{ '%g' % ciclo.equivale_mes_usd }} al mes){% endif %}
     {% elif precio %}${{ '%g' % precio }} por mes{% elif precio == 0 %}Sin costo{% else %}A convenir{% endif %}
   </td></tr>
+  {% endif %}
   <tr><th>Cadencia</th><td>
     {% if cliente["cadencia_dias"] %}Cada {{ cliente["cadencia_dias"] }} días
     {% else %}{{ plan.cadencia_texto or cliente["periodicidad"] }}{% endif %}
@@ -69,20 +114,47 @@
 </div>
 {% endif %}
 
-<h2>Confirmar</h2>
+{% macro elegir_forma() %}
+{% if formas %}
+<h2>Cómo prefiere pagar</h2>
+<div class="formas" role="radiogroup" aria-label="Cómo prefiere pagar">
+  {% for f in formas %}
+  <label class="forma{% if f.ahorro_usd %} anual{% endif %}">
+    {% if f.ahorro_usd %}<span class="ahorro">Ahorra ${{ '%g' % f.ahorro_usd }}</span>{% endif %}
+    <input type="radio" name="ciclo" value="{{ f.clave }}" data-monto="{{ '%g' % f.precio_usd }}"
+           {% if f.clave == ciclo_actual %}checked{% endif %}>
+    <span class="cabeza-forma"><span class="marca-radio" aria-hidden="true"></span>
+      <span class="nombre-forma">{{ f.titulo }}</span></span>
+    <p class="monto">${{ '%g' % f.precio_usd }}<span> / {{ 'año' if f.clave == 'anual' else 'mes' }}</span></p>
+    <p class="explica">
+      {%- if f.equivale_mes_usd %}<span class="ahorro-linea">Le queda en ${{ '%g' % f.equivale_mes_usd }} al mes.</span>
+      Un solo cobro al año, y se renueva solo.
+      {%- else %}Se cobra cada mes. Puede cancelar cuando quiera.{% endif -%}
+    </p>
+  </label>
+  {% endfor %}
+</div>
+{% endif %}
+{% endmacro %}
+
 {% if simulado %}
 <form method="post" action="/checkout/{{ cliente['id'] }}/confirmar">
+  {{ elegir_forma() }}
+  <h2>Confirmar</h2>
   <input type="hidden" name="t" value="{{ firma }}">
   <button class="btn" type="submit">Confirmar (simulado)</button>
 </form>
 {% elif paddle and paddle.faltan %}
 {# Mejor no mostrar el botón que abrir un checkout que cobra y no activa:
    sin el secreto del webhook el pago entra y nadie se entera. #}
+<h2>Confirmar</h2>
 <div class="nota">
   El cobro todavía no está disponible. Escríbanos y le activamos la cuenta a
   mano; no se le cobró nada.
 </div>
-{% elif paddle and paddle.precio %}
+{% elif paddle and paddle.precios %}
+{{ elegir_forma() }}
+<h2>Confirmar</h2>
 <p><button class="btn" type="button" id="pagar">Pagar con Paddle</button></p>
 <div class="nota">
   El pago lo procesa Paddle, que además le emite la factura. Su cuenta se
@@ -93,9 +165,28 @@
   // El entorno se fija antes de Initialize. En sandbox nada cobra de verdad.
   {% if paddle.entorno == "sandbox" %}Paddle.Environment.set("sandbox");{% endif %}
   Paddle.Initialize({ token: {{ paddle.token|tojson }} });
-  document.getElementById("pagar").addEventListener("click", function () {
+  // Un precio de Paddle por forma de pago. El que se cobra es el de la
+  // opción marcada; el webhook después anota en el cliente cuál fue.
+  var PRECIOS = {{ paddle.precios|tojson }};
+  var boton = document.getElementById("pagar");
+  function elegida() {
+    var marcada = document.querySelector('input[name="ciclo"]:checked');
+    return marcada ? marcada : null;
+  }
+  function rotular() {
+    var m = elegida();
+    boton.textContent = m ? "Pagar $" + m.getAttribute("data-monto") + " con Paddle"
+                          : "Pagar con Paddle";
+  }
+  document.querySelectorAll('input[name="ciclo"]').forEach(function (r) {
+    r.addEventListener("change", rotular);
+  });
+  rotular();
+  boton.addEventListener("click", function () {
+    var m = elegida();
+    var precio = m ? PRECIOS[m.value] : PRECIOS[{{ ciclo_actual|tojson }}];
     Paddle.Checkout.open({
-      items: [{ priceId: {{ paddle.precio|tojson }}, quantity: 1 }],
+      items: [{ priceId: precio, quantity: 1 }],
       customer: { email: {{ paddle.email|tojson }} },
       // Vuelve en el webhook: es lo que dice de qué cliente es el pago.
       customData: {{ paddle.custom_data|tojson }},
@@ -111,6 +202,7 @@
   });
 </script>
 {% else %}
+<h2>Confirmar</h2>
 <div class="nota">Falta configurar el precio de este plan en Paddle.</div>
 {% endif %}
 

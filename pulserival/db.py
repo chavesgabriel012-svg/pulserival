@@ -53,6 +53,9 @@ MIGRACIONES = (
     # de malo el borrador: el insumo de la Fase 2 para los descartes, igual que
     # el diff lo es para las ediciones.
     ("reportes_generados", "motivo_descarte", "TEXT"),
+    # Constancia del consentimiento del formulario (Ley 8968, art. 5).
+    ("clientes", "consentimiento_en", "TEXT"),
+    ("clientes", "consentimiento_version", "TEXT"),
 )
 
 # Qué poner en las filas que ya existían cuando se agrega una columna.

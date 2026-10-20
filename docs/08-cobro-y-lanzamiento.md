@@ -17,11 +17,15 @@ Dos planes, nada más:
 
 | | Plan | Cómo se compra | Precio |
 |---|---|---|---|
-| 1 | **Reporte mensual** (`autoservicio`) | landing + checkout de Paddle | $25/mes o $240/año |
+| 1 | **Reporte mensual** (`autoservicio`) | landing + checkout de Paddle | $25/mes (o $240 si paga el año) |
 | 2 | **Custom** (`custom`), para agencias | conversación + link de pago hecho a mano en Paddle | cotizado: cada 2 días desde $300/mes, diario desde $500/mes |
 
-El anual cuesta $240 ($20/mes) para que el cliente pague **una** comisión de
-Paddle al año en vez de doce. La landing lo explica como "Ahorra $60".
+La landing muestra dos tarjetas: el mensual de $25 y el Custom. **El anual no
+es un plan, es una forma de pagar el mensual**, y aparece recién en el
+checkout: "Todo el año, $240, Ahorra $60, le queda en $20 al mes". Cuesta $240
+para que el cliente pague **una** comisión de Paddle al año en vez de doce.
+El checkout deja marcado el mes a mes: elegir el año tiene que ser una
+decisión, no algo que se pasó por alto.
 
 La prueba gratis (`prueba`) y el plan semanal (`semanal`) siguen en
 `config/planes.yaml` con `visible: false`. **Agregarlos después no requiere
@@ -158,9 +162,11 @@ la cuenta real. Los ids de un entorno no sirven en el otro.
 
 5. **Aprobación del dominio** (solo en producción). Paddle revisa el sitio
    antes de dejarlo cobrar, y pide que tenga **precios visibles, Términos y
-   condiciones, Política de reembolso y Política de privacidad.** Esas tres
-   páginas **no existen todavía** en la landing, y son las que bloquean el
-   lanzamiento aunque todo lo demás funcione. El sandbox no pide aprobación.
+   condiciones, Política de reembolso y Política de privacidad**, enlazadas
+   desde la navegación. Las tres páginas existen (`/terminos`,
+   `/reembolsos`, `/privacidad`, enlazadas desde el pie de todas las
+   páginas), pero **les faltan sus datos legales**: ver la sección 7. Sin
+   ellos Paddle no aprueba el dominio. El sandbox no pide aprobación.
 
 ### Variables del servidor
 
@@ -181,12 +187,17 @@ sin probar un pago.
 
 **Plan mensual (autoservicio):**
 
-1. La persona llena el formulario de `/aplicar` y elige mes a mes o anual.
+1. La persona llena el formulario de `/aplicar` y marca la casilla de
+   aceptación de los Términos y la Política de privacidad. Sin ella el
+   servidor rechaza el alta: la Ley 8968 pide el consentimiento por escrito,
+   y queda guardado con fecha y versión (`consentimiento_en`,
+   `consentimiento_version`).
 2. Se crea el cliente en `pendiente_pago` y se la manda a
    `/checkout/<id>?t=<firma>`. La firma impide que alguien cambie el número
    y vea o pague el checkout de otro cliente.
-3. Esa página abre el checkout de Paddle con el precio del ciclo elegido y
-   manda el id del cliente (firmado) en `customData`.
+3. Ahí elige cómo pagar (mes a mes o el año) y la página abre el checkout
+   de Paddle con el precio de esa opción, con el id del cliente (firmado) en
+   `customData`. El webhook anota después en el cliente qué ciclo pagó.
 4. Paddle cobra y avisa al webhook. El cliente pasa a `activa` y desde ese
    momento el ciclo lo incluye.
 5. La persona vuelve a `/gracias/<id>`, que se recarga sola hasta que llegue
@@ -287,7 +298,9 @@ al servidor.** En este orden:
 - [ ] Alta completa por la web con el plan **mes a mes**: formulario →
       checkout → pago → `/gracias` pasa a "activo" sola. Confirmar en
       `clientes lista` el estado `activa`, ciclo `mensual` y el `sub_...`.
-- [ ] Lo mismo con el **anual**: ciclo `anual`, $240.
+- [ ] Lo mismo eligiendo **Todo el año** en el checkout: ciclo `anual`, $240.
+      Es la prueba de que el webhook anota el ciclo según lo que se cobró:
+      el alta entra como `mensual` y tiene que terminar en `anual`.
 - [ ] Una **tarjeta rechazada** (busque en la documentación de Paddle las
       tarjetas de prueba del sandbox que se rechazan): el cliente tiene que
       quedar en `pendiente_pago`.
@@ -318,15 +331,80 @@ al servidor.** En este orden:
 - [ ] Bajar una copia de la base y confirmar que `eventos_pago` tiene los
       eventos de esa compra.
 
-## 7. Lo legal y lo fiscal
+## 7. Lo legal: las tres páginas
 
-Fuera del alcance de este código, pero bloquea el lanzamiento igual:
+Los textos están en `config/legal.yaml` y se publican en `/terminos`,
+`/reembolsos` y `/privacidad` (y como `terminos.html`, etc., en la landing
+estática). Se escribieron contra dos cosas verificables: lo que Paddle pide
+para aprobar el dominio y la Ley 8968 de Costa Rica. **Son un borrador, no
+asesoría legal: antes de publicar, que los lea un abogado.**
 
-- Las tres páginas que Paddle pide para aprobar el dominio: **Términos y
-  condiciones, Política de reembolso, Política de privacidad.**
-- Qué pasa con los datos del cliente si se da de baja.
+**Lo que falta cargar y bloquea el lanzamiento** (en `config/legal.yaml`,
+`responsable:`): la razón social o su nombre legal completo, la cédula, la
+dirección y un correo de contacto. Mientras falten, las páginas los muestran
+marcados como "pendiente", `cli landing` lo avisa y `/salud` también, si
+`PADDLE_ENTORNO=production`.
+
+**La política de reembolso, y por qué es así.** El criterio es: se devuelve
+cuando el cliente cambió de opinión al principio, o cuando fallamos
+nosotros. No se devuelve un mes ya en curso por haberse olvidado de cancelar:
+para eso está la cancelación, que corta el siguiente cobro.
+
+| Caso | Qué pasa | Por qué |
+|---|---|---|
+| Primer pago, dentro de 14 días | Devolución completa, sin preguntas | Paddle exige entre 14 y 90 días; la ley de Costa Rica da 8 de retracto. En 14 días ya le llegó el primer reporte. |
+| Pagó el año, dentro de 14 días (primer pago o renovación) | Devolución completa | El anual es mucha plata para una renovación automática que se le pasó. |
+| Un mes pagado termina sin reporte, por culpa nuestra | Se devuelve ese mes | Es lo único que el cliente compra. |
+| Renovación mensual ya cobrada | No se devuelve; puede cancelar el siguiente | Igual recibe el reporte de ese mes. |
+| Segunda suscripción después de un reembolso | Sin garantía | Evita suscribirse y pedir el reembolso para sacar reportes gratis. |
+| Un competidor no pautó, o una plataforma no publica un dato | No es una falla | El reporte lo dice, y eso también es información. |
+
+Lo que son decisiones suyas, no requisitos (están marcadas con `DECISIÓN` en
+el YAML y se cambian ahí): los 14 días (pueden ser hasta 90), los 12 meses de
+retención tras la baja y los 30 días de aviso antes de subir un precio.
+
+**Cómo se hace un reembolso, en orden:**
+
+1. En el panel de Paddle, reembolsar la transacción. Hay que tramitarlo
+   dentro de los 8 días naturales del pedido: es lo que dice la política.
+2. Cancelar la suscripción en Paddle. **Un reembolso no la cancela ni
+   desactiva al cliente**: el webhook no escucha los reembolsos
+   (`adjustment.*`). La cancelación sí llega y lo pasa a `cancelada`.
+
+**Pedidos de datos (Ley 8968).** Si alguien pide ver, corregir o borrar sus
+datos, hay **5 días hábiles** para responder. Para borrar a un cliente de
+verdad:
+
+```bash
+python -m pulserival.cli clientes eliminar --id <id>              # muestra qué se borraría
+python -m pulserival.cli clientes eliminar --id <id> --confirmar  # lo borra
+```
+
+Borra al cliente, sus competidores, sus anuncios, sus reportes y los
+archivos de reportes en disco. No deja borrar a alguien con una suscripción
+de Paddle activa (primero se cancela). Los avisos de pago se conservan sin el
+cliente, por contabilidad. Las copias de respaldo lo siguen teniendo hasta
+que roten.
+
+La política promete borrar los datos a los 12 meses de la baja. **El sistema
+no lo hace solo**: hay que revisar `clientes lista` de vez en cuando y
+eliminar a mano a quien se dio de baja hace más de un año.
+
+**Para revisar con el abogado o el contador, que este código no resuelve:**
+
+- Si la base de clientes tiene que inscribirse ante la Prodhab. La Ley 8968
+  (art. 21) lo exige para bases "con fines de distribución, difusión o
+  comercialización"; una base de clientes de uso interno no parece serlo,
+  pero es una lectura, no una certeza.
+- La cláusula que limita la responsabilidad a lo pagado en los últimos 12
+  meses, y la de tribunales de Costa Rica.
 - Cómo se declaran en Costa Rica los ingresos que Paddle le transfiere.
-  Eso es para su contador, no para este documento.
+- Si el plan de Gemini que usa es el gratuito: en ese caso Google puede usar
+  lo que se le envía para mejorar sus productos, y la Política de
+  privacidad no lo dice. Con un plan pago no pasa.
+- Si la rama `datos` del repositorio de GitHub sigue guardando la base con
+  datos de clientes: GitHub no está en la lista de proveedores de la
+  política. O se agrega, o se deja de guardar ahí.
 
 ## 8. Cómo se opera, día a día
 
@@ -356,7 +434,8 @@ python -m pulserival.cli clientes editar --id <id> --activo 0
 ```
 
 Se desactiva, no se borra: el historial de anuncios es lo que permite decir
-"esto es nuevo" si vuelve.
+"esto es nuevo" si vuelve. Para borrarlo de verdad, ver
+`clientes eliminar` en la sección 7.
 
 ## Fuentes
 
@@ -372,3 +451,12 @@ documentación:
 - `Paddle.Environment.set()`: <https://developer.paddle.com/paddle-js/methods/paddle-environment-set/>
 - Link de pago por defecto: <https://developer.paddle.com/build/transactions/default-payment-link>
 - Aprobación del dominio: <https://www.paddle.com/help/start/account-verification/what-is-domain-verification>
+- Por qué se rechaza un dominio (nombre legal en los Términos, páginas enlazadas desde la navegación): <https://www.paddle.com/help/start/account-verification/why-has-my-domain-been-rejected>
+- Mínimos de Términos, Reembolso y Privacidad para vender con Paddle, incluida la frase del Merchant of Record y la ventana de 14 a 90 días: <https://developer.paddle.com/embedded-billing-partner-skills/.well-known/skills/draft-seller-policies/SKILL.md>
+- Política de reembolso de Paddle hacia el comprador: <https://www.paddle.com/legal/refund-policy>
+- Términos de compra de Paddle: <https://www.paddle.com/legal/checkout-buyer-terms>
+
+Y sobre la ley de Costa Rica:
+
+- Ley 8968, Protección de la Persona frente al Tratamiento de sus Datos Personales (arts. 5, 7, 14 y 21): <https://transparencia.munigoicoechea.go.cr/wp-content/uploads/2021/07/No-8968-PROTECCION-DE-LA-PERSONA-FRENTE-AL-TRATAMIENTO-DE-SUS-DATOS-PERSONALES.pdf>
+- Retracto de 8 días en el comercio electrónico (Ley 7472, art. 40, y Decreto 40703-MEIC): <https://www.theworldlawgroup.com/membership/news/news-application-of-the-right-of-withdrawal-in-costa-rica-convenience-and-comparative-analysis-with-spanish-legislation>

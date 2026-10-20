@@ -34,6 +34,7 @@ class CasoWeb(CasoBase):
             "email": "ana@tornillo.test", "plan": "autoservicio", "ciclo": "mensual",
             "industria": "ferreterías", "contexto": "Tres sucursales.",
             "comp1": "EPA", "fb1": "facebook.com/EPACostaRica", "web1": "epa.cr",
+            "acepto": "si",
         }
         datos.update(cambios)
         return self.cliente_web.post("/alta", data=datos)
@@ -51,12 +52,47 @@ class TestLandingServida(CasoWeb):
         self.assertNotIn("<form", texto)
         self.assertIn("/aplicar", texto)
 
-    def test_la_pagina_de_aplicar_carga_con_el_ciclo_de_la_url(self):
-        # El botón del anual de la portada lleva a ?ciclo=anual: si el
-        # formulario llegara con el mensual puesto, se pagaría otro precio.
+    def test_un_enlace_viejo_con_ciclo_en_la_url_sigue_cargando(self):
+        # La portada mandaba ?ciclo=anual cuando el anual se elegía ahí. Ahora
+        # se elige en el checkout, pero un enlace viejo compartido por ahí
+        # tiene que seguir llevando al formulario.
         r = self.cliente_web.get("/aplicar?ciclo=anual")
         self.assertEqual(r.status_code, 200)
-        self.assertIn('value="anual" selected', r.get_data(as_text=True))
+        self.assertNotIn('name="ciclo"', r.get_data(as_text=True))
+
+    def test_el_checkout_ofrece_pagar_el_anio_con_su_ahorro(self):
+        r = self.alta()
+        h = self.cliente_web.get(r.headers["Location"]).get_data(as_text=True)
+        self.assertIn('name="ciclo" value="mensual"', h)
+        self.assertIn('name="ciclo" value="anual"', h)
+        self.assertIn("Ahorra $60", h)
+        self.assertIn("Le queda en $20 al mes", h)
+
+    def test_el_checkout_no_preselecciona_el_anual(self):
+        # Elegir pagar el año tiene que ser una decisión, no algo que se pasó
+        # por alto: queda marcado el mensual, que es lo que vio en la portada.
+        r = self.alta()
+        h = self.cliente_web.get(r.headers["Location"]).get_data(as_text=True)
+        self.assertRegex(h, r'value="mensual"[^>]*checked')
+        self.assertNotRegex(h, r'value="anual"[^>]*checked')
+
+    def test_confirmar_con_el_anual_lo_anota(self):
+        r = self.alta()
+        cid = int(r.headers["Location"].split("/checkout/")[1].split("?")[0])
+        firma = r.headers["Location"].split("t=")[1]
+        self.cliente_web.post(f"/checkout/{cid}/confirmar", data={"t": firma, "ciclo": "anual"})
+        fila = db.fila(self.con, "SELECT * FROM clientes WHERE id = ?", (cid,))
+        self.assertEqual(fila["ciclo_facturacion"], "anual")
+        self.assertEqual(fila["estado_suscripcion"], "activa")
+
+    def test_confirmar_con_un_ciclo_inventado_no_lo_anota(self):
+        r = self.alta()
+        cid = int(r.headers["Location"].split("/checkout/")[1].split("?")[0])
+        firma = r.headers["Location"].split("t=")[1]
+        self.cliente_web.post(f"/checkout/{cid}/confirmar",
+                              data={"t": firma, "ciclo": "trimestral"})
+        fila = db.fila(self.con, "SELECT * FROM clientes WHERE id = ?", (cid,))
+        self.assertEqual(fila["ciclo_facturacion"], "mensual")
 
     def test_un_plan_que_no_se_vende_en_la_web_no_se_puede_contratar(self):
         # El POST lo arma cualquiera: sin este control, alguien se da de

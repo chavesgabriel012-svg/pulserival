@@ -1,0 +1,84 @@
+{% extends "_publico.html.j2" %}
+{% from "_legal_texto.html.j2" import texto %}
+{% block titulo %}{{ legal.titulo }} — {{ marca }}{% endblock %}
+
+{% block estilos %}
+  .legal-cabeza { padding:64px 0 36px; border-bottom:1px solid var(--linea); }
+  .legal-cabeza h1 { font-size:42px; margin:0 0 14px; max-width:20ch; }
+  .legal-cabeza .entrada { margin:0; }
+  .legal-cabeza .fecha { font-family:var(--mono); font-size:12px; letter-spacing:.06em;
+                         color:var(--gris-texto); margin:18px 0 0; }
+  .volver { display:inline-block; font-size:14px; color:var(--gris-texto);
+            text-decoration:none; margin-bottom:22px; }
+  .volver:hover { color:var(--tinta); }
+  /* Un texto legal se lee de corrido: columna angosta y sin adornos. */
+  .legal-cuerpo { max-width:70ch; padding:40px 0 96px; }
+  .legal-cuerpo section { padding:0; border:0; margin:0 0 38px; }
+  .legal-cuerpo h2 { font-size:22px; margin:0 0 12px; max-width:none; }
+  .legal-cuerpo p, .legal-cuerpo li { font-size:17px; line-height:1.6; }
+  .legal-cuerpo p { margin:0 0 12px; }
+  .legal-cuerpo ul { margin:0 0 12px; padding-left:22px; }
+  .legal-cuerpo li { margin-bottom:8px; }
+  .legal-cuerpo li::marker { color:var(--pulso); }
+  .encargados { display:grid; gap:10px; margin:6px 0 14px; padding:0; list-style:none; }
+  .encargados li { background:var(--blanco); border:1px solid var(--linea);
+                   border-radius:var(--radio); padding:14px 16px; margin:0; }
+  .encargados strong { font-family:var(--display); display:block; margin-bottom:4px; }
+  .borrador { border:1.5px solid var(--pulso); background:var(--blanco);
+              border-radius:var(--radio); padding:14px 16px; margin:24px 0 0;
+              font-size:15px; color:var(--gris-texto); }
+  .otras { display:flex; gap:18px; flex-wrap:wrap; border-top:1px solid var(--linea);
+           padding-top:24px; font-family:var(--display); font-size:15px; }
+  @media (pointer: coarse) {
+    .volver, .otras a { min-height:44px; display:inline-flex; align-items:center; }
+  }
+  @media (max-width:640px) {
+    .legal-cabeza { padding:44px 0 28px; }
+    .legal-cabeza h1 { font-size:32px; }
+    .legal-cuerpo { padding:30px 0 64px; }
+  }
+{% endblock %}
+
+{% block navegacion %}
+  <a href="{{ inicio_url }}#planes">Planes</a>
+  <a class="cta" href="{{ aplicar_url }}">Empezar</a>
+{% endblock %}
+
+{% block contenido %}
+<div class="env">
+  <div class="legal-cabeza">
+    <a class="volver" href="{{ inicio_url }}">&larr; Volver al inicio</a>
+    <h1>{{ legal.titulo }}</h1>
+    <p class="entrada">{{ texto(legal.entrada) }}</p>
+    {% if legal.actualizado %}<p class="fecha">Última actualización: {{ legal.actualizado }}</p>{% endif %}
+    {% if legal.faltan %}
+    {# Se ve en la página a propósito: con estos huecos Paddle no aprueba el
+       dominio, y es mejor que se note antes que después. #}
+    <p class="borrador">Faltan datos para que esta página esté completa:
+      {{ legal.faltan|join(", ") }}. Se cargan en config/legal.yaml.</p>
+    {% endif %}
+  </div>
+
+  <div class="legal-cuerpo">
+    {% for s in legal.secciones %}
+    <section>
+      <h2>{{ texto(s.titulo) }}</h2>
+      {% for p in s.parrafos %}<p>{{ texto(p) }}</p>{% endfor %}
+      {% if s.lista %}<ul>{% for p in s.lista %}<li>{{ texto(p) }}</li>{% endfor %}</ul>{% endif %}
+      {% if s.encargados %}
+      <ul class="encargados">
+        {% for e in legal.encargados %}<li><strong>{{ e.nombre }}</strong>{{ texto(e.para) }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+      {% for p in s.cierre %}<p>{{ texto(p) }}</p>{% endfor %}
+    </section>
+    {% endfor %}
+
+    <nav class="otras" aria-label="Otras páginas legales">
+      {% for clave, url in legal_urls.items() if clave != legal.clave %}
+      <a href="{{ url }}">{{ legal_nombres[clave] }}</a>
+      {% endfor %}
+    </nav>
+  </div>
+</div>
+{% endblock %}

@@ -37,7 +37,7 @@ from flask import (Flask, abort, redirect, render_template, request,
 from jinja2 import ChoiceLoader, FileSystemLoader
 
 from .. import altas, config, db, marca as marca_mod, pagos, planes
-from ..landing import generador
+from ..landing import generador, legal
 from . import deposito as deposito_mod
 from . import planificador as plan_mod
 from .panel import PLANTILLAS as PLANTILLAS_PANEL
@@ -53,6 +53,12 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
     # Las plantillas son las mismas que usa la landing estática: una sola
     # copia del HTML para los dos modos.
     app = Flask(__name__, template_folder=str(generador.PLANTILLAS))
+    # Escapar siempre. Flask lo hace solo con las plantillas que terminan en
+    # .html, y las de este proyecto terminan en .html.j2: sin esta línea, el
+    # nombre de empresa que alguien escribe en el formulario público se
+    # pintaba como HTML en el checkout y en el panel de administración. Tiene
+    # que ir antes de que se cree el entorno de Jinja.
+    app.jinja_options = {**app.jinja_options, "autoescape": True}
     # Dos carpetas de plantillas: las de la landing se comparten con el
     # generador estático, las del panel son solo del servidor.
     app.jinja_loader = ChoiceLoader([
@@ -135,6 +141,16 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
     def inicio():
         return render_template("index.html.j2", **_contexto_publico())
 
+    def _pagina_legal(clave: str):
+        return render_template("legal.html.j2", **_contexto_publico(),
+                               legal=legal.pagina(clave))
+
+    # Paddle revisa que estas tres existan, sean públicas y respondan 200
+    # antes de aprobar el dominio.
+    for _clave, (_ruta, _, _) in legal.PAGINAS.items():
+        app.add_url_rule(_ruta, f"legal_{_clave}",
+                         lambda clave=_clave: _pagina_legal(clave))
+
     @app.get("/aplicar")
     def aplicar():
         """El formulario, en su propia página. Al enviarlo se pasa al cobro."""
@@ -151,6 +167,7 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
         ciclos = (elegido or {}).get("ciclos") or {}
         pedido = request.args.get("ciclo")
         ctx["ciclo_elegido"] = pedido if pedido in ciclos else next(iter(ciclos), None)
+        ctx["forma_competidores"] = generador.competidores_del_formulario(ctx)
         return render_template("aplicar.html.j2", **ctx)
 
     def _origen(datos) -> str | None:
@@ -197,6 +214,14 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
             return _pagina("No pudimos completar el registro",
                            "Ese plan no se contrata desde la página. Escríbanos y lo "
                            "armamos con usted.", volver=True), 400
+        # La Ley 8968 (art. 5) exige el consentimiento expreso y por escrito
+        # antes de guardar datos personales. La casilla la valida el
+        # navegador, pero el POST lo puede armar cualquiera sin ella.
+        if datos.get("acepto") != "si":
+            return _pagina("Falta aceptar los términos",
+                           "Para registrar su solicitud necesitamos que acepte los "
+                           "Términos y la Política de privacidad. Vuelva al formulario "
+                           "y marque la casilla del final.", volver=True), 400
         tope = vendibles[plan].get("competidores_max")
         if tope and len(competidores) > int(tope):
             return _pagina("No pudimos completar el registro",
@@ -214,6 +239,7 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
                 "industria": datos.get("industria"),
                 "notas": datos.get("contexto"),
                 "origen": _origen(datos),
+                "consentimiento": legal.version() or "sin versión",
             })
         except altas.AltaInvalida as e:
             return _pagina("No pudimos completar el registro", str(e), volver=True), 400
@@ -265,10 +291,14 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
     def _datos_paddle(cliente: sqlite3.Row) -> dict[str, Any]:
         """Lo que la página de checkout le pasa a Paddle.js."""
         datos_plan = planes.plan(db.valor(cliente, "plan"))
+        # Un precio por forma de pago: mes a mes o el año. La persona elige en
+        # la página y el guion abre Paddle con el de la opción marcada.
+        precios = {clave: pagos.precio_paddle(datos_plan, clave)
+                   for clave in (datos_plan.get("ciclos") or {})}
         return {
             "entorno": pagos.entorno(),
             "token": config.env("PADDLE_CLIENT_TOKEN") or "",
-            "precio": pagos.precio_paddle(datos_plan, db.valor(cliente, "ciclo_facturacion")),
+            "precios": {k: v for k, v in precios.items() if v},
             "email": cliente["contacto_email"],
             # Viaja por el navegador y vuelve en el webhook: es lo que dice de
             # qué cliente es el pago. La firma impide cambiarle el id.
@@ -289,6 +319,8 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
         datos_plan = planes.plan(db.valor(cliente, "plan"))
         return render_template(
             "checkout.html.j2",
+            formas=_formas_de_pago(datos_plan),
+            ciclo_actual=db.valor(cliente, "ciclo_facturacion"),
             **generador.contexto(),
             cliente=cliente,
             plan=datos_plan,
@@ -307,10 +339,16 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
             # Con cobro real, quien activa es el webhook de Paddle, no un POST
             # desde el navegador: si no, cualquiera se activa solo.
             abort(403, "El cobro real se confirma desde Paddle, no desde acá")
-        _cliente_firmado(cliente_id)
+        cliente = _cliente_firmado(cliente_id)
+        # La forma de pago se elige en el checkout. En el cobro real la anota
+        # el webhook según el precio que se cobró; acá se anota a mano.
+        ciclos = planes.plan(db.valor(cliente, "plan")).get("ciclos") or {}
+        ciclo = request.form.get("ciclo")
         con = conectar()
         try:
             with con:
+                if ciclo in ciclos:
+                    db.actualizar(con, "clientes", cliente_id, {"ciclo_facturacion": ciclo})
                 altas.activar(con, cliente_id, referencia="SIMULADO",
                               proveedor="manual")
         except altas.AltaInvalida as e:
@@ -482,6 +520,18 @@ def _contacto_visible() -> str:
     if contacto.get("whatsapp"):
         return f"WhatsApp {contacto['whatsapp']}"
     return contacto.get("email") or ""
+
+
+def _formas_de_pago(datos_plan: dict[str, Any]) -> list[dict[str, Any]]:
+    """Las opciones de pago del checkout, en el orden de config/planes.yaml.
+
+    Con una sola forma no hay nada que elegir y no se muestra el bloque.
+    """
+    ciclos = datos_plan.get("ciclos") or {}
+    if len(ciclos) < 2:
+        return []
+    return [{"clave": clave, "titulo": c.get("nombre") or clave, **c}
+            for clave, c in ciclos.items()]
 
 
 def _pagina(titulo: str, mensaje: str, volver: bool = False) -> str:
