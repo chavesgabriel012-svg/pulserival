@@ -19,12 +19,26 @@ dominio: ""                      # pulserival.com, cuando lo compren
 # verdad se cierran ventas en Costa Rica.
 contacto:
   whatsapp: ""                   # solo dígitos con código de país: 50688887777
-  email: ""                      # respaldo si no hay WhatsApp
+  # El correo de soporte. Sale en la sección de contacto, en el pie de todas
+  # las páginas, en el botón del plan Custom y en los mensajes de error que
+  # dicen "escríbanos". Si cambia, cambiarlo también en config/legal.yaml.
+  email: "soporte@pulserival.com"
 
-titulo: "Qué está anunciando su competencia en Meta y Google, mes a mes"
+# La sección de contacto de la portada, antes del pie.
+contacto_seccion:
+  rotulo: "Contacto"
+  titulo: "¿Tiene alguna pregunta?"
+  texto: >-
+    Sobre los planes, un plan Custom para su agencia, su suscripción o un
+    reporte que ya recibió: escríbanos y le respondemos.
+
+# Sin "mes a mes": la frecuencia depende del plan (el de $25 es cada 30 días,
+# un Custom puede ser semanal o más seguido). Lo que vale para todos los
+# planes es que las bibliotecas se leen cada semana.
+titulo: "Qué está anunciando su competencia en Meta y Google"
 subtitulo: >-
   Revisamos los anuncios activos de sus competidores en Facebook, Instagram y
-  Google todas las semanas, y una vez al mes le explicamos qué cambió y qué
+  Google todas las semanas, y en cada reporte le explicamos qué cambió y qué
   conviene hacer. No una lista de anuncios: un análisis, con el enlace a
   cada anuncio para que lo compruebe.
 
@@ -49,7 +63,7 @@ por_que:
         comprobarlo.
     - titulo: "Sin revisar nada usted mismo"
       texto: >-
-        Leemos las bibliotecas cada semana y se lo resumimos una vez al mes.
+        Leemos las bibliotecas cada semana y se lo damos resumido en su reporte.
 
 # ── Las dos fuentes ──────────────────────────────────────────────────
 # Lo que se lee de cada plataforma. La asimetría es real y está dicha a
@@ -61,8 +75,8 @@ plataformas:
   nota: >-
     Las dos son públicas y cualquiera puede abrirlas. Casi nadie lo hace todas
     las semanas, ni compara contra lo que había antes, ni saca conclusiones.
-    Leerlas cada semana es lo que hace que un anuncio que corrió diez días a
-    mitad de mes no se le escape al reporte del mes.
+    Leerlas cada semana es lo que hace que un anuncio que corrió solo diez días
+    no se le escape a su reporte.
   fuentes:
     - nombre: "Meta"
       donde: "Facebook e Instagram"
@@ -103,7 +117,7 @@ pasos:
         industria. Agrupado por competidor, no en una lista plana.
     - nombre: "Revisamos y enviamos"
       texto: >-
-        Una vez al mes le llega el reporte. Ninguno sale sin que una persona
+        Le llega el reporte, con la frecuencia de su plan. Ninguno sale sin que una persona
         lo lea: un control automático marca antes lo que no se sostiene, y lo
         dudoso se corrige o se dice.
 
@@ -116,7 +130,7 @@ pasos:
 # acá un competidor real, o una cifra que no salga de una corrida, sería
 # exactamente lo que el reporte promete no hacer.
 ejemplo:
-  titulo: "Así llega, todos los meses"
+  titulo: "Así llega cada reporte"
   nota: >-
     El detalle va agrupado por competidor y, dentro de cada uno, por
     plataforma. Cada anuncio lleva el enlace a su ficha pública, para que
@@ -149,7 +163,7 @@ ejemplo:
             - referencia: "A2"
               estado: "cambiado"
               detalle: "1 pieza · cambió el titular"
-              texto: "Bajó el precio de anzuelo respecto del mes pasado"
+              texto: "Bajó el precio de anzuelo respecto del reporte anterior"
         - plataforma: "Google"
           anuncios:
             - referencia: "A3"
@@ -173,15 +187,16 @@ ejemplo:
 # elige en el checkout.
 plan_seccion:
   rotulo: "Los planes"
-  titulo: "Un reporte al mes, o uno hecho a su medida"
+  titulo: "Un plan para empezar, o uno hecho a su medida"
   entrada: >-
-    El mensual cubre hasta cuatro competidores en Meta y Google, con el enlace
-    a cada anuncio. Si es una agencia o necesita otra frecuencia, armamos uno
-    Custom. Sin permanencia: puede cancelar cuando quiera.
+    El de $25 cubre hasta cuatro competidores en Meta y Google, con el enlace
+    a cada anuncio. Si es una agencia o necesita reportes más seguidos, armamos
+    uno Custom con la frecuencia que necesite. Sin permanencia: puede cancelar
+    cuando quiera.
   cotizado: "A cotizar"
   boton_contacto: "Conversemos"
   cierre: >-
-    Un reporte al mes por $25, sin permanencia.
+    Desde $25, sin permanencia.
 
 # ── Por qué sirve ────────────────────────────────────────────────────
 argumentos:
@@ -197,8 +212,8 @@ argumentos:
       estimar: el reporte dice lo que se puede comprobar y marca lo que no.
   - titulo: "Le avisamos cuando no hay nada"
     texto: >-
-      Si un competidor no está pautando este mes, se lo decimos. Un reporte
-      relleno para justificar el mes es la forma más rápida de que deje de
+      Si un competidor no está pautando, se lo decimos. Un reporte relleno
+      para justificar lo que paga es la forma más rápida de que deje de
       leerlo.
   - titulo: "Revisión humana antes de cada envío"
     texto: >-

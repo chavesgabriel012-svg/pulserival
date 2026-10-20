@@ -15,6 +15,6 @@
   </script>
 {% else %}
   <h1>Este enlace de pago no está completo</h1>
-  <p>Le falta la referencia del cobro. Escríbanos y se lo mandamos de nuevo.</p>
+  <p>Le falta la referencia del cobro. Escríbanos{% if correo_soporte %} a <a href="mailto:{{ correo_soporte }}">{{ correo_soporte }}</a>{% endif %} y se lo mandamos de nuevo.</p>
 {% endif %}
 {% endblock %}

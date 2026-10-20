@@ -24,7 +24,7 @@
       esta página se actualiza sola.
     </p>
     <p>
-      Si en unos minutos sigue igual, escríbanos: el pago no se pierde, queda
+      Si en unos minutos sigue igual, escríbanos{% if correo_soporte %} a <a href="mailto:{{ correo_soporte }}">{{ correo_soporte }}</a>{% endif %}: el pago no se pierde, queda
       registrado en Paddle aunque la confirmación se demore.
     </p>
   {% elif cliente %}

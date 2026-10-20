@@ -74,7 +74,7 @@
     .cuerpo .btn { display:block; width:100%; text-align:center; }
     th { width:36%; }
   }
-  footer .pie-legal a { color:var(--texto-osc-2); }
+  footer .pie-legal a, footer a { color:var(--texto-osc-2); }
 </style>
 {% block cabeza %}{% endblock %}
 </head>
@@ -84,6 +84,7 @@
 </div></header>
 <div class="env cuerpo">{% block contenido %}{% endblock %}</div>
 <footer><div class="env">{{ marca }}{% if dominio %} &middot; {{ dominio }}{% endif %}
+  {% if correo_soporte %} &middot; <a href="mailto:{{ correo_soporte }}">{{ correo_soporte }}</a>{% endif %}
   {% if legal_urls %}<span class="pie-legal">{% for clave, url in legal_urls.items() %}<a href="{{ url }}">{{ legal_nombres[clave] }}</a>{% endfor %}</span>{% endif %}
 </div></footer>
 </body>

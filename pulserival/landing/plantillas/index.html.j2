@@ -229,9 +229,9 @@
   }
 
   /* -- los planes --------------------------------------------- */
-  /* Dos tarjetas lado a lado: el mensual, que se compra desde la web, y el
-     Custom, que se conversa. Como pagar el mensual (mes a mes o el año) no
-     se elige aca: se elige en el checkout. */
+  /* Dos tarjetas lado a lado: el de $25, que se compra desde la web, y el
+     Custom, que se conversa. Si se paga cada mes o el año entero no se elige
+     aca: se elige en el checkout. */
   .planes { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:stretch; }
   .plan {
     background:var(--blanco); border:1px solid var(--linea); border-radius:var(--radio);
@@ -270,6 +270,24 @@
   .plan .btn { width:100%; text-align:center; }
   .plan .sin-contacto { font-size:14px; color:var(--gris-texto); margin:0; }
 
+  /* -- contacto ------------------------------------------------ */
+  /* El correo va grande y es el boton: es lo unico que hay que hacer aca. */
+  .contacto { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:center; }
+  .contacto .entrada { margin:0; }
+  .contacto-caja {
+    background:var(--blanco); border:1px solid var(--linea); border-radius:var(--radio);
+    padding:30px 30px 28px;
+  }
+  .contacto-caja .etiqueta { font-family:var(--mono); font-size:12px; letter-spacing:.1em;
+                             text-transform:uppercase; color:var(--gris-texto); margin:0 0 8px; }
+  .contacto-caja .correo-grande {
+    display:block; font-family:var(--display); font-weight:700; font-size:26px;
+    letter-spacing:-.02em; color:var(--tinta); text-decoration:none; margin:0 0 22px;
+    overflow-wrap:anywhere;
+  }
+  .contacto-caja .correo-grande:hover { color:var(--pulso-texto); }
+  .contacto-caja .btn { margin-right:10px; }
+
   /* -- llamada final ------------------------------------------- */
   /* El relleno de arriba es parte de --asoma del hero: si cambia uno, cambia
      el otro. El rotulo no se anima: es lo que asoma en la primera pantalla y
@@ -290,6 +308,7 @@
     .hero { grid-template-columns:1fr; gap:36px; padding:48px 0 52px; }
     .hero h1 { font-size:40px; max-width:22ch; }
     .cierre h2 { font-size:32px; } .cierre { padding:56px 0 72px; }
+    .contacto { grid-template-columns:1fr; gap:28px; }
   }
   @media (max-width:640px) {
     .fuentes, .ventajas, .pasos { grid-template-columns:1fr; }
@@ -317,6 +336,9 @@
     .plan .titular { min-height:0; }
     .cierre { padding:56px 0 64px; }
     .cierre h2 { font-size:28px; }
+    .contacto-caja { padding:24px 20px 22px; }
+    .contacto-caja .correo-grande { font-size:21px; }
+    .contacto-caja .btn { display:block; text-align:center; margin:0 0 10px; }
   }
 {% endblock %}
 
@@ -448,6 +470,7 @@
   <a class="oculto" href="#fuentes">¿Qué revisamos?</a>
   <a class="oculto" href="#como">¿Cómo funciona?</a>
   <a href="#planes">Planes</a>
+  {% if correo_soporte %}<a class="oculto" href="#contacto">Contacto</a>{% endif %}
   <a class="cta" href="{{ aplicar_url }}">Empezar</a>
 {% endblock %}
 
@@ -682,4 +705,24 @@
     </div>
   </div>
 </section>
+
+{% if correo_soporte %}
+<section id="contacto">
+  <div class="env contacto">
+    <div class="sube">
+      <p class="rotulo">{{ contacto_seccion.rotulo or 'Contacto' }}</p>
+      <h2>{{ contacto_seccion.titulo }}</h2>
+      <p class="entrada">{{ contacto_seccion.texto }}</p>
+    </div>
+    <div class="contacto-caja sube" style="transition-delay:.1s">
+      <p class="etiqueta">Correo de soporte</p>
+      <a class="correo-grande" href="mailto:{{ correo_soporte }}">{{ correo_soporte }}</a>
+      <a class="btn" href="mailto:{{ correo_soporte }}"><span>Escribirnos</span></a>
+      {% if contacto.whatsapp %}
+      <a class="btn alt" href="https://wa.me/{{ contacto.whatsapp }}"><span>WhatsApp</span></a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
 {% endblock %}

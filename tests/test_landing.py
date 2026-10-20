@@ -542,3 +542,46 @@ class TestGenerador(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestConLaConfiguracionReal(unittest.TestCase):
+    """Lo que la página dice de verdad, con config/ tal como está."""
+
+    def portada(self) -> str:
+        datos = construir_mod.contexto()
+        datos.update({"inicio_url": "index.html", "aplicar_url": "aplicar.html"})
+        return construir_mod.render("index.html.j2", datos)
+
+    def test_no_ata_la_frecuencia_de_los_reportes_al_mes(self):
+        # La frecuencia depende del plan: el de $25 es cada 30 días y un
+        # Custom puede ser semanal o más seguido. La portada no puede decir
+        # "mes a mes" ni "una vez al mes" como si fuera para todos.
+        h = self.portada().lower()
+        for frase in ("mes a mes", "una vez al mes", "todos los meses", "un reporte al mes",
+                      "este mes", "del mes"):
+            with self.subTest(frase=frase):
+                self.assertNotIn(frase, h)
+
+    def test_tiene_la_seccion_de_contacto_con_el_correo_de_soporte(self):
+        h = self.portada()
+        self.assertIn('<section id="contacto">', h)
+        self.assertIn('href="mailto:soporte@pulserival.com"', h)
+        self.assertIn('href="#contacto"', h)
+
+    def test_el_pie_lleva_el_correo_de_soporte(self):
+        h = self.portada()
+        pie = h.split("<footer>", 1)[1]
+        self.assertIn("soporte@pulserival.com", pie)
+
+    def test_el_custom_lleva_a_escribir_a_soporte(self):
+        # Sin WhatsApp configurado, el botón del Custom abre el correo.
+        h = self.portada()
+        self.assertIn('<a class="btn alt" href="mailto:soporte@pulserival.com">', h)
+
+    def test_las_paginas_legales_usan_el_mismo_correo(self):
+        import yaml
+
+        legal = yaml.safe_load((construir_mod.config.DIR_CONFIG / "legal.yaml")
+                               .read_text(encoding="utf-8"))
+        landing = construir_mod.config.config_landing()
+        self.assertEqual(legal["responsable"]["correo"], landing["contacto"]["email"])

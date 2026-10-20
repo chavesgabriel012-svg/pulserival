@@ -340,8 +340,9 @@ para aprobar el dominio y la Ley 8968 de Costa Rica. **Son un borrador, no
 asesoría legal: antes de publicar, que los lea un abogado.**
 
 **Lo que falta cargar y bloquea el lanzamiento** (en `config/legal.yaml`,
-`responsable:`): la razón social o su nombre legal completo, la cédula, la
-dirección y un correo de contacto. Mientras falten, las páginas los muestran
+`responsable:`): la razón social o su nombre legal completo, la cédula y la
+dirección. El correo ya está: `soporte@pulserival.com`, el mismo de
+`config/landing.yaml`. Mientras falten, las páginas los muestran
 marcados como "pendiente", `cli landing` lo avisa y `/salud` también, si
 `PADDLE_ENTORNO=production`.
 
