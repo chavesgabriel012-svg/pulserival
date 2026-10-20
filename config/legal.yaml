@@ -25,7 +25,7 @@ responsable:
   nombre_comercial: "PulseRival"
   identificacion: ""        # cédula física o jurídica
   direccion: ""             # provincia, cantón, distrito y señas
-  correo: ""                # para reembolsos, privacidad y temas legales
+  correo: "soporte@pulserival.com"   # el mismo de contacto en config/landing.yaml
 
 actualizado: "20 de octubre de 2026"
 
@@ -117,9 +117,10 @@ terminos:
           Anuncios de Google. Con lo que encuentra, le enviamos por correo un
           reporte con qué cambió y qué puede significar para su negocio.
         - >-
-          El plan mensual incluye un reporte al mes y hasta cuatro
-          competidores. Un plan Custom tiene la frecuencia, los competidores y
-          el precio que acordemos por escrito.
+          Cada plan dice con qué frecuencia llegan los reportes y cuántos
+          competidores cubre: el plan de $25 incluye un reporte cada 30 días y
+          hasta cuatro competidores, y un plan Custom tiene la frecuencia, los
+          competidores y el precio que acordemos por escrito.
       lista:
         - >-
           El reporte trabaja solo con lo que esas fuentes publican. Las
@@ -257,12 +258,12 @@ reembolsos:
     - titulo: "Si fallamos nosotros"
       parrafos:
         - >-
-          Cada mes pagado incluye un reporte. Si un mes pagado termina sin que
-          le hayamos enviado su reporte, por una causa nuestra, le devolvemos
-          lo que pagó por ese mes, aunque hayan pasado los {dias_garantia}
-          días.
+          Cada periodo que paga incluye los reportes de su plan. Si un periodo
+          pagado termina sin que le hayamos enviado los reportes que le
+          corresponden, por una causa nuestra, le devolvemos lo que pagó por
+          ese periodo, aunque hayan pasado los {dias_garantia} días.
         - >-
-          Que un competidor no haya pautado ese mes no es una falla: el reporte
+          Que un competidor no haya pautado en ese periodo no es una falla: el reporte
           se lo dice, y eso también es información. Tampoco lo es que una
           plataforma no publique algún dato, como la inversión o el texto de
           ciertos anuncios de Google.
@@ -270,8 +271,8 @@ reembolsos:
       parrafos:
         - >-
           Fuera de la garantía y de una falla nuestra, una renovación mensual
-          ya cobrada no se reembolsa: ese mes sigue activo y le llega su
-          reporte. Puede cancelar en cualquier momento para que no se le cobre
+          ya cobrada no se reembolsa: ese mes sigue activo y le llegan los
+          reportes de su plan. Puede cancelar en cualquier momento para que no se le cobre
           el mes siguiente.
     - titulo: "Planes Custom"
       parrafos:

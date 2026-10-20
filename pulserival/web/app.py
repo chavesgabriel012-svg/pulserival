@@ -212,8 +212,9 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
         plan = datos.get("plan") or next(iter(vendibles), "")
         if plan not in vendibles:
             return _pagina("No pudimos completar el registro",
-                           "Ese plan no se contrata desde la página. Escríbanos y lo "
-                           "armamos con usted.", volver=True), 400
+                           "Ese plan no se contrata desde la página. Escríbanos"
+                           + (f" a {_contacto_visible()}" if _contacto_visible() else "")
+                           + " y lo armamos con usted.", volver=True), 400
         # La Ley 8968 (art. 5) exige el consentimiento expreso y por escrito
         # antes de guardar datos personales. La casilla la valida el
         # navegador, pero el POST lo puede armar cualquiera sin ella.
@@ -515,11 +516,12 @@ def _revisar_disco(ruta_db: str) -> str:
 
 
 def _contacto_visible() -> str:
-    """WhatsApp o correo de config/landing.yaml, para el mensaje de error."""
+    """El correo de soporte (o el WhatsApp si no hay correo), para los
+    mensajes de error que dicen "escríbanos"."""
     contacto = config.config_landing().get("contacto") or {}
-    if contacto.get("whatsapp"):
-        return f"WhatsApp {contacto['whatsapp']}"
-    return contacto.get("email") or ""
+    if contacto.get("email"):
+        return contacto["email"]
+    return f"WhatsApp {contacto['whatsapp']}" if contacto.get("whatsapp") else ""
 
 
 def _formas_de_pago(datos_plan: dict[str, Any]) -> list[dict[str, Any]]:

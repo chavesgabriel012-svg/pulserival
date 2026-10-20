@@ -164,6 +164,13 @@ mandar correos a sus clientes.
 `RESEND_API_KEY` solo cuando quiera enviar de verdad. Sin ella el panel igual
 deja simular el envío y guarda la copia.
 
+Para que las respuestas de los clientes a un reporte lleguen a soporte, y
+para que el correo lo muestre al pie:
+
+```
+EMAIL_RESPONDER_A=soporte@pulserival.com
+```
+
 Sin `APIFY_TOKEN` no hay datos reales. Sin clave de IA el borrador lo escribe
 el respaldo del código y el control de calidad lo rechaza con
 `sin_interpretacion` — eso no es un error, es el control funcionando.

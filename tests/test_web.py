@@ -450,3 +450,15 @@ class TestDiscoPersistente(CasoWeb):
         # El chequeo es informativo: si fallara, no puede tumbar /salud, que es
         # lo que el hosting usa para decidir si reinicia el contenedor.
         self.assertTrue(self.cliente_web.get("/salud").get_json()["ok"])
+
+
+class TestCorreoDeSoporte(CasoWeb):
+    def test_el_checkout_dice_a_donde_escribir(self):
+        r = self.alta(comp1="", fb1="", web1="")
+        h = self.cliente_web.get(r.headers["Location"]).get_data(as_text=True)
+        self.assertIn('href="mailto:soporte@pulserival.com"', h)
+
+    def test_un_plan_que_no_se_vende_en_la_web_dice_a_donde_escribir(self):
+        r = self.alta(plan="custom")
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("soporte@pulserival.com", r.get_data(as_text=True))

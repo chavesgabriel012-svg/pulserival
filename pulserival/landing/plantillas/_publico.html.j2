@@ -279,6 +279,9 @@
       Las plataformas no publican inversión, alcance ni clics de los anuncios
       comerciales, de modo que los reportes no los incluyen ni los estiman.
     </p>
+    {% if correo_soporte %}
+    <p class="pie-contacto">Contacto: <a href="mailto:{{ correo_soporte }}">{{ correo_soporte }}</a></p>
+    {% endif %}
     <nav class="pie-legal" aria-label="Páginas legales">
       {% for clave, url in legal_urls.items() %}<a href="{{ url }}">{{ legal_nombres[clave] }}</a>{% endfor %}
     </nav>

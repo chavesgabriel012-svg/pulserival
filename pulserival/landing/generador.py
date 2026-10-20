@@ -41,6 +41,9 @@ def contexto() -> dict[str, Any]:
         datos.setdefault("ciclo_elegido", next(iter(primero.get("ciclos") or {}), None))
     datos.setdefault("marca", "PulseRival")
     datos.setdefault("contacto", {})
+    # El correo de soporte, a mano para las plantillas: el pie, la sección de
+    # contacto y cada "escríbanos" de las páginas de cobro.
+    datos["correo_soporte"] = (datos["contacto"] or {}).get("email") or ""
     # El mismo wordmark que va en el correo: una sola fuente para el logo.
     datos["logo_data_uri"] = render.logo_data_uri()
     # Por defecto las páginas apuntan a /marca/, que es donde las sirve Flask.

@@ -110,7 +110,7 @@
 </table>
 <div class="nota">
   Un competidor sin anuncios activos no va a aparecer en su reporte hasta que
-  vuelva a pautar. Si alguno le sorprende, escríbanos antes de confirmar.
+  vuelva a pautar. Si alguno le sorprende, escríbanos{% if correo_soporte %} a <a href="mailto:{{ correo_soporte }}">{{ correo_soporte }}</a>{% endif %} antes de confirmar.
 </div>
 {% endif %}
 
@@ -149,8 +149,8 @@
    sin el secreto del webhook el pago entra y nadie se entera. #}
 <h2>Confirmar</h2>
 <div class="nota">
-  El cobro todavía no está disponible. Escríbanos y le activamos la cuenta a
-  mano; no se le cobró nada.
+  El cobro todavía no está disponible. Escríbanos{% if correo_soporte %} a <a href="mailto:{{ correo_soporte }}">{{ correo_soporte }}</a>{% endif %} y le activamos
+  la cuenta a mano; no se le cobró nada.
 </div>
 {% elif paddle and paddle.precios %}
 {{ elegir_forma() }}

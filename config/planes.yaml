@@ -43,7 +43,8 @@ planes:
     competidores_max: 4
     ciclos:
       mensual:
-        nombre: "Mes a mes"
+        # Es la forma de pago, no la frecuencia del reporte.
+        nombre: "Pago mensual"
         precio_usd: 25
         cobro_texto: "$25 al mes"
       anual:
@@ -66,7 +67,7 @@ planes:
       - "Un reporte cada 30 días"
       - "Hasta 4 competidores"
       - "Meta (Facebook e Instagram) y Google"
-      - "Qué cambió respecto del mes anterior"
+      - "Qué cambió respecto del reporte anterior"
       - "El enlace a cada anuncio, para comprobarlo"
 
   - clave: prueba
@@ -103,7 +104,7 @@ planes:
     incluye:
       - "Un reporte cada 30 días"
       - "Hasta 4 competidores"
-      - "Qué cambió respecto del mes anterior"
+      - "Qué cambió respecto del reporte anterior"
 
   - clave: semanal
     visible: false
