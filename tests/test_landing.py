@@ -124,6 +124,47 @@ class TestCajaDePorQue(CasoPaginas):
         h = self.portada()
         self.assertNotIn('id="porque-caja"', h)
 
+    def test_el_titulo_de_la_caja_es_la_pregunta_con_letra_de_titular(self):
+        import yaml
+
+        real = yaml.safe_load((construir_mod.config.DIR_CONFIG / "landing.yaml")
+                              .read_text(encoding="utf-8"))
+        self.assertEqual(real["por_que"]["rotulo"], "¿Por qué usar PulseRival?")
+        h = self.portada(landing={"por_que": POR_QUE})
+        self.assertIn('<p class="titulo-caja">', h)
+        self.assertIn(".porque-cabeza .titulo-caja { font-family:var(--display);", h)
+
+    def test_las_diapositivas_del_yaml_dicen_solo_lo_esencial(self):
+        # Se pidió dejar solo el centro de cada mensaje: una frase corta.
+        import yaml
+
+        real = yaml.safe_load((construir_mod.config.DIR_CONFIG / "landing.yaml")
+                              .read_text(encoding="utf-8"))
+        for d in real["por_que"]["diapositivas"]:
+            with self.subTest(titulo=d["titulo"]):
+                self.assertLessEqual(len(d["texto"]), 90)
+
+    def test_la_caja_se_pausa_pero_nunca_se_detiene(self):
+        # Usar las flechas o deslizar ya no la frena para siempre: cambia de
+        # diapositiva y vuelve a contar. Solo se pausa con el puntero encima.
+        h = self.portada(landing={"por_que": POR_QUE})
+        self.assertNotIn("detener", h)
+        self.assertIn("pointerenter", h)
+        self.assertIn("pointerleave", h)
+
+    def test_el_hero_ocupa_la_pantalla_menos_lo_que_asoma(self):
+        # Que asome solo el rotulo de la seccion de abajo, en cualquier alto
+        # de pantalla: por eso sale de la altura de la ventana.
+        h = self.portada(landing={"por_que": POR_QUE})
+        self.assertIn("min-height:calc(100svh - var(--cabecera) - var(--asoma))", h)
+
+    def test_el_rotulo_del_primer_paso_no_se_anima_y_el_resto_si(self):
+        h = self.portada()
+        cierre = h.split('<section class="cierre">', 1)[1].split("</section>", 1)[0]
+        self.assertIn('<p class="rotulo">El primer paso</p>', cierre)
+        self.assertIn('<h2 class="sube">', cierre)
+        self.assertNotIn('class="env sube"', cierre)
+
     def test_el_hero_ya_no_lleva_rotulo_ni_promesa_ni_latido(self):
         h = self.portada(landing={"por_que": POR_QUE,
                                   "promesa_corta": "Datos públicos, verificables"})
@@ -301,7 +342,7 @@ class TestAnimaciones(CasoPaginas):
         # Una diapositiva que cambia sola es movimiento: a quien pidió menos
         # se le deja quieta, y la barra de avance no aparece.
         h = self.portada(landing={"por_que": POR_QUE})
-        self.assertIn("var detenido = quieto;", h)
+        self.assertIn("return !quieto &&", h)
         self.assertIn(".porque-avance { display:none; }", h)
 
     def test_el_logo_vuelve_al_inicio(self):

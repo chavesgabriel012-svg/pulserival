@@ -828,3 +828,19 @@ class TestElPanelEscapa(CasoPanelBase):
         h = self.web.get("/panel/").get_data(as_text=True)
         self.assertNotIn("<img src=x onerror=alert(1)>", h)
         self.assertIn("&lt;img src=x onerror=alert(1)&gt;", h)
+
+
+class TestLasPaginasDeCobroTienenMargenEnCelular(unittest.TestCase):
+    """Regresión: en _base.html.j2, `.cuerpo { padding:56px 0 72px }` iba
+    después de `.env { padding:0 24px }` y le pisaba los costados. En el
+    celular el checkout, la página de gracias y las de mensaje quedaban con
+    el texto pegado al borde de la pantalla. En el escritorio no se notaba
+    porque el ancho máximo centraba el bloque igual."""
+
+    def test_el_cuerpo_solo_fija_arriba_y_abajo(self):
+        from pathlib import Path
+
+        base = (Path(__file__).resolve().parent.parent / "pulserival" / "landing"
+                / "plantillas" / "_base.html.j2").read_text(encoding="utf-8")
+        self.assertIn(".cuerpo { padding-top:56px; padding-bottom:72px; }", base)
+        self.assertNotIn(".cuerpo { padding:", base)

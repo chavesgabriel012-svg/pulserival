@@ -132,14 +132,22 @@
     table td.num { text-align:left; padding-right:0; }
     table td[data-etiqueta]:before {
       content:attr(data-etiqueta); display:block; font-family:var(--mono);
-      font-size:10.5px; text-transform:uppercase; letter-spacing:.09em;
+      font-size:12px; text-transform:uppercase; letter-spacing:.09em;
       color:var(--piedra); margin-bottom:3px; font-weight:500;
     }
+    /* Los rotulos en mono de 10,5 a 11,5px se leen en un monitor; en el
+       celular, con el brillo bajo, no. */
+    h2, th, label, details summary { font-size:12px; }
     table td:empty { display:none; }
     /* Media pantalla de caja de texto en un celular deja el borrador sin
        contexto alrededor; con esto se ve el título y los botones. */
     textarea { min-height:300px; }
     .cols { gap:28px; }
+  }
+  /* En los celulares más angostos no entran el logo y los tres enlaces. El
+     logo ya lleva a la bandeja, así que ese enlace es el que sobra. */
+  @media (max-width:400px) {
+    header nav a.nav-bandeja { display:none; }
   }
   /* Los blancos de toque van por tipo de puntero y no por ancho: una tableta
      se toca con el dedo igual que un celular. En el panel median entre 15 y
@@ -150,6 +158,10 @@
     header nav a, header nav button, header nav form {
       min-height:44px; display:inline-flex; align-items:center;
     }
+    /* Ancho de toque sin ensanchar la fila: el relleno sale del espacio
+       entre enlaces. */
+    header nav { gap:4px; }
+    header nav a, header nav button { padding:0 9px; }
     header a[href] { min-height:44px; }
     .btn, .btn.chico { min-height:44px; display:inline-flex; align-items:center;
                        justify-content:center; }
@@ -167,7 +179,7 @@
     <img src="/marca/logo-negativo.svg" alt="{{ marca }}">
   </a>
   <nav>
-    <a href="{{ url_for('panel.bandeja') }}">Bandeja</a>
+    <a class="nav-bandeja" href="{{ url_for('panel.bandeja') }}">Bandeja</a>
     <a href="{{ url_for('panel.gasto') }}">Gasto</a>
     {% if csrf %}
     <form method="post" action="{{ url_for('panel.salir') }}" style="display:inline;">

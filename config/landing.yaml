@@ -34,27 +34,22 @@ subtitulo: >-
 # archivo: nada que el producto no haga, sin cifras que no salgan de una
 # corrida y sin prometer resultados de venta.
 por_que:
-  rotulo: "Por qué PulseRival"
+  rotulo: "¿Por qué usar PulseRival?"
   diapositivas:
     - titulo: "Entérese antes de que le cueste un cliente"
       texto: >-
-        Cuando un competidor lanza una promoción, un financiamiento o un precio
-        de anzuelo, lo ve en su reporte con el anuncio a la vista, y no se
-        entera por el cliente que se fue.
+        Cada promoción o precio nuevo de su competencia, con el anuncio a la
+        vista.
     - titulo: "Sepa qué mensajes están empujando"
       texto: >-
-        Un anuncio que lleva semanas al aire, con varias versiones, es uno que
-        su competencia decidió mantener. Eso le dice qué argumentos están
-        usando para venderle a sus mismos clientes.
-    - titulo: "Decida con lo que publicaron, no con suposiciones"
+        Lo que mantienen al aire le muestra en qué argumentos están apostando.
+    - titulo: "Decida con lo que publicaron"
       texto: >-
-        Qué anunciaron, qué cambiaron y qué dejaron de publicar, agrupado por
-        competidor y con el enlace a cada anuncio para comprobarlo.
-    - titulo: "Sin revisar las bibliotecas usted mismo"
+        Qué anunciaron, qué cambiaron y qué apagaron, con el enlace para
+        comprobarlo.
+    - titulo: "Sin revisar nada usted mismo"
       texto: >-
-        Las bibliotecas de Meta y Google son públicas, pero revisarlas
-        competidor por competidor, todas las semanas, lleva tiempo. Lo hacemos
-        nosotros y le llega resumido una vez al mes.
+        Leemos las bibliotecas cada semana y se lo resumimos una vez al mes.
 
 # ── Las dos fuentes ──────────────────────────────────────────────────
 # Lo que se lee de cada plataforma. La asimetría es real y está dicha a
