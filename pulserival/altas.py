@@ -14,6 +14,7 @@ from __future__ import annotations
 import re
 import sqlite3
 import unicodedata
+from datetime import datetime, timezone
 from typing import Any
 
 from . import db, planes
@@ -121,6 +122,7 @@ def preparar(
     origen: str | None = None,
     estado: str | None = None,
     ciclo: str | None = None,
+    consentimiento: str | None = None,
 ) -> dict[str, Any]:
     """Valida y normaliza un alta, sin guardarla en ningún lado.
 
@@ -174,6 +176,8 @@ def preparar(
         "notas": _texto(notas) or None,
         "origen": _texto(origen) or None,
         "ciclo_facturacion": ciclo,
+        # La versión de los textos legales que aceptó, si vino del formulario.
+        "consentimiento": _texto(consentimiento) or None,
         "plan": plan,
         "estado": estado,
         "periodicidad": datos_plan.get("periodicidad") or "semanal",
@@ -199,6 +203,7 @@ def crear(
     precio: float | None = None,
     pago_proveedor: str | None = None,
     pago_referencia: str | None = None,
+    consentimiento: str | None = None,
 ) -> dict[str, Any]:
     """Crea el cliente y sus competidores. No verifica ni cobra: solo guarda.
 
@@ -208,7 +213,8 @@ def crear(
     """
     listo = preparar(empresa, email, competidores, plan=plan, contacto=contacto,
                      whatsapp=whatsapp, industria=industria, notas=notas,
-                     origen=origen, estado=estado, ciclo=ciclo)
+                     origen=origen, estado=estado, ciclo=ciclo,
+                     consentimiento=consentimiento)
     limpios = listo["competidores"]
     # La cadencia propia solo existe en periodicidad 'custom' (un CHECK de la
     # base lo exige). Se avisa acá con un mensaje que se entienda, en vez de
@@ -240,6 +246,9 @@ def crear(
         "notas": listo["notas"],
         "origen": listo["origen"],
         "ciclo_facturacion": listo["ciclo_facturacion"],
+        "consentimiento_version": listo["consentimiento"],
+        "consentimiento_en": (datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+                              if listo["consentimiento"] else None),
     })
     for orden, comp in enumerate(limpios, start=1):
         db.insertar(con, "competidores_seguidos", {

@@ -1,0 +1,426 @@
+# ─────────────────────────────────────────────────────────────────────
+#  Términos, Política de reembolso y Política de privacidad.
+#
+#  Están en YAML por la misma razón que los textos de la landing: cambiar
+#  una cláusula no debería necesitar tocar código. Después de editar acá,
+#  regenerar con:  python3 -m pulserival.cli landing
+#
+#  ESTO ES UN BORRADOR, NO ASESORÍA LEGAL. Se escribió contra dos cosas
+#  verificables: lo que Paddle pide para aprobar el dominio y lo que dice la
+#  Ley 8968 (datos personales) de Costa Rica. Antes de publicar, que lo lea
+#  un abogado. Lo que es una decisión de negocio y no un requisito está
+#  marcado con DECISIÓN en los comentarios.
+#
+#  En los textos, {razon_social}, {identificacion}, {direccion}, {correo},
+#  {nombre_comercial} y los números de abajo ({dias_garantia}, etc.) se
+#  reemplazan solos. Si un dato falta, la página lo muestra marcado como
+#  pendiente en vez de inventarlo, y `cli landing` avisa.
+# ─────────────────────────────────────────────────────────────────────
+
+# Quién vende. Paddle exige el nombre legal en los Términos ("legal name
+# preferred for sole proprietors"), y la Ley 8968 (art. 5, inciso h) exige
+# informar la identidad y la dirección del responsable de la base de datos.
+responsable:
+  razon_social: ""          # nombre legal: su nombre completo, o el de la sociedad
+  nombre_comercial: "PulseRival"
+  identificacion: ""        # cédula física o jurídica
+  direccion: ""             # provincia, cantón, distrito y señas
+  correo: ""                # para reembolsos, privacidad y temas legales
+
+actualizado: "20 de octubre de 2026"
+
+# Los números que usan los textos.
+numeros:
+  # DECISIÓN. Días para pedir el reembolso completo de un primer pago, sin
+  # dar razones. Paddle exige entre 14 y 90; la ley de Costa Rica da 8 días
+  # de retracto en compras en línea. 14 cumple las dos y alcanza para que el
+  # cliente vea su primer reporte, que sale en la primera semana.
+  dias_garantia: 14
+  # Días en que nos comprometemos a tramitar la devolución en Paddle. Son los
+  # ocho días naturales que el reglamento de la Ley 7472 le da al comerciante
+  # para reintegrar lo pagado cuando se ejerce el retracto.
+  dias_tramite: 8
+  # Plazo de la Ley 8968 (art. 7) para responder a un pedido de acceso,
+  # corrección o eliminación de datos. No es una decisión: es la ley.
+  dias_habiles_datos: 5
+  # DECISIÓN. Cuánto se guardan los datos después de la baja. El sistema no
+  # los borra solo: hay que correr `cli clientes eliminar` (ver docs/08).
+  meses_tras_baja: 12
+  # DECISIÓN. Con cuánto aviso se cambia el precio a quien ya está suscrito.
+  dias_aviso_precio: 30
+
+# Quién recibe datos y para qué. La Ley 8968 pide informar los destinatarios
+# (art. 5, inciso c) y autorizar la transferencia (art. 14); Paddle pide
+# nombrarse como destinatario. Es la lista de lo que usa el código hoy: si se
+# cambia de proveedor, hay que cambiarla acá.
+encargados:
+  - nombre: "Paddle"
+    para: >-
+      Procesa los pagos como revendedor y comerciante registrado (Merchant of
+      Record). Recibe su correo y los datos de pago que usted le da en el
+      checkout; nosotros no vemos el número de su tarjeta.
+  - nombre: "Railway"
+    para: >-
+      Aloja el servidor y la base de datos donde se guardan sus datos y sus
+      reportes. Sus servidores están fuera de Costa Rica.
+  - nombre: "Google (Gemini)"
+    para: >-
+      Modelo de inteligencia artificial que redacta el borrador del reporte.
+      Recibe el nombre de su empresa, su industria, el contexto que nos dio y
+      los anuncios de sus competidores. No recibe su correo ni su teléfono.
+  - nombre: "Groq"
+    para: >-
+      Modelo de respaldo, para cuando el anterior no responde. Recibe lo mismo
+      que el anterior.
+  - nombre: "Apify"
+    para: >-
+      Consulta las bibliotecas públicas de anuncios. Recibe solo los nombres,
+      las páginas y los dominios de sus competidores; ningún dato suyo.
+  - nombre: "Resend"
+    para: >-
+      Envía los correos con sus reportes. Recibe su correo y el contenido del
+      reporte.
+
+# ── Términos y condiciones ───────────────────────────────────────────
+terminos:
+  titulo: "Términos y condiciones"
+  entrada: >-
+    Estas son las reglas del servicio. Están escritas para que se entiendan:
+    si algo no queda claro, escríbanos a {correo} antes de suscribirse.
+  secciones:
+    - titulo: "Quiénes somos"
+      parrafos:
+        - >-
+          {nombre_comercial} es un servicio de {razon_social}, identificación
+          {identificacion}, con domicilio en {direccion}. Cuando usted contrata
+          el servicio, su contrato es con {razon_social}.
+        - >-
+          Nuestro proceso de compra lo realiza nuestro revendedor en línea
+          Paddle.com. Paddle.com es el comerciante registrado (Merchant of
+          Record) de todos nuestros pedidos. Paddle atiende las consultas de
+          facturación y los reembolsos.
+        - >-
+          Our order process is conducted by our online reseller Paddle.com.
+          Paddle.com is the Merchant of Record for all our orders.
+    - titulo: "Aceptación"
+      parrafos:
+        - >-
+          Al suscribirse, o al seguir usando el servicio después de un cambio
+          en estos términos, usted acepta estos términos, la Política de
+          reembolso y la Política de privacidad.
+    - titulo: "Qué es el servicio"
+      parrafos:
+        - >-
+          {nombre_comercial} revisa los anuncios activos de los competidores que
+          usted nos indique en dos fuentes públicas: la Biblioteca de Anuncios
+          de Meta (Facebook e Instagram) y el Centro de Transparencia de
+          Anuncios de Google. Con lo que encuentra, le enviamos por correo un
+          reporte con qué cambió y qué puede significar para su negocio.
+        - >-
+          El plan mensual incluye un reporte al mes y hasta cuatro
+          competidores. Un plan Custom tiene la frecuencia, los competidores y
+          el precio que acordemos por escrito.
+      lista:
+        - >-
+          El reporte trabaja solo con lo que esas fuentes publican. Las
+          plataformas no publican la inversión, el alcance ni los clics de los
+          anuncios comerciales, y el reporte no los incluye ni los estima.
+        - >-
+          Google no publica el texto de todos sus anuncios. En esos casos el
+          reporte informa actividad, no mensajes, y lo dice.
+        - >-
+          Si una fuente deja de estar disponible o cambia lo que publica, el
+          reporte de ese periodo puede salir con menos información. Se lo
+          diremos en el mismo reporte.
+        - >-
+          El borrador lo redacta un sistema con inteligencia artificial y lo
+          revisa una persona antes de enviarlo.
+    - titulo: "No es asesoría"
+      parrafos:
+        - >-
+          El reporte es información y análisis para que usted decida. No es
+          asesoría legal, financiera ni de inversión, y no garantiza resultados
+          comerciales. Las decisiones que tome con él son suyas.
+    - titulo: "Lo que usted nos da"
+      parrafos:
+        - >-
+          Usted se compromete a darnos datos ciertos y a mantener vigente el
+          correo donde recibe los reportes. Si no nos indica competidores, los
+          deducimos de su industria y su zona; hacemos lo posible por acertar,
+          pero no lo garantizamos.
+    - titulo: "Uso aceptable"
+      parrafos:
+        - "No puede usar el servicio para:"
+      lista:
+        - "Nada contrario a la ley."
+        - "Fraude, suplantación de identidad o envío de correo no deseado."
+        - "Infringir derechos de propiedad intelectual de otros."
+        - >-
+          Atacar o comprometer la seguridad del servicio: introducir código
+          malicioso, sondear sus vulnerabilidades o extraer su contenido de
+          forma automatizada.
+    - titulo: "Propiedad intelectual"
+      parrafos:
+        - >-
+          El servicio, su software, su marca y el formato de los reportes son
+          de {razon_social}. Le damos permiso para usar los reportes dentro de
+          su empresa. Compartirlos fuera de ella, por ejemplo una agencia con
+          sus clientes, requiere un plan Custom que lo autorice por escrito.
+        - >-
+          Los anuncios que el reporte menciona son de sus respectivos dueños.
+          El reporte los describe y enlaza a su ficha pública en la plataforma.
+    - titulo: "Pagos y suscripciones"
+      lista:
+        - >-
+          Los precios están en dólares estadounidenses. Paddle calcula en el
+          checkout los impuestos que correspondan según su ubicación.
+        - >-
+          La suscripción se renueva sola al final de cada periodo (mensual o
+          anual, según lo que eligió al pagar) y se cobra al mismo medio de
+          pago, hasta que usted la cancele.
+        - >-
+          Puede cancelar cuando quiera, desde el enlace para administrar la
+          suscripción que viene en el recibo de Paddle o escribiéndonos. La
+          cancelación detiene los cobros siguientes; el servicio sigue hasta
+          el final del periodo que ya pagó.
+        - >-
+          Si cambiamos el precio, se lo avisaremos por correo con al menos
+          {dias_aviso_precio} días de anticipación, y el cambio aplica desde su
+          siguiente renovación.
+        - >-
+          Los reembolsos se rigen por la Política de reembolso. Lo que esta
+          página no cubre se rige por los términos de compra de Paddle
+          (paddle.com/legal/checkout-buyer-terms).
+    - titulo: "Disponibilidad"
+      parrafos:
+        - >-
+          Hacemos lo posible por que el servicio funcione siempre, pero no
+          garantizamos que funcione sin interrupciones ni sin errores. Depende
+          de fuentes y proveedores que no controlamos.
+    - titulo: "Suspensión y terminación"
+      parrafos:
+        - "Podemos suspender o terminar el servicio si:"
+      lista:
+        - "Usted incumple estos términos de forma grave o repetida."
+        - "Un cobro no se puede realizar y no se resuelve."
+        - "Hay un riesgo de seguridad o de fraude."
+    - titulo: "Responsabilidad"
+      parrafos:
+        - >-
+          En la medida en que la ley lo permita, la responsabilidad total de
+          {razon_social} frente a usted por el servicio se limita a lo que
+          usted pagó en los doce meses anteriores al hecho que la origina.
+    - titulo: "Cambios a estos términos"
+      parrafos:
+        - >-
+          Si cambiamos estos términos, publicaremos la versión nueva en esta
+          página con su fecha y se lo avisaremos por correo antes de que
+          aplique. Si no está de acuerdo, puede cancelar.
+    - titulo: "Ley aplicable"
+      parrafos:
+        - >-
+          Estos términos se rigen por las leyes de la República de Costa Rica.
+          Lo que no se resuelva conversando se someterá a los tribunales de
+          Costa Rica.
+    - titulo: "Contacto"
+      parrafos:
+        - "Para cualquier consulta sobre estos términos: {correo}."
+
+# ── Política de reembolso ────────────────────────────────────────────
+# El criterio, para quien la mantenga: se devuelve cuando el cliente cambió
+# de opinión al principio (la garantía) o cuando fallamos nosotros (no llegó
+# el reporte que pagó). No se devuelve un periodo ya en curso por haberse
+# olvidado de cancelar: para eso está la cancelación, que corta el siguiente.
+reembolsos:
+  titulo: "Política de reembolso"
+  entrada: >-
+    Queremos que pague solo si el reporte le sirve. Por eso el primer pago
+    tiene {dias_garantia} días de garantía, y si fallamos nosotros le
+    devolvemos el periodo.
+  secciones:
+    - titulo: "Garantía de {dias_garantia} días"
+      parrafos:
+        - >-
+          Si dentro de los {dias_garantia} días naturales siguientes a su
+          primer pago decide que el servicio no es para usted, le devolvemos
+          el pago completo. No tiene que darnos razones. En ese plazo ya le
+          habrá llegado su primer reporte.
+        - >-
+          Aplica igual si eligió pagar el año completo: dentro de los
+          {dias_garantia} días le devolvemos los doce meses. Y también a cada
+          renovación anual: dentro de los {dias_garantia} días siguientes al
+          cobro de la renovación puede pedir la devolución completa.
+        - >-
+          La garantía aplica a la primera suscripción de cada empresa. Si se
+          suscribe de nuevo después de un reembolso, la nueva suscripción no
+          tiene garantía, salvo lo que la ley disponga.
+    - titulo: "Si fallamos nosotros"
+      parrafos:
+        - >-
+          Cada mes pagado incluye un reporte. Si un mes pagado termina sin que
+          le hayamos enviado su reporte, por una causa nuestra, le devolvemos
+          lo que pagó por ese mes, aunque hayan pasado los {dias_garantia}
+          días.
+        - >-
+          Que un competidor no haya pautado ese mes no es una falla: el reporte
+          se lo dice, y eso también es información. Tampoco lo es que una
+          plataforma no publique algún dato, como la inversión o el texto de
+          ciertos anuncios de Google.
+    - titulo: "Renovaciones mensuales"
+      parrafos:
+        - >-
+          Fuera de la garantía y de una falla nuestra, una renovación mensual
+          ya cobrada no se reembolsa: ese mes sigue activo y le llega su
+          reporte. Puede cancelar en cualquier momento para que no se le cobre
+          el mes siguiente.
+    - titulo: "Planes Custom"
+      parrafos:
+        - >-
+          Aplican las mismas reglas, salvo que el acuerdo escrito de su plan
+          diga otra cosa.
+    - titulo: "Cómo pedirlo"
+      lista:
+        - >-
+          Escríbanos a {correo} con el correo con que se suscribió, o
+          pídalo directamente a Paddle desde paddle.net o desde el enlace de su
+          recibo.
+        - >-
+          Tramitamos la devolución en Paddle dentro de los {dias_tramite} días
+          naturales siguientes a su pedido. Paddle la devuelve al mismo medio
+          de pago; el tiempo en que se refleje depende de su banco.
+        - >-
+          Al reembolsar una suscripción, la cancelamos: no se le vuelve a
+          cobrar y el servicio termina.
+        - >-
+          Antes de abrir un contracargo con su banco, escríbanos: lo
+          resolvemos más rápido y sin que su tarjeta quede en disputa.
+    - titulo: "Sus derechos"
+      parrafos:
+        - >-
+          Esta política no reduce los derechos que le dé la ley de su país.
+          Si la ley le da un plazo o un derecho mayor, se aplica ese.
+
+# ── Política de privacidad ───────────────────────────────────────────
+# Sigue el orden de lo que la Ley 8968 (art. 5) exige informar al pedir
+# datos: que existe la base, para qué, quién la recibe, qué es obligatorio,
+# qué pasa si no se dan, qué derechos hay y quién es el responsable.
+privacidad:
+  titulo: "Política de privacidad"
+  entrada: >-
+    Qué datos le pedimos, para qué, quién más los recibe y cómo pedirnos que
+    los corrijamos o los borremos.
+  secciones:
+    - titulo: "Quién es el responsable"
+      parrafos:
+        - >-
+          El responsable de la base de datos de clientes de {nombre_comercial}
+          es {razon_social}, identificación {identificacion}, con domicilio en
+          {direccion}. Para cualquier tema de privacidad: {correo}.
+    - titulo: "Qué datos guardamos"
+      lista:
+        - >-
+          Los del formulario: el nombre de su empresa, su nombre, su correo, su
+          WhatsApp si lo da, su industria, el contexto de su negocio, sus
+          competidores y cómo se enteró de nosotros.
+        - >-
+          Los de su suscripción: plan, forma de pago, estado del cobro y los
+          identificadores que Paddle le asigna a usted, a su suscripción y a
+          cada pago. El aviso de pago que nos envía Paddle puede incluir la
+          marca y los últimos cuatro dígitos de su tarjeta; nunca el número
+          completo.
+        - "Los reportes que le enviamos."
+        - >-
+          Registros técnicos del servidor, como la dirección IP de cada
+          visita, que usamos para seguridad y para diagnosticar fallas.
+    - titulo: "Para qué los usamos"
+      lista:
+        - "Armar y enviarle sus reportes."
+        - "Cobrarle la suscripción, a través de Paddle."
+        - "Escribirle sobre su servicio: avisos, cambios y respuestas a sus consultas."
+        - >-
+          Saber por qué canales nos conocen, con la respuesta de la encuesta
+          del formulario.
+      parrafos:
+        - >-
+          No vendemos sus datos ni los usamos para publicidad de terceros. Los
+          tratamos con base en su consentimiento, que usted nos da al enviar el
+          formulario, y para cumplir el contrato del servicio.
+    - titulo: "Qué es obligatorio"
+      parrafos:
+        - >-
+          Solo el primer paso del formulario: el nombre de su empresa, su
+          nombre y su correo. Sin esos datos no podemos crearle la cuenta ni
+          enviarle el reporte. Todo lo demás es opcional; sin el contexto o sin
+          sus competidores el reporte se puede hacer, pero sale menos preciso.
+    - titulo: "Quién más los recibe"
+      parrafos:
+        - >-
+          Para dar el servicio usamos estos proveedores. Algunos están fuera de
+          Costa Rica, así que sus datos se transfieren a otros países. Al
+          aceptar esta política usted autoriza esas transferencias.
+      encargados: true
+      cierre:
+        - >-
+          También podemos entregar datos a asesores profesionales (contables o
+          legales) que los necesiten para su trabajo, y a una autoridad cuando
+          la ley o una orden judicial lo exija.
+    - titulo: "Cookies"
+      parrafos:
+        - >-
+          Estas páginas no usan cookies de seguimiento ni publicidad. La página
+          de pago carga el checkout de Paddle, que puede usar cookies propias
+          para procesar el pago y prevenir fraudes. Las páginas cargan
+          tipografías de Google Fonts, por lo que su navegador se conecta a
+          servidores de Google.
+    - titulo: "Cuánto tiempo los guardamos"
+      parrafos:
+        - >-
+          Mientras tenga una suscripción activa. Después de la baja los
+          guardamos hasta {meses_tras_baja} meses, por si vuelve y para poder
+          comparar con lo que ya vimos de sus competidores; pasado ese plazo
+          los eliminamos. Si nos pide eliminarlos antes, lo hacemos.
+        - >-
+          Los registros de pagos se conservan lo que exijan las obligaciones
+          contables y tributarias, aunque se eliminen sus demás datos.
+    - titulo: "Sus derechos"
+      parrafos:
+        - >-
+          Puede pedirnos en cualquier momento, sin costo, saber qué datos suyos
+          tenemos, corregirlos o eliminarlos, y retirar su consentimiento
+          (lo que no afecta lo hecho antes). Escríbanos a {correo};
+          respondemos dentro de los {dias_habiles_datos} días hábiles
+          siguientes, como manda la Ley 8968.
+        - >-
+          Si considera que no atendimos bien su pedido, puede acudir a la
+          Agencia de Protección de Datos de los Habitantes (Prodhab).
+    - titulo: "Seguridad"
+      parrafos:
+        - >-
+          La información viaja cifrada (HTTPS), la base de datos no es
+          pública y el panel donde se revisan los reportes está protegido con
+          contraseña. Ningún sistema es infalible: si ocurriera un incidente
+          que afecte sus datos, se lo informaremos.
+    - titulo: "Datos de los anuncios"
+      parrafos:
+        - >-
+          Los reportes describen anuncios que sus anunciantes publicaron y que
+          Meta y Google muestran en bibliotecas abiertas a cualquiera. Son
+          datos de fuentes de acceso público.
+    - titulo: "Cambios a esta política"
+      parrafos:
+        - >-
+          Si la cambiamos, publicaremos la versión nueva en esta página con su
+          fecha y se lo avisaremos por correo si el cambio afecta cómo usamos
+          sus datos.
+
+# El aviso que va en el formulario, junto a la casilla de aceptación. La Ley
+# 8968 (art. 5) pide que, cuando los datos se piden con un cuestionario, las
+# advertencias figuren en el mismo formulario y de forma legible; la
+# política completa queda enlazada.
+aviso_formulario: >-
+  Sus datos se guardan en la base de clientes de {nombre_comercial}, a cargo
+  de {razon_social}, {direccion}. Los usamos para armar y enviarle sus
+  reportes y para cobrarle por medio de Paddle, y los reciben los proveedores
+  que listamos en la política, algunos fuera de Costa Rica. Solo el primer
+  paso es obligatorio. Puede pedir acceso, corrección o eliminación de sus
+  datos en {correo}.

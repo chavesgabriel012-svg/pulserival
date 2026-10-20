@@ -28,9 +28,33 @@ subtitulo: >-
   conviene hacer. No una lista de anuncios: un análisis, con el enlace a
   cada anuncio para que lo compruebe.
 
-# Frase corta bajo el botón. Lo que alguien necesita saber antes de decidir.
-promesa_corta: >-
-  Datos públicos, verificables uno por uno. Sin contratos ni instalaciones.
+# ── La caja de la portada: por qué PulseRival ────────────────────────
+# Las diapositivas de al lado del titular. Máximo cuatro: la plantilla corta
+# en la cuarta, porque más que eso nadie las ve pasar. Misma regla que todo el
+# archivo: nada que el producto no haga, sin cifras que no salgan de una
+# corrida y sin prometer resultados de venta.
+por_que:
+  rotulo: "Por qué PulseRival"
+  diapositivas:
+    - titulo: "Entérese antes de que le cueste un cliente"
+      texto: >-
+        Cuando un competidor lanza una promoción, un financiamiento o un precio
+        de anzuelo, lo ve en su reporte con el anuncio a la vista, y no se
+        entera por el cliente que se fue.
+    - titulo: "Sepa qué mensajes están empujando"
+      texto: >-
+        Un anuncio que lleva semanas al aire, con varias versiones, es uno que
+        su competencia decidió mantener. Eso le dice qué argumentos están
+        usando para venderle a sus mismos clientes.
+    - titulo: "Decida con lo que publicaron, no con suposiciones"
+      texto: >-
+        Qué anunciaron, qué cambiaron y qué dejaron de publicar, agrupado por
+        competidor y con el enlace a cada anuncio para comprobarlo.
+    - titulo: "Sin revisar las bibliotecas usted mismo"
+      texto: >-
+        Las bibliotecas de Meta y Google son públicas, pero revisarlas
+        competidor por competidor, todas las semanas, lleva tiempo. Lo hacemos
+        nosotros y le llega resumido una vez al mes.
 
 # ── Las dos fuentes ──────────────────────────────────────────────────
 # Lo que se lee de cada plataforma. La asimetría es real y está dicha a
@@ -149,24 +173,20 @@ ejemplo:
 
 # ── El plan ──────────────────────────────────────────────────────────
 # Los precios no van acá: salen de config/planes.yaml. Esto es el texto que
-# los rodea. El plan a la medida (agencias, cadencias más cortas) no se vende
-# desde la página: el enlace lleva al contacto de arriba, y si no hay contacto
-# configurado no aparece.
+# los rodea. El Custom no se compra desde la página: su botón lleva al
+# contacto de arriba. La opción de pagar el año completo no se muestra acá: se
+# elige en el checkout.
 plan_seccion:
-  rotulo: "El plan"
-  titulo: "Un reporte al mes, con lo que hizo su competencia"
+  rotulo: "Los planes"
+  titulo: "Un reporte al mes, o uno hecho a su medida"
   entrada: >-
-    Hasta cuatro competidores, en Meta y Google, con el enlace a cada anuncio.
-    Elija cómo pagarlo: mes a mes, o el año completo a un precio menor. Sin
-    permanencia: puede cancelar cuando quiera.
-  medida:
-    titulo: "¿Es una agencia o necesita reportes más seguidos?"
-    texto: >-
-      Armamos un plan a la medida, con la cadencia y los competidores que
-      necesite.
-    boton: "Conversemos"
+    El mensual cubre hasta cuatro competidores en Meta y Google, con el enlace
+    a cada anuncio. Si es una agencia o necesita otra frecuencia, armamos uno
+    Custom. Sin permanencia: puede cancelar cuando quiera.
+  cotizado: "A cotizar"
+  boton_contacto: "Conversemos"
   cierre: >-
-    Un reporte al mes por $25, o $240 si paga el año completo. Sin permanencia.
+    Un reporte al mes por $25, sin permanencia.
 
 # ── Por qué sirve ────────────────────────────────────────────────────
 argumentos:

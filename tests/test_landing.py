@@ -51,16 +51,19 @@ CICLOS_BASE = {
     "anual": {"nombre": "Anual", "precio_usd": 240, "equivale_mes_usd": 20,
               "ahorro_usd": 60, "cobro_texto": "$240 al año"},
 }
-# El catálogo del lanzamiento: un plan que se vende en la web y el Custom,
-# que está en el catálogo pero no se muestra.
+# El catálogo del lanzamiento: un plan que se vende en la web, el Custom, que
+# se muestra pero se conversa, y uno oculto que sigue en el catálogo.
 PLANES_BASE = [
     {"clave": "autoservicio", "nombre": "Reporte mensual", "visible": True,
      "checkout": True, "precio_usd": 25, "resumen": "r", "incluye": ["x"],
      "cadencia_texto": "Cada 30 días", "competidores_max": 4,
      "para_quien": "Para seguir a la competencia.", "ciclos": CICLOS_BASE},
-    {"clave": "custom", "nombre": "A la medida", "visible": False, "precio_usd": None,
+    {"clave": "custom", "nombre": "Custom", "visible": True, "precio_usd": None,
      "resumen": "r", "incluye": ["x"], "periodicidad": "custom",
-     "cadencia_texto": "La que necesite", "competidores_max": None},
+     "cadencia_texto": "La que acordemos", "competidores_max": None},
+    {"clave": "semanal", "nombre": "Semanal", "visible": False, "precio_usd": 100,
+     "resumen": "r", "incluye": ["x"], "periodicidad": "semanal",
+     "cadencia_texto": "Cada 7 días", "competidores_max": 6},
 ]
 
 
@@ -98,26 +101,62 @@ class CasoPaginas(unittest.TestCase):
         return visibles[0] if visibles else ""
 
 
+POR_QUE = {"rotulo": "Por qué PulseRival", "diapositivas": [
+    {"titulo": f"Ventaja {n}", "texto": f"Texto {n}."} for n in range(1, 7)]}
+
+
+class TestCajaDePorQue(CasoPaginas):
+    """La caja de diapositivas al lado del titular."""
+
+    def test_muestra_cuatro_como_maximo(self):
+        # Se pidieron hasta cuatro. Si el YAML trae más, la plantilla corta.
+        h = self.portada(landing={"por_que": POR_QUE})
+        self.assertEqual(h.count('class="diapo"'), 4)
+        self.assertIn("Ventaja 4", h)
+        self.assertNotIn("Ventaja 5", h)
+
+    def test_sin_javascript_se_desliza_y_no_muestra_controles_muertos(self):
+        h = self.portada(landing={"por_que": POR_QUE})
+        self.assertIn("scroll-snap-type:x mandatory", h)
+        self.assertIn("html:not(.js) .porque-pie", h)
+
+    def test_sin_diapositivas_no_queda_una_caja_vacia(self):
+        h = self.portada()
+        self.assertNotIn('id="porque-caja"', h)
+
+    def test_el_hero_ya_no_lleva_rotulo_ni_promesa_ni_latido(self):
+        h = self.portada(landing={"por_que": POR_QUE,
+                                  "promesa_corta": "Datos públicos, verificables"})
+        self.assertNotIn("Inteligencia publicitaria", h)
+        self.assertNotIn("Datos públicos, verificables", h)
+        self.assertNotIn('class="latido"', h)
+
+
 class TestPortada(CasoPaginas):
     def test_los_precios_salen_del_yaml(self):
-        ciclos = {"mensual": dict(CICLOS_BASE["mensual"], precio_usd=37)}
-        h = self.portada(planes=[dict(PLANES_BASE[0], ciclos=ciclos)])
+        h = self.portada(planes=[dict(PLANES_BASE[0], precio_usd=37)])
         self.assertIn("$37", h)
 
     def test_un_plan_oculto_no_aparece(self):
-        # El Custom, la prueba y el semanal siguen en el catálogo (los
-        # clientes que los tienen conservan precio y cadencia) pero no se
-        # venden desde la página.
+        # La prueba y el semanal siguen en el catálogo (los clientes que los
+        # tienen conservan precio y cadencia) pero no se venden.
         h = self.portada()
-        self.assertNotIn("A la medida", h)
+        self.assertNotIn("Semanal", h)
+        self.assertNotIn("$100", h)
         self.assertNotIn("$None", h)
 
-    def test_el_anual_explica_el_ahorro_en_plata(self):
+    def test_muestra_dos_planes_el_mensual_y_el_custom(self):
         h = self.portada()
+        self.assertEqual(h.count('<div class="plan sube'), 2)
         self.assertIn("$25", h)
-        self.assertIn("$240", h)
-        self.assertIn("$20 al mes", h)
-        self.assertIn("Ahorra $60", h)
+        self.assertIn("A cotizar", h)
+
+    def test_la_portada_no_muestra_el_anual(self):
+        # El anual no es un plan: es una forma de pagar el mensual, y se
+        # elige en el checkout.
+        h = self.portada()
+        self.assertNotIn("$240", h)
+        self.assertNotIn("Ahorra", h)
 
     def test_no_promete_lo_que_este_lanzamiento_no_vende(self):
         # La prueba gratis y el plan semanal quedaron afuera. La portada
@@ -129,7 +168,7 @@ class TestPortada(CasoPaginas):
             with self.subTest(frase=frase):
                 self.assertNotIn(frase, h)
 
-    def test_el_plan_a_la_medida_lleva_al_contacto(self):
+    def test_el_custom_lleva_al_contacto(self):
         h = self.portada(landing={"contacto": {"whatsapp": "50688887777"}})
         self.assertIn("https://wa.me/50688887777", h)
         self.assertIn("Conversemos", h)
@@ -146,10 +185,10 @@ class TestPortada(CasoPaginas):
         self.assertNotIn("<form", h)
         self.assertNotIn('name="empresa"', h)
 
-    def test_cada_forma_de_pago_lleva_a_aplicar_con_su_ciclo(self):
+    def test_el_mensual_lleva_a_aplicar_sin_elegir_ciclo(self):
         h = self.portada()
-        self.assertIn('href="aplicar.html?plan=autoservicio&amp;ciclo=mensual"', h)
-        self.assertIn('href="aplicar.html?plan=autoservicio&amp;ciclo=anual"', h)
+        self.assertIn('href="aplicar.html?plan=autoservicio"', h)
+        self.assertNotIn("ciclo=", h)
 
     def test_dice_cada_cuanto_llega_y_a_cuantos_cubre(self):
         # Es la pregunta que frena la compra.
@@ -160,7 +199,7 @@ class TestPortada(CasoPaginas):
 
     def test_un_plan_sin_tope_de_competidores_lo_dice(self):
         h = self.portada(planes=[dict(PLANES_BASE[0], competidores_max=None)])
-        self.assertIn("Sin tope", h)
+        self.assertIn("Los que necesite", h)
 
     def test_nombra_las_dos_plataformas(self):
         h = self.portada(landing={"plataformas": {
@@ -258,12 +297,12 @@ class TestAnimaciones(CasoPaginas):
         self.assertIn("cruza-el-pulso", h)
         self.assertIn("header .pista { display:none; }", h)
 
-    def test_el_latido_del_fondo_para_con_menos_movimiento(self):
-        # El trazo se queda: el adorno sirve igual quieto. Lo que se apaga es
-        # el segmento que lo recorre.
-        h = self.portada()
-        self.assertIn("recorre-el-latido", h)
-        self.assertIn(".latido .viva { display:none; }", h)
+    def test_la_caja_de_por_que_no_avanza_sola_con_menos_movimiento(self):
+        # Una diapositiva que cambia sola es movimiento: a quien pidió menos
+        # se le deja quieta, y la barra de avance no aparece.
+        h = self.portada(landing={"por_que": POR_QUE})
+        self.assertIn("var detenido = quieto;", h)
+        self.assertIn(".porque-avance { display:none; }", h)
 
     def test_el_logo_vuelve_al_inicio(self):
         h = self.portada()
@@ -287,13 +326,9 @@ class TestMovil(CasoPaginas):
         h = self.portada()
         self.assertIn("@media (max-width:420px)", h)
 
-    def test_el_latido_le_deja_sitio_a_la_promesa_en_celular(self):
-        # El trazo mide 72px de alto en celular y se apoya abajo del todo:
-        # con los 56px de relleno de antes le pasaba por encima a la linea
-        # de "Datos publicos, verificables uno por uno".
-        h = self.portada()
-        self.assertIn(".latido { height:72px; }", h)
-        self.assertIn(".hero { padding:68px 0 112px; }", h)
+    def test_en_tableta_y_celular_la_caja_baja_debajo_del_texto(self):
+        h = self.portada(landing={"por_que": POR_QUE})
+        self.assertIn(".hero { grid-template-columns:1fr;", h)
 
     def test_las_secciones_no_quedan_tapadas_por_el_encabezado_pegajoso(self):
         h = self.portada()
@@ -303,9 +338,11 @@ class TestMovil(CasoPaginas):
 class TestAplicar(CasoPaginas):
     def test_tiene_el_formulario_completo(self):
         h = self.aplicar()
-        for campo in ("empresa", "contacto", "email", "plan", "ciclo", "industria",
+        for campo in ("empresa", "contacto", "email", "plan", "industria",
                       "contexto"):
             self.assertIn(f'name="{campo}"', h)
+        # Cómo pagar (mes a mes o el año) se elige en el checkout, no acá.
+        self.assertNotIn('name="ciclo"', h)
 
     def test_pide_el_contexto_del_negocio(self):
         # Es el campo que más sube la calidad del reporte (docs/05). Si se
@@ -344,8 +381,11 @@ class TestAplicar(CasoPaginas):
         """
         forma = html.split("<form", 1)[1].split("</form>", 1)[0]
         trozo = forma.split(f'data-paso="{n}"', 1)[1]
-        siguiente = trozo.find('data-paso="')
-        return trozo if siguiente < 0 else trozo[:siguiente]
+        # El último paso termina donde empieza la casilla de aceptación, que
+        # no es un paso: va junto al botón de enviar.
+        cortes = [i for i in (trozo.find('data-paso="'), trozo.find("data-al-enviar"))
+                  if i >= 0]
+        return trozo[:min(cortes)] if cortes else trozo
 
     def test_solo_el_primer_paso_es_obligatorio(self):
         # Los otros tres mejoran el reporte pero no impiden pedirlo: si
@@ -387,15 +427,8 @@ class TestAplicar(CasoPaginas):
         for campo in ("comp1", "fb1", "web1"):
             self.assertIn(f'name="{campo}"', h)
 
-    def test_el_ciclo_de_la_url_llega_preseleccionado(self):
-        h = self.aplicar(ciclo_elegido="anual")
-        self.assertIn('value="anual" selected', h)
-        self.assertIn("$240", self.resumen_visible(h))
-
-    def test_el_resumen_visible_es_el_del_ciclo_elegido(self):
-        # El selector y el resumen de al lado tienen que decir lo mismo: si no,
-        # la persona lee un precio y paga otro.
-        h = self.aplicar(ciclo_elegido="mensual")
+    def test_el_resumen_muestra_el_precio_mensual(self):
+        h = self.aplicar()
         self.assertIn("$25", self.resumen_visible(h))
         self.assertNotIn("$240", self.resumen_visible(h))
 
@@ -433,13 +466,15 @@ class TestAplicar(CasoPaginas):
 
 
 class TestGenerador(unittest.TestCase):
-    def test_escribe_las_dos_paginas(self):
+    def test_escribe_las_paginas_y_las_legales(self):
         import tempfile
         from pathlib import Path
 
         with tempfile.TemporaryDirectory() as tmp:
             paginas = construir_mod.construir(Path(tmp))
-        self.assertEqual([p.name for p in paginas], ["index.html", "aplicar.html"])
+        self.assertEqual([p.name for p in paginas],
+                         ["index.html", "aplicar.html", "terminos.html",
+                          "reembolsos.html", "privacidad.html"])
 
     def test_en_estatico_los_enlaces_son_archivos(self):
         # La página tiene que funcionar abierta con doble clic desde una

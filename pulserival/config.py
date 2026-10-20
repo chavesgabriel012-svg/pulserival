@@ -99,6 +99,10 @@ def config_landing() -> dict[str, Any]:
     return _yaml("landing.yaml")
 
 
+def config_legal() -> dict[str, Any]:
+    return _yaml("legal.yaml")
+
+
 def huella_incluye_creativo() -> bool:
     return bool((config_fuentes().get("deteccion") or {}).get("huella_incluye_creativo", True))
 

@@ -123,6 +123,13 @@ def pendientes() -> list[str]:
             if not precio_paddle(datos, ciclo):
                 faltan.append(f"config/planes.yaml: falta el precio de Paddle de "
                               f"'{datos['clave']}' {ciclo} en {entorno()}")
+    if entorno() == "production":
+        # Paddle no aprueba el dominio sin el nombre legal en los Términos.
+        # En sandbox no hace falta aprobación, así que no se exige ahí.
+        from .landing import legal
+
+        for falta in legal.faltantes():
+            faltan.append(f"config/legal.yaml: falta {falta}")
     return faltan
 
 

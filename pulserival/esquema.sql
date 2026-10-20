@@ -67,6 +67,12 @@ CREATE TABLE IF NOT EXISTS clientes (
     origen            TEXT,
     activo            INTEGER NOT NULL DEFAULT 1,
     creado_en         TEXT    NOT NULL DEFAULT (datetime('now')),
+    -- Cuándo aceptó los Términos y la Política de privacidad, y qué versión
+    -- (la fecha de config/legal.yaml). La Ley 8968 (art. 5) pide que el
+    -- consentimiento conste por escrito; esto es esa constancia. NULL en
+    -- los clientes cargados a mano, que aceptan por otra vía.
+    consentimiento_en      TEXT,
+    consentimiento_version TEXT,
     CHECK ((periodicidad = 'custom' AND cadencia_dias IS NOT NULL)
         OR (periodicidad <> 'custom' AND cadencia_dias IS NULL))
 );
