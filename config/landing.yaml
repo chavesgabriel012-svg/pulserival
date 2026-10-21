@@ -232,6 +232,13 @@ formulario:
 # El formulario salió de la portada y tiene su propia página, a la que se
 # llega desde los botones de cada plan. Más adelante, ahí mismo se cobra.
 aplicar:
+  # MODO DE PRUEBA. Con `false` el formulario no exige ningún campo para
+  # avanzar ni para enviar: sirve para probar el flujo completo rápido. Si
+  # falta el nombre de la empresa se guarda como "Empresa de prueba", y si
+  # falta el correo, el reporte se manda al correo de soporte de arriba.
+  # VOLVER A `true` ANTES DE LANZAR: `cli landing` lo avisa, y /salud falla
+  # con PADDLE_ENTORNO=production mientras siga en false.
+  campos_obligatorios: false
   titulo: "Empecemos con su reporte"
   nota: >-
     Nos toma dos minutos. Entre más nos cuente del negocio, mejor sale el

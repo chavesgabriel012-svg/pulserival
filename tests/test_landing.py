@@ -192,12 +192,14 @@ class TestPortada(CasoPaginas):
         self.assertIn("$25", h)
         self.assertIn("A cotizar", h)
 
-    def test_la_portada_no_muestra_el_anual(self):
-        # El anual no es un plan: es una forma de pagar el mensual, y se
-        # elige en el checkout.
+    def test_la_ficha_del_plan_avisa_del_pago_anual_sin_venderlo_como_otro_plan(self):
+        # El anual se elige en el checkout, pero la ficha de $25 lleva una
+        # pista chica: el ahorro en plata y lo que queda por mes.
         h = self.portada()
+        self.assertIn('<span class="ahorra">Ahorra $60</span>', h)
+        self.assertIn("Pagando el año: $20 al mes", h)
+        self.assertEqual(h.count('<div class="plan sube'), 2)
         self.assertNotIn("$240", h)
-        self.assertNotIn("Ahorra", h)
 
     def test_no_promete_lo_que_este_lanzamiento_no_vende(self):
         # La prueba gratis y el plan semanal quedaron afuera. La portada

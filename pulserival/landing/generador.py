@@ -61,6 +61,11 @@ def contexto() -> dict[str, Any]:
     return datos
 
 
+def campos_obligatorios() -> bool:
+    """False solo en modo de prueba (ver `aplicar.campos_obligatorios`)."""
+    return (config.config_landing().get("aplicar") or {}).get("campos_obligatorios") is not False
+
+
 def competidores_del_formulario(datos: dict[str, Any]) -> int:
     """Cuántas casillas de competidor muestra el formulario: las del plan elegido.
 
@@ -158,6 +163,10 @@ def pendientes() -> list[str]:
         # la Ley 8968 pide identificar al responsable de los datos.
         faltan.append(f"config/legal.yaml: falta {falta} (las páginas legales lo "
                       "muestran como pendiente)")
+    if not campos_obligatorios():
+        faltan.append(
+            "config/landing.yaml: `aplicar.campos_obligatorios` está en false (modo de "
+            "prueba): el formulario no exige nada. Volver a true antes de lanzar")
     if not datos.get("dominio"):
         faltan.append("config/landing.yaml: falta `dominio` (solo sale en el pie)")
     return faltan

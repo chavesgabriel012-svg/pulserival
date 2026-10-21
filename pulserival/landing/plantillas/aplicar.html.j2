@@ -156,6 +156,9 @@
 {% endblock %}
 
 {% block contenido %}
+{# Con `aplicar.campos_obligatorios: false` (modo de prueba) ningún campo
+   lleva `required`, y el guion de los pasos deja avanzar sin nada. #}
+{% set obligatorio = aplicar.campos_obligatorios is not sameas false %}
 <div class="env">
   <div class="cabeza sube">
     <a class="volver" href="{{ inicio_url }}">&larr; Volver al inicio</a>
@@ -187,16 +190,16 @@
         <p class="bajada">Para saber a quién le estamos reportando.</p>
         <div class="campo">
           <label for="empresa">Nombre de la empresa</label>
-          <input id="empresa" name="empresa" required>
+          <input id="empresa" name="empresa"{% if obligatorio %} required{% endif %}>
         </div>
         <div class="fila">
           <div class="campo">
             <label for="contacto">Su nombre</label>
-            <input id="contacto" name="contacto" required>
+            <input id="contacto" name="contacto"{% if obligatorio %} required{% endif %}>
           </div>
           <div class="campo">
             <label for="email">Correo donde quiere recibir el reporte</label>
-            <input id="email" name="email" type="email" required>
+            <input id="email" name="email" type="email"{% if obligatorio %} required{% endif %}>
           </div>
         </div>
         <div class="fila">

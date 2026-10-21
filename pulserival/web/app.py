@@ -228,10 +228,17 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
             return _pagina("No pudimos completar el registro",
                            f"El plan incluye hasta {tope} competidores.", volver=True), 400
 
+        empresa = (datos.get("empresa") or "").strip()
+        email = (datos.get("email") or "").strip()
+        if not generador.campos_obligatorios():
+            # Modo de prueba: nada es obligatorio. Lo que falte se completa
+            # para que el alta entre y el flujo siga hasta el envío.
+            empresa = empresa or "Empresa de prueba"
+            email = email or (config.config_landing().get("contacto") or {}).get("email") or ""
         try:
             resultado = deposito.guardar({
-                "empresa": datos.get("empresa", ""),
-                "email": datos.get("email", ""),
+                "empresa": empresa,
+                "email": email,
                 "competidores": competidores,
                 "plan": plan,
                 "ciclo": datos.get("ciclo"),
@@ -262,7 +269,7 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
             return render_template(
                 "gracias.html.j2", **generador.contexto(),
                 cliente=None, simulado=cobro_simulado(), alta=resultado,
-                empresa=datos.get("empresa", ""), email=datos.get("email", ""),
+                empresa=empresa, email=email,
                 plan=planes.plan(plan))
         cid = resultado["cliente_id"]
         return redirect(url_for("checkout", cliente_id=cid, t=_firma(cid)))

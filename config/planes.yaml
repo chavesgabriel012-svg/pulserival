@@ -58,8 +58,8 @@ planes:
     # ciclo y por entorno: los de sandbox no sirven en producción.
     paddle:
       sandbox:
-        mensual: ""
-        anual: ""
+        mensual: "pri_01m5e45724vbn47qn7gyxbggzp"
+        anual: "pri_01m5e47k5y0y4ajxme9b4h5wjh"
       production:
         mensual: ""
         anual: ""

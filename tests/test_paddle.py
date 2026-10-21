@@ -366,11 +366,24 @@ class TestCheckoutConPaddle(CasoPaddle):
         self.assertIn("Paddle.Initialize", h)
 
     def test_salud_avisa_lo_que_falta_para_cobrar(self):
-        r = self.web.get("/salud")
+        # Los precios de sandbox ya están cargados; los de producción no,
+        # así que es en producción donde tiene que avisar.
+        from unittest import mock
+
+        with mock.patch.dict("os.environ", {"PADDLE_ENTORNO": "production"}):
+            r = self.web.get("/salud")
         self.assertEqual(r.status_code, 500)
         faltan = " ".join(r.get_json()["falta_configurar"])
         self.assertIn("PADDLE_CLIENT_TOKEN", faltan)
         self.assertIn("precio de Paddle", faltan)
+
+    def test_los_dos_precios_de_sandbox_estan_cargados(self):
+        from pulserival import pagos, planes
+
+        datos = planes.plan("autoservicio")
+        for ciclo in ("mensual", "anual"):
+            with self.subTest(ciclo=ciclo):
+                self.assertTrue((pagos.precio_paddle(datos, ciclo) or "").startswith("pri_"))
 
 
 class TestPipelineConPaddle(CasoPaddle):
