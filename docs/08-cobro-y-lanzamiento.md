@@ -282,6 +282,49 @@ Apify. La solución real es la cola de trabajos por cliente con fecha límite,
 que quedó fuera de este cambio. **No venda un Custom de menos de 7 días hasta
 que exista.** El CLI avisa cuando se registra uno.
 
+## 5.5 Probar el flujo completo en sandbox, paso a paso
+
+De la persona que entra a la página al reporte en su correo. Los precios de
+sandbox ya están en `config/planes.yaml`
+(`pri_01m5e45724vbn47qn7gyxbggzp` mensual, `pri_01m5e47k5y0y4ajxme9b4h5wjh`
+anual).
+
+**El formulario está en modo de prueba**
+(`aplicar.campos_obligatorios: false` en `config/landing.yaml`): no exige
+nada para avanzar ni para enviar. Sin nombre de empresa se guarda "Empresa de
+prueba" y sin correo el reporte va a `soporte@pulserival.com`. Lo único que
+sigue pidiendo es la casilla de aceptación, porque es la constancia del
+consentimiento. **Volver a `true` antes de lanzar.**
+
+1. **Variables en Railway:** `PULSERIVAL_COBRO=paddle`,
+   `PADDLE_ENTORNO=sandbox`, `PADDLE_CLIENT_TOKEN` (el `test_...` del panel de
+   sandbox), `PADDLE_WEBHOOK_SECRET` (el del destino de notificaciones), y las
+   de siempre: `PULSERIVAL_SECRET`, `PULSERIVAL_PANEL_CLAVE`, `APIFY_TOKEN`,
+   `GEMINI_API_KEY`, `RESEND_API_KEY`, `EMAIL_REMITENTE`, `EMAIL_RESPONDER_A`.
+2. **En el panel de sandbox de Paddle:** el destino de notificaciones
+   apuntando a `https://<su-dominio>/webhooks/paddle` con los eventos de la
+   sección 3, y el link de pago por defecto en `https://<su-dominio>/pagar`.
+3. **`/salud` tiene que responder 200.** Si responde 500, la lista dice qué
+   falta.
+4. **Llenar el formulario.** Para que salga un reporte hace falta **al menos
+   un competidor** (paso 3) con su página de Facebook o su dominio: sin
+   competidores el ciclo no le genera reporte a nadie, a propósito. Poner su
+   propio correo si quiere recibirlo ahí.
+5. **Pagar** en el checkout con la tarjeta de prueba que indica la
+   documentación de Paddle para sandbox. `/gracias` tiene que pasar sola a
+   "activa" en unos segundos.
+6. **Ver que entró:**
+   `railway ssh -- python -m pulserival.cli clientes lista` muestra el cliente
+   en `activa`, con su `sub_...`. El número de la primera columna es su id.
+7. **Generar el reporte ya**, sin esperar al ciclo semanal:
+   `railway ssh -- python -m pulserival.cli ciclo --cliente <id>`. Esto sí
+   consulta Apify y usa la IA de verdad.
+8. **Revisar y enviar desde el panel** (`/panel`): abrir el borrador,
+   corregir si hace falta y aprobarlo. Para enviarlo, el panel pide escribir
+   el nombre del cliente tal cual ("Empresa de prueba" si lo dejó vacío).
+9. **Confirmar que llegó** al correo del formulario (o a soporte, si lo dejó
+   vacío).
+
 ## 6. Lo que falta probar antes de cobrar de verdad
 
 Nada de esto está probado. Los tests usan eventos armados a mano con la

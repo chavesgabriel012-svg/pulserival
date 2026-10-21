@@ -251,6 +251,14 @@
   .plan .precio span { font-family:var(--cuerpo); font-size:16px; font-weight:400;
                        color:var(--gris-texto); letter-spacing:0; }
   .plan .precio.cotizado { font-size:34px; padding:6px 0 4px; }
+  .plan .pista-anual { display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px;
+                       font-size:14px; color:var(--gris-texto); margin:2px 0 14px;
+                       line-height:1.4; }
+  .plan .pista-anual .ahorra {
+    font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+    background:var(--pulso); color:var(--blanco); padding:3px 8px; border-radius:3px;
+    font-weight:500; white-space:nowrap;
+  }
   .plan .titular { font-size:16px; color:var(--gris-texto); line-height:1.5;
                    margin:0 0 22px; min-height:3em; }
   .plan .datos { border-top:1px solid var(--linea); margin-bottom:16px; }
@@ -673,6 +681,13 @@
         <p class="nombre">{{ p.nombre }}</p>
         {% if p.checkout and p.precio_usd %}
         <p class="precio">${{ '%g' % p.precio_usd }}<span> / mes</span></p>
+        {# Una pista del pago anual, chica: el anual se elige en el checkout,
+           pero quien compara precios tiene que saber que existe. #}
+        {% set anual = (p.ciclos or {}).values() | selectattr("ahorro_usd") | first %}
+        {% if anual %}
+        <p class="pista-anual"><span class="ahorra">Ahorra ${{ '%g' % anual.ahorro_usd }}</span>
+          <span>Pagando el año{% if anual.equivale_mes_usd %}: ${{ '%g' % anual.equivale_mes_usd }} al mes{% endif %}</span></p>
+        {% endif %}
         {% else %}
         <p class="precio cotizado">{{ plan_seccion.cotizado or 'A cotizar' }}</p>
         {% endif %}

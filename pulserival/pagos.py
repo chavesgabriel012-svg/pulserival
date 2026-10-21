@@ -130,6 +130,13 @@ def pendientes() -> list[str]:
 
         for falta in legal.faltantes():
             faltan.append(f"config/legal.yaml: falta {falta}")
+        # El modo de prueba del formulario deja entrar altas sin correo: con
+        # cobro real, un cliente que paga y no deja correo no recibe nada.
+        from .landing import generador
+
+        if not generador.campos_obligatorios():
+            faltan.append("config/landing.yaml: `aplicar.campos_obligatorios` sigue en "
+                          "false (modo de prueba)")
     return faltan
 
 

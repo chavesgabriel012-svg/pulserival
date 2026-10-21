@@ -462,3 +462,52 @@ class TestCorreoDeSoporte(CasoWeb):
         r = self.alta(plan="custom")
         self.assertEqual(r.status_code, 400)
         self.assertIn("soporte@pulserival.com", r.get_data(as_text=True))
+
+
+class TestFormularioEnModoDePrueba(CasoWeb):
+    """`aplicar.campos_obligatorios: false` en config/landing.yaml: para probar
+    el flujo completo sin llenar nada. Tiene que volver a true antes de lanzar."""
+
+    def test_un_formulario_vacio_entra_igual(self):
+        r = self.cliente_web.post("/alta", data={"plan": "autoservicio", "acepto": "si"})
+        self.assertEqual(r.status_code, 302)
+        fila = db.fila(self.con, "SELECT * FROM clientes ORDER BY id DESC LIMIT 1")
+        self.assertEqual(fila["nombre_empresa"], "Empresa de prueba")
+        # Sin correo, el reporte va al de soporte: así igual llega a alguien.
+        self.assertEqual(fila["contacto_email"], "soporte@pulserival.com")
+
+    def test_el_formulario_no_marca_nada_como_obligatorio(self):
+        h = self.cliente_web.get("/aplicar").get_data(as_text=True)
+        forma = h.split("<form", 1)[1].split("</form>", 1)[0]
+        for campo in ("empresa", "contacto", "email"):
+            with self.subTest(campo=campo):
+                self.assertNotRegex(forma, rf'name="{campo}"[^>]*required')
+
+    def test_cli_landing_avisa_que_esta_en_modo_de_prueba(self):
+        from pulserival.landing import generador
+
+        self.assertTrue(any("campos_obligatorios" in f for f in generador.pendientes()))
+
+    def test_en_produccion_salud_no_deja_pasar_el_modo_de_prueba(self):
+        from unittest import mock
+
+        from pulserival import pagos
+
+        with mock.patch.dict("os.environ", {"PADDLE_ENTORNO": "production"}):
+            faltan = pagos.pendientes()
+        self.assertTrue(any("campos_obligatorios" in f for f in faltan))
+
+    def test_con_el_modo_apagado_los_datos_vuelven_a_ser_obligatorios(self):
+        import copy
+        from unittest import mock
+
+        from pulserival import config
+
+        real = config.config_landing()
+        normal = copy.deepcopy(real)
+        normal["aplicar"]["campos_obligatorios"] = True
+        with mock.patch.object(config, "config_landing", return_value=normal):
+            r = self.cliente_web.post("/alta", data={"plan": "autoservicio", "acepto": "si"})
+            h = self.cliente_web.get("/aplicar").get_data(as_text=True)
+        self.assertEqual(r.status_code, 400)
+        self.assertRegex(h, r'name="email"[^>]*required')
