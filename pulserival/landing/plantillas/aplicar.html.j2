@@ -71,14 +71,16 @@
 
   .navegacion { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
 
+  .opcional-campo { font-family:var(--cuerpo); font-weight:400; font-size:14px;
+                    color:var(--piedra); margin-left:6px; }
+  /* El ultimo paso de la barra es el checkout: se ve, pero no se toca
+     desde aca. */
+  .por-pasos .barra li.despues { cursor:default; opacity:.7; }
+
   /* -- aceptacion de terminos ---------------------------------- */
-  /* El aviso es largo porque la Ley 8968 pide decir todo eso en el mismo
-     formulario. Va en letra chica pero legible, y la casilla es grande: es
-     lo unico de este bloque que hay que tocar. */
+  /* Solo la casilla, grande: es lo unico de este bloque que hay que tocar. */
   .acepto { background:var(--blanco); border:1px solid var(--linea);
             border-radius:var(--radio); padding:18px 20px; }
-  .acepto .aviso-datos { font-size:14px; color:var(--gris-texto); line-height:1.55;
-                         margin:0 0 14px; }
   .acepto label { display:flex; gap:12px; align-items:flex-start; cursor:pointer;
                   font-family:var(--display); font-size:15px; font-weight:500;
                   line-height:1.45; }
@@ -156,9 +158,6 @@
 {% endblock %}
 
 {% block contenido %}
-{# Con `aplicar.campos_obligatorios: false` (modo de prueba) ningún campo
-   lleva `required`, y el guion de los pasos deja avanzar sin nada. #}
-{% set obligatorio = aplicar.campos_obligatorios is not sameas false %}
 <div class="env">
   <div class="cabeza sube">
     <a class="volver" href="{{ inicio_url }}">&larr; Volver al inicio</a>
@@ -177,74 +176,65 @@
     <form id="alta" novalidate{% if modo_servidor %} method="post" action="{{ accion_alta }}"{% endif %}>
 
       {# La barra de pasos. Sin JavaScript no se muestra: ahi el formulario es
-         uno solo, con los cuatro bloques a la vista, y una barra que dice
-         "paso 1 de 4" mentiria. #}
+         uno solo, con los bloques a la vista, y una barra que dice "paso 1"
+         mentiria. Los tres primeros son este formulario; el ultimo es el
+         checkout, la pagina que sigue al enviar, y no se puede tocar. #}
       <ol class="barra" aria-hidden="true">
         {% for p in aplicar.pasos %}
-        <li data-ir="{{ loop.index }}"><span class="n">{{ loop.index }}</span>{{ p.corto }}</li>
+        <li data-ir="{{ loop.index }}"{% if loop.last and loop.length > 3 %} class="despues"{% endif %}><span class="n">{{ loop.index }}</span>{{ p.corto }}</li>
         {% endfor %}
       </ol>
 
       <div class="grupo paso sube" data-paso="1">
         <p class="titulo">{{ aplicar.pasos[0].nombre if aplicar.pasos else 'Su empresa' }}</p>
-        <p class="bajada">Para saber a quién le estamos reportando.</p>
+        <p class="bajada">{{ aplicar.empresa.bajada if aplicar.empresa else '' }}</p>
+        {# El plan va antes de los campos: un input oculto entre dos `.campo`
+           corta el `.campo + .campo` y los deja pegados. #}
+        {% if planes_checkout | length > 1 %}
+        <div class="campo">
+          <label for="plan">Plan</label>
+          <select id="plan" name="plan">
+            {% for p in planes_checkout %}
+            <option value="{{ p.clave }}"{% if plan_form and p.clave == plan_form.clave %} selected{% endif %}>
+              {{ p.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% elif plan_form %}
+        <input type="hidden" name="plan" value="{{ plan_form.clave }}">
+        {% endif %}
         <div class="campo">
           <label for="empresa">Nombre de la empresa</label>
-          <input id="empresa" name="empresa"{% if obligatorio %} required{% endif %}>
-        </div>
-        <div class="fila">
-          <div class="campo">
-            <label for="contacto">Su nombre</label>
-            <input id="contacto" name="contacto"{% if obligatorio %} required{% endif %}>
-          </div>
-          <div class="campo">
-            <label for="email">Correo donde quiere recibir el reporte</label>
-            <input id="email" name="email" type="email"{% if obligatorio %} required{% endif %}>
-          </div>
-        </div>
-        <div class="fila">
-          {% if planes_checkout | length > 1 %}
-          <div class="campo">
-            <label for="plan">Plan</label>
-            <select id="plan" name="plan">
-              {% for p in planes_checkout %}
-              <option value="{{ p.clave }}"{% if plan_form and p.clave == plan_form.clave %} selected{% endif %}>
-                {{ p.nombre }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          {% elif plan_form %}
-          <input type="hidden" name="plan" value="{{ plan_form.clave }}">
-          {% endif %}
+          <input id="empresa" name="empresa" required autocomplete="organization">
         </div>
         <div class="campo">
-          <label for="industria">Industria</label>
-          <input id="industria" name="industria" placeholder="En sus palabras">
+          <label for="email">Correo donde quiere recibir los reportes</label>
+          <input id="email" name="email" type="email" required autocomplete="email">
         </div>
-      </div>
-
-      <div class="grupo paso sube" data-paso="2">
-        <p class="titulo">{{ aplicar.pasos[1].nombre if aplicar.pasos else 'Contexto de su negocio' }}<span class="opcional">Opcional</span></p>
-        <p class="bajada">
-          Tres o cuatro líneas: qué le preocupa, si compite por precio o por
-          servicio, cuántas sedes tiene, su ticket promedio. Esto es lo que más
-          sube la calidad del reporte.
-        </p>
         <div class="campo">
+          <label for="industria">Industria <span class="opcional-campo">Opcional</span></label>
+          {# Una lista y no texto libre: con la industria se buscan los
+             competidores de quien no los indica (config/industrias.yaml). #}
+          <select id="industria" name="industria">
+            <option value="">Elija una</option>
+            {% for i in industrias %}<option value="{{ i }}">{{ i }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="campo">
+          <label for="contexto">{{ aplicar.empresa.contexto_etiqueta if aplicar.empresa else 'Contexto de su negocio' }}
+            <span class="opcional-campo">Opcional</span></label>
+          {% if aplicar.empresa and aplicar.empresa.contexto_ayuda %}<p class="ayuda">{{ aplicar.empresa.contexto_ayuda }}</p>{% endif %}
           <textarea id="contexto" name="contexto"
                     placeholder="Ej: tenemos tres sucursales en el GAM, competimos por servicio más que por precio, y nos preocupa que la competencia esté empujando financiamiento a doce meses."></textarea>
         </div>
       </div>
 
-      <div class="grupo paso sube" data-paso="3">
+      <div class="grupo paso sube" data-paso="2">
         <p class="titulo">
           {{ aplicar.competidores.titulo }}<span class="opcional">Opcional</span>
         </p>
         <p class="bajada">{{ aplicar.competidores.opcional }}</p>
-        <div class="nota" style="margin-bottom:22px;">
-          {{ aplicar.competidores.explicacion }}
-        </div>
-        <p class="bajada">{{ aplicar.competidores.ayuda }}</p>
+        {% if aplicar.competidores.ayuda %}<p class="bajada">{{ aplicar.competidores.ayuda }}</p>{% endif %}
         {% for n in range(1, forma_competidores + 1) %}
         <div class="competidor">
           <div class="campo">
@@ -252,15 +242,15 @@
             <input id="comp{{ n }}" name="comp{{ n }}" placeholder="Nombre de la empresa">
           </div>
           <div class="fila">
-            <input name="fb{{ n }}" placeholder="facebook.com/sucompetidor">
-            <input name="web{{ n }}" placeholder="sucompetidor.co.cr">
+            <input name="fb{{ n }}" placeholder="Facebook (opcional)" aria-label="Facebook del competidor {{ n }} (opcional)">
+            <input name="web{{ n }}" placeholder="Sitio web (opcional)" aria-label="Sitio web del competidor {{ n }} (opcional)">
           </div>
         </div>
         {% endfor %}
       </div>
 
       {% if aplicar.origen %}
-      <div class="grupo paso sube" data-paso="4">
+      <div class="grupo paso sube" data-paso="3">
         <p class="titulo">
           {{ aplicar.origen.titulo }}<span class="opcional">{{ aplicar.origen.opcional }}</span>
         </p>
@@ -284,17 +274,14 @@
       </div>
       {% endif %}
 
-      {# Consentimiento expreso y por escrito (Ley 8968, art. 5). Se muestra
-         junto al boton de enviar, no en un paso: tiene que estar a la vista
-         en el momento de aceptar. #}
+      {# Consentimiento expreso y por escrito (Ley 8968, art. 5): la casilla,
+         sola, junto al boton de enviar. El detalle de que datos se guardan y
+         quien los recibe esta en la Politica de privacidad enlazada. #}
       <div class="acepto sube" data-al-enviar id="bloque-acepto">
-        {% if aviso_datos %}<p class="aviso-datos">{{ texto(aviso_datos) }}</p>{% endif %}
         <label for="acepto">
           <input type="checkbox" id="acepto" name="acepto" value="si" required>
-          <span>Leí y acepto los <a href="{{ legal_urls.terminos }}" target="_blank" rel="noopener">{{ legal_nombres.terminos }}</a>,
-            la <a href="{{ legal_urls.reembolsos }}" target="_blank" rel="noopener">{{ legal_nombres.reembolsos }}</a>
-            y la <a href="{{ legal_urls.privacidad }}" target="_blank" rel="noopener">{{ legal_nombres.privacidad }}</a>,
-            y autorizo el tratamiento de mis datos como ahí se describe.</span>
+          <span>Acepto los <a href="{{ legal_urls.terminos }}" target="_blank" rel="noopener">{{ legal_nombres.terminos }}</a>
+            y la <a href="{{ legal_urls.privacidad }}" target="_blank" rel="noopener">{{ legal_nombres.privacidad }}</a>.</span>
         </label>
       </div>
 
@@ -304,14 +291,9 @@
         <button class="btn" type="button" data-siguiente hidden>
           <span>Continuar</span></button>
         <button class="btn" type="submit" data-enviar>
-          <span>Enviar solicitud</span></button>
+          <span>{% if modo_servidor %}Continuar al pago{% else %}Enviar solicitud{% endif %}</span></button>
       </div>
 
-      <div class="nota sube" data-cierre>
-        {% if modo_servidor %}{{ aplicar.cierre }}
-        {% else %}Al enviar se abre WhatsApp con sus datos ya ordenados. Nada se
-        guarda en esta página.{% endif %}
-      </div>
     </form>
 
     <div class="lado">
@@ -400,6 +382,13 @@ document.addEventListener('change', function (e) {
   var masLejos = 0;
 
   forma.classList.add('por-pasos');
+
+  // El aviso de "esto hace falta" se va apenas la persona escribe: si se
+  // queda hasta el próximo "Continuar", parece que lo escrito no sirvió.
+  forma.addEventListener('input', function (e) {
+    var campo = e.target.closest && e.target.closest('.campo.malo');
+    if (campo && (e.target.value || '').trim()) { limpiarError(campo); }
+  });
   if (barra) { barra.removeAttribute('aria-hidden'); }
 
   function limpiarError(campo) {
@@ -566,7 +555,7 @@ document.addEventListener('change', function (e) {
     l.push('Solicitud de reporte — ' + v('empresa'));
     l.push('');
     l.push('Plan: ' + v('plan'));
-    l.push('Contacto: ' + v('contacto') + ' · ' + v('email'));
+    l.push('Correo: ' + v('email'));
     if (v('industria')) { l.push('Industria: ' + v('industria')); }
     if (v('contexto')) { l.push(''); l.push('Contexto: ' + v('contexto')); }
 

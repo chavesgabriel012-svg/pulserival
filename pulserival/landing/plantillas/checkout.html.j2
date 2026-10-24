@@ -41,6 +41,19 @@
   .total { font-family:var(--display); font-size:15px; margin:16px 0 18px; }
   .total strong { font-size:18px; }
   @media (max-width:560px) { .formas { grid-template-columns:1fr; gap:18px; } }
+  /* La barra de pasos del formulario, con el ultimo (el pago) marcado. */
+  .barra-pasos { display:flex; flex-wrap:wrap; gap:8px; list-style:none; padding:0;
+                 margin:0 0 28px; }
+  .barra-pasos li { display:inline-flex; align-items:center; gap:8px; font-family:var(--display);
+                    font-size:13.5px; font-weight:500; color:var(--piedra);
+                    padding:7px 13px 7px 7px; border-radius:100px; background:var(--blanco);
+                    border:1px solid var(--linea); }
+  .barra-pasos .n { display:inline-flex; align-items:center; justify-content:center;
+                    width:22px; height:22px; border-radius:50%; background:var(--linea);
+                    color:var(--gris-texto); font-family:var(--mono); font-size:12px; }
+  .barra-pasos li.hecho .n { background:var(--tinta); color:var(--papel); }
+  .barra-pasos li.actual { border-color:var(--pulso); color:var(--tinta); }
+  .barra-pasos li.actual .n { background:var(--pulso); color:var(--blanco); }
 </style>
 {% endblock %}
 {% block contenido %}
@@ -53,6 +66,13 @@
 </div>
 {% endif %}
 
+{% if aplicar and aplicar.pasos %}
+<ol class="barra-pasos" aria-label="Paso {{ aplicar.pasos|length }} de {{ aplicar.pasos|length }}">
+  {% for p in aplicar.pasos %}
+  <li class="{{ 'actual' if loop.last else 'hecho' }}"><span class="n">{{ loop.index }}</span>{{ p.corto }}</li>
+  {% endfor %}
+</ol>
+{% endif %}
 <h1>{{ cliente["nombre_empresa"] }}</h1>
 <p>Revise que esté todo bien antes de confirmar.</p>
 
@@ -76,9 +96,8 @@
 <h2>Competidores que vamos a seguir</h2>
 {% if not competidores %}
 <div class="nota">
-  No nos indicó competidores: los investigamos nosotros a partir de su
-  industria y le escribimos con la lista antes del primer reporte. El primer
-  reporte sale cuando estén cargados, no antes.
+  No nos indicó competidores: los identificamos nosotros a partir de su
+  industria, y en su reporte le decimos a quiénes seguimos.
 </div>
 {% endif %}
 <table>

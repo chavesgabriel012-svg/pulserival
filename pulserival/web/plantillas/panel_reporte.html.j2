@@ -6,7 +6,18 @@
     {{ r.periodo }} · {{ r.movimientos }} movimiento{{ 's' if r.movimientos != 1 }} ·
     {{ modelo }} · ${{ '%.4f' % r.costo_usd }} · estado <strong>{{ r.estado }}</strong>
   </p>
-  <p class="sub">Asunto propuesto: {{ r.asunto }}</p>
+  <p class="sub">Asunto propuesto: {{ r.asunto }} ·
+    <a href="{{ url_for('panel.cliente', cid=cid) }}">competidores y datos del cliente</a></p>
+
+  {% if problemas_cliente %}
+  <div class="aviso">
+    <strong>Revisar los competidores de este cliente</strong>
+    {% for p in problemas_cliente %}{{ p }}{% if not loop.last %}<br>{% endif %}{% endfor %}
+    <p style="margin:12px 0 0;font-size:13px;">
+      <a href="{{ url_for('panel.cliente', cid=cid) }}">Corregirlos</a> y después rehacer el
+      reporte desde la página del cliente, sin volver a consultar Apify.</p>
+  </div>
+  {% endif %}
 
   {% if request.args.get('guardado') %}
   <div class="aviso"><strong>Guardado</strong>

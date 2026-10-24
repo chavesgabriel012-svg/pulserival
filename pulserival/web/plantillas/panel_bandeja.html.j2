@@ -4,6 +4,18 @@
   <h1>Reportes esperando su decisión</h1>
   <p class="sub">El cron genera el borrador. Nada le llega al cliente hasta que usted lo apruebe.</p>
 
+  {% if atender %}
+  <div class="aviso">
+    <strong>{{ atender|length }} cliente{{ 's' if atender|length != 1 }} necesita{{ 'n' if atender|length != 1 }} atención</strong>
+    <ul class="limpia">
+      {% for c in atender %}
+      <li><a href="{{ url_for('panel.cliente', cid=c.id) }}">{{ c.empresa }}</a>
+        <span class="sub">· {{ c.problemas|join(' ') }}</span></li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
   {% if not pendientes %}
     <p class="vacio">No hay nada pendiente. Cuando corra el ciclo, los borradores aparecen acá.</p>
   {% else %}

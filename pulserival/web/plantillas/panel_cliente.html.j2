@@ -1,0 +1,176 @@
+{% extends "_panel.html.j2" %}
+{% block titulo %}{{ c.empresa }} · {{ marca }}{% endblock %}
+{% block cabeza %}
+{# Mientras corre una tarea, la página se actualiza sola para mostrar cómo va. #}
+{% if tarea and tarea.estado == 'corriendo' %}<meta http-equiv="refresh" content="6">{% endif %}
+{% endblock %}
+{% block contenido %}
+  <p class="sub"><a href="{{ url_for('panel.clientes') }}">&larr; Clientes</a></p>
+  <h1>{{ c.empresa }}</h1>
+  <p class="sub">{{ c.email }} · {{ c.plan or 'sin plan' }} · {{ c.estado or 'sin estado' }}</p>
+
+  {% if tarea %}
+  <div class="aviso">
+    <strong>{{ tarea.nombre }}</strong>
+    {% if tarea.estado == 'corriendo' %}
+      En curso. Esta página se actualiza sola; puede tardar unos minutos.
+    {% elif tarea.estado == 'fallo' %}
+      Falló: {{ tarea.error }}
+    {% else %}
+      {% set r = tarea.resultado or {} %}
+      Terminó.
+      {% if r.agregados is defined %}
+        {% if r.agregados %}Se agregaron: {{ r.agregados|join(', ') }}.
+        {% else %}No se agregó a nadie: {{ r.motivo }}.{% endif %}
+      {% endif %}
+      {% for d in r.deducidos or [] %}
+        {% if d.agregados %}Competidores elegidos: {{ d.agregados|join(', ') }}.
+        {% else %}No se pudieron deducir competidores: {{ d.motivo }}.{% endif %}
+      {% endfor %}
+      {% for rep in r.reportes or [] %}
+        {% if rep.reporte_id %}Reporte listo:
+          <a href="{{ url_for('panel.ver', rid=rep.reporte_id) }}">abrirlo</a>.
+        {% elif rep.omitido %}Sin reporte: {{ rep.omitido }}.
+        {% elif rep.error %}Error al generar: {{ rep.error }}.{% endif %}
+      {% endfor %}
+      {% for e in r.errores or [] %}<br>{{ e.competidor }} [{{ e.plataforma }}]: {{ e.error }}{% endfor %}
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if c.reporta and c.problemas %}
+  <div class="nota">
+    {% for p in c.problemas %}{{ p }}{% if not loop.last %}<br>{% endif %}{% endfor %}
+  </div>
+  {% endif %}
+
+  {% if pendiente %}
+  <p><a class="btn chico" href="{{ url_for('panel.ver', rid=pendiente.id) }}">Abrir el reporte pendiente</a></p>
+  {% endif %}
+
+  <div class="cols">
+    <div>
+      <h2>Competidores</h2>
+      {% if not c.competidores %}
+        <p class="vacio">No tiene competidores. Agréguele uno abajo, o búsquelos por su
+          industria{% if terminos %} ({{ terminos|join(', ') }}){% endif %}.</p>
+      {% endif %}
+      {% for comp in c.competidores %}
+      <details class="competidor"{% if comp.deducido or comp.sin_anuncios %} open{% endif %}>
+        <summary>
+          {{ comp.nombre }}
+          {% if comp.deducido %}<span class="marca lleno">Elegido por el sistema</span>{% endif %}
+          {% if comp.sin_anuncios %}<span class="marca lleno">Sin anuncios</span>{% endif %}
+          <span class="sub">· {{ comp.anuncios.total }} anuncio{{ 's' if comp.anuncios.total != 1 }}
+            ({{ comp.anuncios.get('meta', 0) }} Meta, {{ comp.anuncios.get('google', 0) }} Google)</span>
+        </summary>
+        {% if comp.notas %}<p class="sub">{{ comp.notas }}</p>{% endif %}
+        {% if comp.meta_pagina_id %}<p class="sub">Página de Meta: <a target="_blank" rel="noopener"
+          href="https://www.facebook.com/ads/library/?active_status=active&amp;ad_type=all&amp;country=CR&amp;view_all_page_id={{ comp.meta_pagina_id }}">ver sus anuncios en la biblioteca</a></p>{% endif %}
+        <form method="post" action="{{ url_for('panel.competidor_editar', comp_id=comp.id) }}" class="campos">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <label for="n{{ comp.id }}">Nombre</label>
+          <input type="text" id="n{{ comp.id }}" name="nombre" value="{{ comp.nombre }}" required>
+          <label for="f{{ comp.id }}">Página de Facebook (opcional)</label>
+          <input type="text" id="f{{ comp.id }}" name="facebook" value="{{ comp.meta_pagina_url or '' }}"
+                 placeholder="facebook.com/sucompetidor">
+          <label for="w{{ comp.id }}">Sitio web (opcional)</label>
+          <input type="text" id="w{{ comp.id }}" name="web" value="{{ comp.google_dominio or '' }}"
+                 placeholder="sucompetidor.co.cr">
+          <label for="p{{ comp.id }}">Prioridad</label>
+          <select id="p{{ comp.id }}" name="prioridad">
+            <option value="1"{% if comp.prioridad == 1 %} selected{% endif %}>1 · el que más importa</option>
+            <option value="2"{% if comp.prioridad != 1 %} selected{% endif %}>2</option>
+          </select>
+          <p style="margin-top:14px;">
+            <button class="btn chico" type="submit">{% if comp.deducido %}Confirmar{% else %}Guardar{% endif %}</button>
+          </p>
+        </form>
+        <form method="post" action="{{ url_for('panel.competidor_quitar', comp_id=comp.id) }}"
+              data-confirmar="¿Quitar a {{ comp.nombre }}? Sus anuncios quedan en el historial.">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <button class="btn chico alt" type="submit">Quitar</button>
+        </form>
+      </details>
+      {% endfor %}
+
+      <h2>Agregar un competidor</h2>
+      <form method="post" action="{{ url_for('panel.competidor_agregar', cid=c.id) }}" class="campos">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label for="nuevo-nombre">Nombre</label>
+        <input type="text" id="nuevo-nombre" name="nombre" required>
+        <label for="nuevo-fb">Página de Facebook (opcional)</label>
+        <input type="text" id="nuevo-fb" name="facebook" placeholder="facebook.com/sucompetidor">
+        <label for="nuevo-web">Sitio web (opcional)</label>
+        <input type="text" id="nuevo-web" name="web" placeholder="sucompetidor.co.cr">
+        <p style="margin-top:14px;"><button class="btn chico" type="submit">Agregar</button></p>
+      </form>
+    </div>
+
+    <div>
+      <h2>Datos del cliente</h2>
+      <form method="post" action="{{ url_for('panel.cliente_datos', cid=c.id) }}" class="campos">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label for="email">Correo de los reportes</label>
+        <input type="text" id="email" name="email" value="{{ c.email }}">
+        <label for="industria">Industria</label>
+        <select id="industria" name="industria">
+          <option value="">Sin industria</option>
+          {% for i in industrias %}<option value="{{ i }}"{% if i == c.industria %} selected{% endif %}>{{ i }}</option>{% endfor %}
+          {% if c.industria and c.industria not in industrias %}
+          <option value="{{ c.industria }}" selected>{{ c.industria }} (escrita a mano)</option>{% endif %}
+        </select>
+        <label for="notas">Contexto del negocio</label>
+        <textarea id="notas" name="notas" style="min-height:120px;font-family:var(--cuerpo);font-size:14px;">{{ notas }}</textarea>
+        <p style="margin-top:14px;"><button class="btn chico" type="submit">Guardar</button></p>
+      </form>
+
+      <h2>Acciones</h2>
+      {% if ocupado %}
+      <p class="sub">Hay una corrida en curso. Cuando termine se pueden usar estas acciones.</p>
+      {% endif %}
+      {# Cada una dice qué gasta. La casilla es para que no se aprieten sin leer. #}
+      <form method="post" action="{{ url_for('panel.cliente_buscar', cid=c.id) }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <h3>Buscar competidores por su industria</h3>
+        <p class="sub">{% if terminos %}Busca «{{ terminos|join('», «') }}» en la Biblioteca de Meta
+          y agrega a los que más anuncian, sin repetir a los que ya tiene.
+          {% else %}Sin industria ni un nombre que diga el rubro no hay qué buscar: elija una
+          industria arriba.{% endif %} Usa Apify: hasta 40 anuncios por término.</p>
+        <label class="casilla"><input type="checkbox" name="confirmo" value="si"> Entiendo que esto consulta Apify</label>
+        <button class="btn chico" type="submit"{% if ocupado or not terminos %} disabled{% endif %}>Buscar</button>
+      </form>
+
+      <form method="post" action="{{ url_for('panel.cliente_generar', cid=c.id) }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <h3>Recolectar y generar el reporte</h3>
+        <p class="sub">Lo mismo que el ciclo semanal, solo para este cliente: trae los anuncios de
+          sus competidores (Apify) y escribe el borrador (IA). Si no tiene competidores, primero
+          los busca. El reporte queda en la bandeja para revisar; no se envía solo.</p>
+        <label class="casilla"><input type="checkbox" name="confirmo" value="si"> Entiendo que esto consulta Apify y la IA</label>
+        <button class="btn chico" type="submit"{% if ocupado %} disabled{% endif %}>Generar</button>
+      </form>
+
+      <form method="post" action="{{ url_for('panel.cliente_rehacer', cid=c.id) }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <h3>Rehacer el reporte con lo que ya hay</h3>
+        <p class="sub">Vuelve a escribir el borrador del periodo actual con los anuncios ya
+          guardados, sin consultar Apify. Sirve después de corregir competidores o el contexto.
+          Reemplaza el borrador: lo que haya editado a mano en ese reporte se pierde.</p>
+        <label class="casilla"><input type="checkbox" name="confirmo" value="si"> Entiendo que esto usa la IA y reemplaza el borrador</label>
+        <button class="btn chico" type="submit"{% if ocupado %} disabled{% endif %}>Rehacer</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+{% block guion %}
+<script>
+// El texto viene del atributo, no del código: así el nombre de un
+// competidor, que puede venir del formulario público, nunca se ejecuta.
+document.querySelectorAll('form[data-confirmar]').forEach(function (f) {
+  f.addEventListener('submit', function (e) {
+    if (!window.confirm(f.getAttribute('data-confirmar'))) { e.preventDefault(); }
+  });
+});
+</script>
+{% endblock %}

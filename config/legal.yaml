@@ -75,7 +75,8 @@ encargados:
   - nombre: "Apify"
     para: >-
       Consulta las bibliotecas públicas de anuncios. Recibe solo los nombres,
-      las páginas y los dominios de sus competidores; ningún dato suyo.
+      las páginas y los dominios de sus competidores, o palabras de su
+      industria para identificarlos; ningún dato suyo.
   - nombre: "Resend"
     para: >-
       Envía los correos con sus reportes. Recibe su correo y el contenido del
@@ -147,7 +148,7 @@ terminos:
         - >-
           Usted se compromete a darnos datos ciertos y a mantener vigente el
           correo donde recibe los reportes. Si no nos indica competidores, los
-          deducimos de su industria y su zona; hacemos lo posible por acertar,
+          deducimos de su industria; hacemos lo posible por acertar,
           pero no lo garantizamos.
     - titulo: "Uso aceptable"
       parrafos:
@@ -320,9 +321,9 @@ privacidad:
     - titulo: "Qué datos guardamos"
       lista:
         - >-
-          Los del formulario: el nombre de su empresa, su nombre, su correo, su
-          WhatsApp si lo da, su industria, el contexto de su negocio, sus
-          competidores y cómo se enteró de nosotros.
+          Los del formulario: el nombre de su empresa, su correo, su
+          industria, el contexto de su negocio, sus competidores y cómo se
+          enteró de nosotros. Y su nombre o su WhatsApp, si nos los da.
         - >-
           Los de su suscripción: plan, forma de pago, estado del cobro y los
           identificadores que Paddle le asigna a usted, a su suscripción y a
@@ -349,10 +350,10 @@ privacidad:
     - titulo: "Qué es obligatorio"
       parrafos:
         - >-
-          Solo el primer paso del formulario: el nombre de su empresa, su
-          nombre y su correo. Sin esos datos no podemos crearle la cuenta ni
-          enviarle el reporte. Todo lo demás es opcional; sin el contexto o sin
-          sus competidores el reporte se puede hacer, pero sale menos preciso.
+          Solo el nombre de su empresa y su correo. Sin esos datos no podemos
+          crearle la cuenta ni enviarle el reporte. Todo lo demás es opcional:
+          si no nos indica competidores, los identificamos nosotros a partir de
+          su industria, y con su contexto el reporte sale más preciso.
     - titulo: "Quién más los recibe"
       parrafos:
         - >-
@@ -413,15 +414,3 @@ privacidad:
           Si la cambiamos, publicaremos la versión nueva en esta página con su
           fecha y se lo avisaremos por correo si el cambio afecta cómo usamos
           sus datos.
-
-# El aviso que va en el formulario, junto a la casilla de aceptación. La Ley
-# 8968 (art. 5) pide que, cuando los datos se piden con un cuestionario, las
-# advertencias figuren en el mismo formulario y de forma legible; la
-# política completa queda enlazada.
-aviso_formulario: >-
-  Sus datos se guardan en la base de clientes de {nombre_comercial}, a cargo
-  de {razon_social}, {direccion}. Los usamos para armar y enviarle sus
-  reportes y para cobrarle por medio de Paddle, y los reciben los proveedores
-  que listamos en la política, algunos fuera de Costa Rica. Solo el primer
-  paso es obligatorio. Puede pedir acceso, corrección o eliminación de sus
-  datos en {correo}.

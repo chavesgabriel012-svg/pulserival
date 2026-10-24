@@ -150,6 +150,16 @@ class FuenteDemo:
         # un dato de demo siempre es identificable en la base.
         self.nombre = f"demo:{plataforma}"
 
+    def buscar(self, consulta: str, limite: int = 40) -> list[AnuncioCrudo]:
+        """La búsqueda por palabra de la demo: los dos competidores inventados
+        de siempre, con su nombre y un id de página fijo."""
+        salida = []
+        for i, nombre in enumerate(("Vital Gym CR", "Club Atlas Escazú"), start=1):
+            for a in self.traer({"id": i, "nombre": nombre}, limite=limite):
+                a.metadata = {**(a.metadata or {}), "anunciante_id": f"demo-pagina-{i}"}
+                salida.append(a)
+        return salida[:limite]
+
     def traer(self, competidor: dict, limite: int = 40) -> list[AnuncioCrudo]:
         semana = int(os.environ.get("PULSERIVAL_DEMO_SEMANA", "1"))
         # Hay dos juegos de anuncios de ejemplo ("a" y "b"). Cada competidor

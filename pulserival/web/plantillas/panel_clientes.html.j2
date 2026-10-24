@@ -1,0 +1,37 @@
+{% extends "_panel.html.j2" %}
+{% block titulo %}Clientes · {{ marca }}{% endblock %}
+{% block contenido %}
+  <h1>Clientes</h1>
+  <p class="sub">Arriba, los que tienen algo que resolver antes de que salga su reporte.</p>
+
+  {% if not clientes %}
+    <p class="vacio">Todavía no hay clientes.</p>
+  {% else %}
+  <table style="margin-top:26px;">
+    <tr>
+      <th>Cliente</th><th>Plan</th><th>Competidores</th><th>Qué revisar</th><th></th>
+    </tr>
+    {% for c in clientes %}
+    <tr>
+      <td data-etiqueta="Cliente"><strong>{{ c.empresa }}</strong><br><span class="sub">{{ c.email }}</span>
+        {% if c.industria %}<br><span class="sub">{{ c.industria }}</span>{% endif %}</td>
+      <td data-etiqueta="Plan">{{ c.plan or '—' }}<br><span class="sub">{{ c.estado or '—' }}</span></td>
+      <td data-etiqueta="Competidores">
+        {% if c.competidores %}{{ c.competidores|length }}
+          {% set ded = c.competidores|selectattr('deducido')|list %}
+          {% if ded %}<br><span class="sub">{{ ded|length }} elegido{{ 's' if ded|length != 1 }} por el sistema</span>{% endif %}
+        {% else %}<span class="marca lleno">Ninguno</span>{% endif %}
+      </td>
+      <td data-etiqueta="Qué revisar">
+        {% if c.reporta and c.problemas %}
+          {% for p in c.problemas %}<span class="sub">{{ p }}</span><br>{% endfor %}
+        {% elif not c.reporta %}<span class="sub">No reporta ({{ c.estado or 'sin estado' }})</span>
+        {% else %}<span class="marca">Todo en orden</span>{% endif %}
+      </td>
+      <td><a class="btn chico{% if not (c.reporta and c.problemas) %} alt{% endif %}"
+             href="{{ url_for('panel.cliente', cid=c.id) }}">Abrir</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+{% endblock %}

@@ -74,16 +74,14 @@ def normalizar_competidor(datos: dict[str, Any]) -> dict[str, Any]:
     if pagina and not pagina.lower().startswith("http"):
         pagina = "https://" + pagina.lstrip("/")
 
-    if not (pagina or consulta or dominio):
-        raise AltaInvalida(
-            f"De '{nombre}' hace falta al menos su página de Facebook, un término "
-            "de búsqueda, o su dominio. Sin ninguno de los tres no hay dónde buscar.")
-
+    # Con el nombre alcanza: en Meta se lo busca por palabra y en Google por
+    # nombre de anunciante. La página y el dominio solo afinan la búsqueda.
     return {
         "nombre": nombre,
         "meta_pagina_url": pagina or None,
         "meta_consulta": consulta or (nombre if not pagina else None),
         "google_dominio": dominio or None,
+        "google_anunciante": None if dominio else nombre,
         "prioridad": int(datos.get("prioridad") or 2),
     }
 
@@ -268,14 +266,8 @@ def activar(con: sqlite3.Connection, cliente_id: int,
     fila = db.fila(con, "SELECT * FROM clientes WHERE id = ?", (cliente_id,))
     if not fila:
         raise AltaInvalida(f"No existe el cliente {cliente_id}")
-    # Un cliente sin competidores no se activa. El alta puede llegar sin
-    # ninguno —se ofrece deducirlos— pero activarlo así le generaría un
-    # reporte vacío en la corrida siguiente, con su costo de IA, y el cliente
-    # recibiría un correo que no dice nada.
-    if not db.competidores_de(con, cliente_id):
-        raise AltaInvalida(
-            f"El cliente {cliente_id} no tiene competidores cargados. Agrégueselos "
-            "antes de activarlo: sin competidores el reporte sale vacío.")
+    # Sin competidores también se activa: el ciclo los deduce de su
+    # industria antes de recolectar (pulserival/descubrir.py).
     cambios: dict[str, Any] = {"estado_suscripcion": "activa", "activo": 1}
     if referencia:
         cambios["pago_referencia"] = _texto(referencia)

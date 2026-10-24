@@ -105,7 +105,8 @@ pasos:
     - nombre: "Recolectamos"
       texto: >-
         Cada semana leemos las dos bibliotecas para los competidores que usted
-        nos indique, y guardamos cada anuncio con su ficha pública.
+        nos indique, o que identificamos nosotros a partir de su industria, y
+        guardamos cada anuncio con su ficha pública.
     - nombre: "Comparamos"
       texto: >-
         Cada anuncio se contrasta con lo que vimos antes: cuál es nuevo, cuál
@@ -232,47 +233,38 @@ formulario:
 # El formulario salió de la portada y tiene su propia página, a la que se
 # llega desde los botones de cada plan. Más adelante, ahí mismo se cobra.
 aplicar:
-  # MODO DE PRUEBA. Con `false` el formulario no exige ningún campo para
-  # avanzar ni para enviar: sirve para probar el flujo completo rápido. Si
-  # falta el nombre de la empresa se guarda como "Empresa de prueba", y si
-  # falta el correo, el reporte se manda al correo de soporte de arriba.
-  # VOLVER A `true` ANTES DE LANZAR: `cli landing` lo avisa, y /salud falla
-  # con PADDLE_ENTORNO=production mientras siga en false.
-  campos_obligatorios: false
   titulo: "Empecemos con su reporte"
   nota: >-
-    Nos toma dos minutos. Entre más nos cuente del negocio, mejor sale el
-    reporte: el contexto que solo usted sabe es lo que separa un reporte
-    correcto de uno útil.
+    Con el nombre de su empresa y un correo alcanza. Lo demás es opcional y
+    mejora el reporte.
+  empresa:
+    bajada: "Lo único obligatorio es el nombre y el correo."
+    contexto_etiqueta: "Contexto de su negocio"
+    contexto_ayuda: >-
+      Qué le preocupa, si compite por precio o por servicio, cuántas sedes
+      tiene. Es lo que más sube la calidad del reporte.
   competidores:
     titulo: "Sus competidores"
+    # Una sola línea: el bloque es opcional y no tiene que parecer trabajo.
     opcional: >-
-      Este bloque es opcional. Si prefiere, lo deja en blanco y los
-      averiguamos nosotros.
-    explicacion: >-
-      Si no nos los indica, investigamos su industria y su zona y deducimos
-      quiénes son. Lo hacemos bien, pero no le prometemos acertar: nadie
-      conoce a su competencia como usted. Si hay alguien que le preocupa en
-      particular, dígalo acá y lo cubrimos seguro.
+      Si nos dice a quién sigue, el reporte sale de mejor calidad. Si lo deja
+      en blanco, los identificamos nosotros a partir de su industria.
     ayuda: >-
-      De cada uno sirve su página de Facebook, su dominio, o los dos. Con uno
-      solo alcanza: se cubre esa plataforma y se le avisa de la otra.
-  cierre: >-
-    Al enviar le mostramos un resumen para confirmar. No se activa nada ni se
-    cobra nada hasta que usted lo confirme.
+      Con el nombre alcanza. La página de Facebook o el sitio web ayudan a
+      encontrarlo.
 
-  # Los nombres de los pasos. Solo el primero es obligatorio: el resto mejora
-  # el reporte pero no impide pedirlo. El paso del cobro se agrega acá cuando
-  # haya proveedor conectado (ver docs/08-cobro-y-lanzamiento.md).
+  # Los pasos de la barra. Los tres primeros son el formulario; el cuarto es
+  # el checkout, la página que sigue al enviar. Solo el primero tiene campos
+  # obligatorios: el nombre de la empresa y el correo.
   pasos:
     - nombre: "Su empresa"
       corto: "Empresa"
-    - nombre: "Contexto de su negocio"
-      corto: "Contexto"
     - nombre: "Sus competidores"
       corto: "Competencia"
     - nombre: "Cómo nos conoció"
       corto: "Cómo nos conoció"
+    - nombre: "Pago"
+      corto: "Pago"
 
   # La encuesta del último paso. No cambia nada del reporte: sirve para saber
   # dónde vale la pena poner el tiempo. Por eso es opcional y va al final,

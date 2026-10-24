@@ -103,6 +103,10 @@ def config_legal() -> dict[str, Any]:
     return _yaml("legal.yaml")
 
 
+def config_industrias() -> dict[str, Any]:
+    return _yaml("industrias.yaml")
+
+
 def huella_incluye_creativo() -> bool:
     return bool((config_fuentes().get("deteccion") or {}).get("huella_incluye_creativo", True))
 

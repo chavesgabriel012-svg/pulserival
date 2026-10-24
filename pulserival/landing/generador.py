@@ -55,15 +55,14 @@ def contexto() -> dict[str, Any]:
     datos["legal_nombres"] = {
         clave: (legal.datos().get(clave) or {}).get("titulo") or texto
         for clave, (_, _, texto) in legal.PAGINAS.items()}
-    datos["aviso_datos"] = legal.aviso_formulario()
+    # La lista del campo Industria. Sale del mismo archivo que usa la
+    # deducción de competidores, así lo que se elige es lo que se sabe buscar.
+    from .. import descubrir
+
+    datos["industrias"] = descubrir.nombres_de_industrias()
     datos["legal_version"] = legal.version()
     datos["forma_competidores"] = competidores_del_formulario(datos)
     return datos
-
-
-def campos_obligatorios() -> bool:
-    """False solo en modo de prueba (ver `aplicar.campos_obligatorios`)."""
-    return (config.config_landing().get("aplicar") or {}).get("campos_obligatorios") is not False
 
 
 def competidores_del_formulario(datos: dict[str, Any]) -> int:
@@ -163,10 +162,6 @@ def pendientes() -> list[str]:
         # la Ley 8968 pide identificar al responsable de los datos.
         faltan.append(f"config/legal.yaml: falta {falta} (las páginas legales lo "
                       "muestran como pendiente)")
-    if not campos_obligatorios():
-        faltan.append(
-            "config/landing.yaml: `aplicar.campos_obligatorios` está en false (modo de "
-            "prueba): el formulario no exige nada. Volver a true antes de lanzar")
     if not datos.get("dominio"):
         faltan.append("config/landing.yaml: falta `dominio` (solo sale en el pie)")
     return faltan
