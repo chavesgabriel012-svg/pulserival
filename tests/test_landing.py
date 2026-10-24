@@ -28,17 +28,19 @@ LANDING_BASE = {
     "formulario": {"titulo": "Empecemos", "nota": "Nota"},
     "aplicar": {
         "titulo": "Empecemos con su reporte", "nota": "Nos toma dos minutos.",
+        "empresa": {"bajada": "Lo único obligatorio es el nombre y el correo.",
+                    "contexto_etiqueta": "Contexto de su negocio",
+                    "contexto_ayuda": "Qué le preocupa."},
         "competidores": {
             "titulo": "Sus competidores",
-            "opcional": "Este bloque es opcional.",
-            "explicacion": "Si no nos los indica, los deducimos nosotros.",
-            "ayuda": "Sirve su página de Facebook o su dominio.",
+            "opcional": "Si nos dice a quién sigue, el reporte sale de mejor calidad. "
+                        "Si lo deja en blanco, los identificamos nosotros.",
+            "ayuda": "Con el nombre alcanza.",
         },
-        "cierre": "No se cobra nada hasta que usted lo confirme.",
         "pasos": [{"nombre": "Su empresa", "corto": "Empresa"},
-                  {"nombre": "Contexto", "corto": "Contexto"},
                   {"nombre": "Sus competidores", "corto": "Competencia"},
-                  {"nombre": "Cómo nos conoció", "corto": "Cómo nos conoció"}],
+                  {"nombre": "Cómo nos conoció", "corto": "Cómo nos conoció"},
+                  {"nombre": "Pago", "corto": "Pago"}],
         "origen": {"titulo": "¿Cómo se enteró de PulseRival?", "opcional": "Opcional",
                    "ayuda": "No cambia nada de su reporte.",
                    "etiqueta": "Elija la que más se acerque",
@@ -381,9 +383,10 @@ class TestMovil(CasoPaginas):
 class TestAplicar(CasoPaginas):
     def test_tiene_el_formulario_completo(self):
         h = self.aplicar()
-        for campo in ("empresa", "contacto", "email", "plan", "industria",
-                      "contexto"):
+        for campo in ("empresa", "email", "plan", "industria", "contexto"):
             self.assertIn(f'name="{campo}"', h)
+        # Su nombre ya no se pide: con la empresa y el correo alcanza.
+        self.assertNotIn('name="contacto"', h)
         # Cómo pagar (mes a mes o el año) se elige en el checkout, no acá.
         self.assertNotIn('name="ciclo"', h)
 
@@ -395,23 +398,25 @@ class TestAplicar(CasoPaginas):
     def test_los_competidores_son_opcionales_y_lo_dice(self):
         h = self.aplicar()
         self.assertIn("Opcional", h)
-        self.assertIn("los deducimos nosotros", h)
+        self.assertIn("los identificamos nosotros", h)
 
-    def test_no_promete_acertar_los_competidores_deducidos(self):
+    def test_los_competidores_mejoran_el_reporte_sin_prometer_de_mas(self):
         # Deducirlos y prometer que son los correctos son cosas distintas.
-        # Lo segundo se descubre en el primer reporte, y mal.
-        h = self.aplicar(landing={"aplicar": {
-            **LANDING_BASE["aplicar"],
-            "competidores": {**LANDING_BASE["aplicar"]["competidores"],
-                             "explicacion": "Lo hacemos bien, pero no le prometemos acertar."},
-        }})
-        self.assertIn("no le prometemos acertar", h)
+        import yaml
+
+        real = yaml.safe_load((construir_mod.config.DIR_CONFIG / "landing.yaml")
+                              .read_text(encoding="utf-8"))
+        texto = real["aplicar"]["competidores"]["opcional"].lower()
+        self.assertIn("mejor calidad", texto)
+        for promesa in ("garantiz", "acertamos", "seguro"):
+            self.assertNotIn(promesa, texto)
 
     def test_el_formulario_va_por_pasos(self):
         h = self.aplicar()
-        # Cuatro bloques, cada uno con su numero de paso.
-        for n in (1, 2, 3, 4):
+        # Tres bloques; el cuarto paso de la barra es el checkout.
+        for n in (1, 2, 3):
             self.assertIn(f'data-paso="{n}"', h)
+        self.assertNotIn('data-paso="4"', h)
         self.assertIn("Continuar", h)
         self.assertIn("Atrás", h)
 
@@ -431,11 +436,11 @@ class TestAplicar(CasoPaginas):
         return trozo[:min(cortes)] if cortes else trozo
 
     def test_solo_el_primer_paso_es_obligatorio(self):
-        # Los otros tres mejoran el reporte pero no impiden pedirlo: si
-        # alguno bloqueara, la persona se va antes de terminar.
+        # Los otros mejoran el reporte pero no impiden pedirlo: si alguno
+        # bloqueara, la persona se va antes de terminar.
         h = self.aplicar()
         self.assertIn("required", self.bloque_del_paso(h, 1))
-        for n in (2, 3, 4):
+        for n in (2, 3):
             with self.subTest(paso=n):
                 self.assertNotIn("required", self.bloque_del_paso(h, n))
 

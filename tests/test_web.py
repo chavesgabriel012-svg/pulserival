@@ -8,6 +8,7 @@ reportar.
 """
 from __future__ import annotations
 
+import re
 import unittest
 
 from pulserival import db
@@ -159,17 +160,24 @@ class TestAlta(CasoWeb):
         fila = db.fila(self.con, "SELECT * FROM clientes ORDER BY id DESC LIMIT 1")
         self.assertIn("servicio", fila["notas"])
 
-    def test_rechaza_un_competidor_sin_dónde_buscar(self):
-        # pipeline._tiene_datos_para() exige al menos un campo por
-        # plataforma. Aceptarlo acá sería fallar callado el lunes.
+    def test_un_competidor_con_solo_el_nombre_se_acepta_y_se_puede_buscar(self):
+        # Cambió a propósito: con el nombre alcanza. En Meta se lo busca por
+        # palabra y en Google por nombre de anunciante; la página y el
+        # dominio solo afinan la búsqueda.
+        from pulserival import pipeline
+
         r = self.alta(comp1="Solo Un Nombre", fb1="", web1="")
-        self.assertEqual(r.status_code, 400)
-        self.assertEqual(db.filas(self.con, "SELECT * FROM clientes"), [])
+        self.assertEqual(r.status_code, 302)
+        fila = db.fila(self.con, "SELECT * FROM clientes ORDER BY id DESC LIMIT 1")
+        comp = dict(db.competidores_de(self.con, int(fila["id"]))[0])
+        self.assertEqual(comp["meta_consulta"], "Solo Un Nombre")
+        self.assertEqual(comp["google_anunciante"], "Solo Un Nombre")
+        for plataforma in ("meta", "google"):
+            self.assertTrue(pipeline._tiene_datos_para(comp, plataforma))
 
     def test_un_alta_sin_competidores_se_acepta(self):
         # Cambió a propósito. La página ofrece deducir los competidores cuando
-        # el cliente no los indica, así que el alta entra sin ninguno. Lo que
-        # NO se puede es activarla así: eso lo prueba el test de abajo.
+        # el cliente no los indica, así que el alta entra sin ninguno.
         r = self.alta(comp1="", fb1="", web1="")
         self.assertEqual(r.status_code, 302)
         fila = db.fila(self.con, "SELECT * FROM clientes ORDER BY id DESC LIMIT 1")
@@ -199,16 +207,16 @@ class TestAlta(CasoWeb):
         fila = db.fila(self.con, "SELECT * FROM clientes ORDER BY id DESC LIMIT 1")
         self.assertIsNone(fila["origen"])
 
-    def test_un_cliente_sin_competidores_NO_se_puede_activar(self):
-        # Activarlo generaría un reporte vacío en la corrida siguiente, con su
-        # costo de IA, y el cliente recibiría un correo que no dice nada.
+    def test_un_cliente_sin_competidores_se_activa_igual(self):
+        # Cambió a propósito: el reporte le llega igual, porque el ciclo le
+        # deduce los competidores de su industria antes de recolectar.
         from pulserival import altas
 
         self.alta(comp1="", fb1="", web1="")
         fila = db.fila(self.con, "SELECT * FROM clientes ORDER BY id DESC LIMIT 1")
-        with self.assertRaises(altas.AltaInvalida) as e:
-            altas.activar(self.con, int(fila["id"]))
-        self.assertIn("competidores", str(e.exception))
+        altas.activar(self.con, int(fila["id"]))
+        fila = db.fila(self.con, "SELECT * FROM clientes WHERE id = ?", (fila["id"],))
+        self.assertEqual(fila["estado_suscripcion"], "activa")
 
     def test_rechaza_un_correo_invalido(self):
         r = self.alta(email="no-es-un-correo")
@@ -464,50 +472,59 @@ class TestCorreoDeSoporte(CasoWeb):
         self.assertIn("soporte@pulserival.com", r.get_data(as_text=True))
 
 
-class TestFormularioEnModoDePrueba(CasoWeb):
-    """`aplicar.campos_obligatorios: false` en config/landing.yaml: para probar
-    el flujo completo sin llenar nada. Tiene que volver a true antes de lanzar."""
+class TestFormularioDefinitivo(CasoWeb):
+    """Lo único obligatorio es el nombre de la empresa y el correo. Con eso
+    se deducen los competidores y el reporte sale igual."""
 
-    def test_un_formulario_vacio_entra_igual(self):
-        r = self.cliente_web.post("/alta", data={"plan": "autoservicio", "acepto": "si"})
+    def test_con_nombre_y_correo_alcanza(self):
+        r = self.cliente_web.post("/alta", data={
+            "plan": "autoservicio", "acepto": "si",
+            "empresa": "Ferretería El Roble", "email": "ana@roble.test"})
         self.assertEqual(r.status_code, 302)
         fila = db.fila(self.con, "SELECT * FROM clientes ORDER BY id DESC LIMIT 1")
-        self.assertEqual(fila["nombre_empresa"], "Empresa de prueba")
-        # Sin correo, el reporte va al de soporte: así igual llega a alguien.
-        self.assertEqual(fila["contacto_email"], "soporte@pulserival.com")
+        self.assertEqual(fila["nombre_empresa"], "Ferretería El Roble")
+        self.assertEqual(db.competidores_de(self.con, int(fila["id"])), [])
 
-    def test_el_formulario_no_marca_nada_como_obligatorio(self):
+    def test_sin_nombre_o_sin_correo_no_entra(self):
+        for faltante in ("empresa", "email"):
+            datos = {"plan": "autoservicio", "acepto": "si",
+                     "empresa": "Ferretería El Roble", "email": "ana@roble.test"}
+            datos[faltante] = ""
+            with self.subTest(falta=faltante):
+                r = self.cliente_web.post("/alta", data=datos)
+                self.assertEqual(r.status_code, 400)
+        self.assertEqual(db.filas(self.con, "SELECT * FROM clientes"), [])
+
+    def html_del_formulario(self) -> str:
         h = self.cliente_web.get("/aplicar").get_data(as_text=True)
-        forma = h.split("<form", 1)[1].split("</form>", 1)[0]
-        for campo in ("empresa", "contacto", "email"):
-            with self.subTest(campo=campo):
-                self.assertNotRegex(forma, rf'name="{campo}"[^>]*required')
+        return h.split("<form", 1)[1].split("</form>", 1)[0]
 
-    def test_cli_landing_avisa_que_esta_en_modo_de_prueba(self):
-        from pulserival.landing import generador
+    def test_solo_el_nombre_y_el_correo_son_obligatorios(self):
+        forma = self.html_del_formulario()
+        obligatorios = re.findall(r'name="(\w+)"[^>]*required', forma)
+        self.assertEqual(sorted(obligatorios), ["acepto", "email", "empresa"])
+        self.assertNotIn('name="contacto"', forma)
 
-        self.assertTrue(any("campos_obligatorios" in f for f in generador.pendientes()))
+    def test_la_industria_es_una_lista_y_no_texto_libre(self):
+        from pulserival import descubrir
 
-    def test_en_produccion_salud_no_deja_pasar_el_modo_de_prueba(self):
-        from unittest import mock
+        forma = self.html_del_formulario()
+        self.assertIn('<select id="industria" name="industria">', forma)
+        for nombre in descubrir.nombres_de_industrias():
+            self.assertIn(f'<option value="{nombre}">', forma)
 
-        from pulserival import pagos
+    def test_son_tres_pasos_y_el_cuarto_es_el_pago(self):
+        forma = self.html_del_formulario()
+        self.assertEqual(len(re.findall(r'class="grupo paso sube" data-paso="\d"', forma)), 3)
+        self.assertIn('class="despues"><span class="n">4</span>Pago', forma)
+        # El contexto del negocio va en el primer paso, no en uno propio.
+        primero = forma.split('data-paso="1"', 1)[1].split('data-paso="2"', 1)[0]
+        self.assertIn('name="contexto"', primero)
 
-        with mock.patch.dict("os.environ", {"PADDLE_ENTORNO": "production"}):
-            faltan = pagos.pendientes()
-        self.assertTrue(any("campos_obligatorios" in f for f in faltan))
-
-    def test_con_el_modo_apagado_los_datos_vuelven_a_ser_obligatorios(self):
-        import copy
-        from unittest import mock
-
-        from pulserival import config
-
-        real = config.config_landing()
-        normal = copy.deepcopy(real)
-        normal["aplicar"]["campos_obligatorios"] = True
-        with mock.patch.object(config, "config_landing", return_value=normal):
-            r = self.cliente_web.post("/alta", data={"plan": "autoservicio", "acepto": "si"})
-            h = self.cliente_web.get("/aplicar").get_data(as_text=True)
-        self.assertEqual(r.status_code, 400)
-        self.assertRegex(h, r'name="email"[^>]*required')
+    def test_al_final_solo_queda_la_casilla(self):
+        forma = self.html_del_formulario()
+        self.assertNotIn("data-cierre", forma)
+        self.assertNotIn("aviso-datos", forma)
+        bloque = forma.split('id="bloque-acepto"', 1)[1].split("</div>", 1)[0]
+        self.assertIn('name="acepto"', bloque)
+        self.assertNotIn("<p", bloque)

@@ -113,10 +113,6 @@ def pagina(clave: str) -> dict[str, Any]:
     }
 
 
-def aviso_formulario() -> list[dict[str, Any]]:
-    return rellenar(datos().get("aviso_formulario"))
-
-
 def version() -> str:
     """Qué versión de los textos aceptó un cliente: la fecha de actualización."""
     return str(datos().get("actualizado") or "")

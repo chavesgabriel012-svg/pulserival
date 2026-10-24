@@ -1,0 +1,55 @@
+# ─────────────────────────────────────────────────────────────────────
+#  Las industrias del formulario, y cómo se buscan sus competidores.
+#
+#  El formulario muestra `nombre` en una lista desplegable. Cuando un
+#  cliente no indica competidores, el ciclo los deduce: busca en la
+#  Biblioteca de Anuncios de Meta (Costa Rica) los términos de `busqueda`
+#  de su industria y toma a los anunciantes con más anuncios activos, menos
+#  al propio cliente. Ver pulserival/descubrir.py.
+#
+#  Los términos son palabras que un anuncio de esa industria usaría, no el
+#  nombre de la categoría: "ferretería" encuentra ferreterías; "comercio
+#  minorista" no encuentra nada.
+#
+#  Agregar una industria es agregar una entrada acá. "Otra" no lleva
+#  términos: ahí la búsqueda sale de la primera palabra del nombre de la
+#  empresa ("Ferretería El Roble" busca "Ferretería").
+# ─────────────────────────────────────────────────────────────────────
+
+industrias:
+  - nombre: "Ferretería y construcción"
+    busqueda: ["ferretería", "materiales de construcción"]
+  - nombre: "Restaurantes y cafeterías"
+    busqueda: ["restaurante", "cafetería"]
+  - nombre: "Supermercados y abarrotes"
+    busqueda: ["supermercado", "abarrotes"]
+  - nombre: "Gimnasios y deporte"
+    busqueda: ["gimnasio", "entrenamiento funcional"]
+  - nombre: "Salud, clínicas y farmacias"
+    busqueda: ["clínica", "farmacia"]
+  - nombre: "Odontología"
+    busqueda: ["clínica dental", "odontología"]
+  - nombre: "Belleza y estética"
+    busqueda: ["salón de belleza", "estética"]
+  - nombre: "Moda, ropa y calzado"
+    busqueda: ["tienda de ropa", "zapatería"]
+  - nombre: "Tecnología y electrónica"
+    busqueda: ["tienda de tecnología", "celulares"]
+  - nombre: "Electrodomésticos y muebles"
+    busqueda: ["electrodomésticos", "mueblería"]
+  - nombre: "Automotriz"
+    busqueda: ["agencia de autos", "taller mecánico"]
+  - nombre: "Bienes raíces"
+    busqueda: ["bienes raíces", "condominio"]
+  - nombre: "Turismo y hospedaje"
+    busqueda: ["hotel", "tour"]
+  - nombre: "Educación y cursos"
+    busqueda: ["cursos", "academia"]
+  - nombre: "Servicios financieros y seguros"
+    busqueda: ["préstamos", "seguros"]
+  - nombre: "Mascotas y veterinarias"
+    busqueda: ["veterinaria", "tienda de mascotas"]
+  - nombre: "Servicios profesionales"
+    busqueda: ["abogados", "contabilidad"]
+  - nombre: "Otra"
+    busqueda: []

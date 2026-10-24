@@ -228,13 +228,10 @@ def crear_app(ruta_db: str | None = None, deposito=None) -> Flask:
             return _pagina("No pudimos completar el registro",
                            f"El plan incluye hasta {tope} competidores.", volver=True), 400
 
+        # Lo único obligatorio: el nombre de la empresa y el correo. Si faltan,
+        # `altas.preparar` lo dice. Los competidores, si no vienen, se deducen.
         empresa = (datos.get("empresa") or "").strip()
         email = (datos.get("email") or "").strip()
-        if not generador.campos_obligatorios():
-            # Modo de prueba: nada es obligatorio. Lo que falte se completa
-            # para que el alta entre y el flujo siga hasta el envío.
-            empresa = empresa or "Empresa de prueba"
-            email = email or (config.config_landing().get("contacto") or {}).get("email") or ""
         try:
             resultado = deposito.guardar({
                 "empresa": empresa,

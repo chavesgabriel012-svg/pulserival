@@ -143,10 +143,14 @@ class TestConsentimiento(CasoWeb):
         self.assertEqual(fila["consentimiento_version"], legal.version())
         self.assertTrue(fila["consentimiento_en"])
 
-    def test_el_formulario_lleva_la_casilla_y_el_aviso(self):
+    def test_el_formulario_lleva_la_casilla_con_los_enlaces(self):
+        # Solo la casilla: el detalle de qué datos se guardan está en la
+        # Política de privacidad, que la casilla enlaza.
         h = self.cliente_web.get("/aplicar").get_data(as_text=True)
-        self.assertIn('name="acepto"', h)
-        self.assertIn("base de clientes", h)
+        bloque = h.split('id="bloque-acepto"', 1)[1].split("</div>", 1)[0]
+        self.assertIn('name="acepto"', bloque)
+        self.assertIn('href="/terminos"', bloque)
+        self.assertIn('href="/privacidad"', bloque)
 
     def test_aplicar_config_no_borra_la_constancia(self):
         # Mover la entrada de config/altas/ a clientes.yaml sin copiar estos

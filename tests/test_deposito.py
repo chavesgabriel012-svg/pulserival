@@ -121,7 +121,7 @@ class TestLoQueDeposita(CasoGitHub):
             ({"email": "no-es-un-correo"}, "correo"),
             ({"empresa": ""}, "empresa"),
             ({"plan": "inventado"}, "plan"),
-            ({"competidores": [{"nombre": "Sin datos"}]}, "Facebook"),
+            ({"competidores": [{"nombre": ""}]}, "competidor"),
         ]
         for cambio, esperado in casos:
             with self.subTest(cambio=cambio):
@@ -136,7 +136,6 @@ class TestLoQueDeposita(CasoGitHub):
     def test_un_alta_sin_competidores_se_deposita_igual(self):
         # Cambió a propósito: la página ofrece deducir los competidores si el
         # cliente no los indica, así que cero competidores es un alta válida.
-        # El seguro se mudó a `activar()`, que no deja activar a ciegas.
         with mock.patch("requests.put", return_value=RespuestaFalsa()) as put:
             resultado = self.deposito.guardar({**self.alta, "competidores": []})
         self.assertEqual(resultado["competidores"], 0)

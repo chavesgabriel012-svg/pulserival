@@ -500,6 +500,12 @@ def cmd_ciclo(args) -> int:
     with db.sesion() as con:
         res = pipeline.ciclo_completo(con, cliente_id=args.cliente, modo=args.modo,
                                       limite=args.limite, solo_reporte=args.solo_reporte)
+    for d in res.get("deducidos") or []:
+        if d["agregados"]:
+            ok(f"{d['cliente']}: competidores deducidos de su industria: "
+               f"{', '.join(d['agregados'])}. Revíselos antes de enviar el reporte.")
+        else:
+            aviso(f"{d['cliente']}: no se pudieron deducir competidores ({d.get('motivo')})")
     t = res["totales"]
     ok(f"Corrida #{res['corrida_id']}: {t['nuevos']} nuevos · {t['cambiados']} cambiados · "
        f"{t['pausados']} se cayeron · costo IA ${res['costo_ia_usd']}")

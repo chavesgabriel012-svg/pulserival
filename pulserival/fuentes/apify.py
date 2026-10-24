@@ -116,6 +116,20 @@ class FuenteApify:
         )
         return anuncios
 
+    def buscar(self, consulta: str, limite: int = 40) -> list[AnuncioCrudo]:
+        """Anuncios de CUALQUIER anunciante que contengan la consulta.
+
+        Es lo que usa la deducción de competidores (pulserival/descubrir.py):
+        a diferencia de `traer`, no filtra por anunciante, porque lo que se
+        busca es justamente quiénes anuncian. Solo Meta busca por palabra.
+        """
+        if self.plataforma != "meta":
+            raise FuenteError("La búsqueda por palabra clave solo existe en Meta")
+        entrada = self.construir_entrada({"nombre": consulta, "meta_consulta": consulta}, limite)
+        crudos = self._correr_actor(entrada)
+        self._guardar_crudo({"id": "busqueda"}, crudos)
+        return [a for a in (self.mapear(item) for item in crudos) if a and not a.vacio()]
+
     # ── traducción a AnuncioCrudo usando el mapeo del YAML ───────────
     def mapear(self, item: dict) -> AnuncioCrudo | None:
         if not isinstance(item, dict):

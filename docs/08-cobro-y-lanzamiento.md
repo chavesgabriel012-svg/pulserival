@@ -261,8 +261,8 @@ No tiene checkout ni automatización de alta. El flujo es:
    con ese `txn_...`, el webhook lo encuentra y lo activa. Las renovaciones
    siguen solas.
 
-4. Cargar sus competidores con `competidores agregar`, como siempre. Un
-   cliente sin competidores no genera reporte aunque esté pagando.
+4. Cargar sus competidores con `competidores agregar`, si los conoce. Si
+   no, el ciclo los deduce de su industria (ver la sección 5.6).
 
 Si el link se arma después, se agrega con
 `clientes editar --id <id> --paddle-transaccion txn_...`. Sin ese id el
@@ -289,12 +289,10 @@ sandbox ya están en `config/planes.yaml`
 (`pri_01m5e45724vbn47qn7gyxbggzp` mensual, `pri_01m5e47k5y0y4ajxme9b4h5wjh`
 anual).
 
-**El formulario está en modo de prueba**
-(`aplicar.campos_obligatorios: false` en `config/landing.yaml`): no exige
-nada para avanzar ni para enviar. Sin nombre de empresa se guarda "Empresa de
-prueba" y sin correo el reporte va a `soporte@pulserival.com`. Lo único que
-sigue pidiendo es la casilla de aceptación, porque es la constancia del
-consentimiento. **Volver a `true` antes de lanzar.**
+**El formulario** tiene tres pasos y el cuarto es el pago: (1) la empresa:
+nombre y correo, obligatorios, más la industria y el contexto, opcionales;
+(2) los competidores, opcionales; (3) cómo nos conoció. Al final, solo la
+casilla de aceptación de los Términos y la Política de privacidad.
 
 1. **Variables en Railway:** `PULSERIVAL_COBRO=paddle`,
    `PADDLE_ENTORNO=sandbox`, `PADDLE_CLIENT_TOKEN` (el `test_...` del panel de
@@ -306,10 +304,9 @@ consentimiento. **Volver a `true` antes de lanzar.**
    sección 3, y el link de pago por defecto en `https://<su-dominio>/pagar`.
 3. **`/salud` tiene que responder 200.** Si responde 500, la lista dice qué
    falta.
-4. **Llenar el formulario.** Para que salga un reporte hace falta **al menos
-   un competidor** (paso 3) con su página de Facebook o su dominio: sin
-   competidores el ciclo no le genera reporte a nadie, a propósito. Poner su
-   propio correo si quiere recibirlo ahí.
+4. **Llenar el formulario.** Con el nombre y el correo alcanza. Si no pone
+   competidores, el ciclo los deduce de la industria que elija; elegir una
+   ayuda a que la búsqueda acierte.
 5. **Pagar** en el checkout con la tarjeta de prueba que indica la
    documentación de Paddle para sandbox. `/gracias` tiene que pasar sola a
    "activa" en unos segundos.
@@ -324,6 +321,31 @@ consentimiento. **Volver a `true` antes de lanzar.**
    el nombre del cliente tal cual ("Empresa de prueba" si lo dejó vacío).
 9. **Confirmar que llegó** al correo del formulario (o a soporte, si lo dejó
    vacío).
+
+## 5.6 Cuando el cliente no indica competidores
+
+El reporte le llega igual. Antes de recolectar, el ciclo busca en la
+Biblioteca de Anuncios de Meta (Costa Rica) los términos de su industria
+(`config/industrias.yaml`) y agrega como competidores a los anunciantes con
+más anuncios activos, hasta 4, menos al propio cliente. Quedan guardados con
+la nota "Deducido por PulseRival" y el comando `ciclo` los muestra.
+
+- **Por qué los que más anuncian:** son los que se pueden reportar. Uno que no
+  pauta no aparece en ninguna biblioteca.
+- **Por qué solo Meta para buscar:** es la única que busca por palabra y dice
+  quién pautó. En Google se los sigue después por nombre de anunciante.
+- **Revíselos antes de enviar el primer reporte.** La búsqueda por industria
+  puede traer a un anunciante grande que no compite de verdad con el
+  cliente. Se cambian con `competidores editar` o `competidores agregar`, y
+  el reporte se rehace con `ciclo --cliente <id> --solo-reporte`.
+- **Si la búsqueda no encuentra a nadie** (industria "Otra" con un nombre que
+  no dice el rubro, o Apify caído), el ciclo no genera un reporte vacío:
+  avisa para cargarlos a mano.
+- **Cuesta:** una búsqueda de hasta 40 anuncios por término (dos términos por
+  industria), una sola vez por cliente.
+
+Un competidor con solo el nombre también se acepta: en Meta se lo busca por
+palabra y en Google por nombre de anunciante.
 
 ## 6. Lo que falta probar antes de cobrar de verdad
 

@@ -254,11 +254,17 @@ def ciclo_completo(
     from .reporte import generar as generar_mod
     from .revision import flujo
 
+    deducidos: list[dict[str, Any]] = []
     if solo_reporte:
         # Regenerar el reporte con lo que ya está en la base, sin volver a
         # llamar al scraper. Los anuncios ya se pagaron una vez.
         corrida = Corrida(id=None)
     else:
+        # Quien no indicó competidores recibe el reporte igual: se deducen de
+        # su industria antes de recolectar.
+        from . import descubrir
+
+        deducidos = descubrir.completar(con, cliente_id, modo=modo)
         corrida = recolectar(con, cliente_id, modo=modo, limite=limite, disparada_por="cron")
     presupuesto = Presupuesto()
     reportes: list[dict[str, Any]] = []
@@ -279,12 +285,14 @@ def ciclo_completo(
                            f"'{db.valor(cliente, 'estado_suscripcion')}'",
             })
             continue
-        # Un cliente que pagó sin indicar competidores está esperando que se
-        # los investiguemos. Generarle el reporte igual daría uno que dice
-        # "no hubo movimiento" sin haber mirado a nadie, y cobraría la IA.
+        # Si ni la deducción encontró competidores, un reporte diría "no hubo
+        # movimiento" sin haber mirado a nadie, y cobraría la IA. Se avisa
+        # para cargarlos a mano.
         if not db.competidores_de(con, int(cliente["id"])):
             reportes.append({"cliente": cliente["nombre_empresa"],
-                             "omitido": "no tiene competidores cargados todavía"})
+                             "omitido": "no se pudieron deducir competidores de su industria: "
+                                        "cárguele uno con `competidores agregar` y vuelva a "
+                                        "correr el ciclo"})
             continue
         if not solo_reporte and not _toca_reportar(
                 con, int(cliente["id"]), periodicidad, inicio,
@@ -349,5 +357,6 @@ def ciclo_completo(
         "saltados": corrida.saltados,
         "sospechosas": corrida.sospechosas,
         "reportes": reportes,
+        "deducidos": deducidos,
         "costo_ia_usd": round(presupuesto.gastado_usd, 5),
     }
