@@ -509,7 +509,7 @@ class TestFormularioDefinitivo(CasoWeb):
         from pulserival import descubrir
 
         forma = self.html_del_formulario()
-        self.assertIn('<select id="industria" name="industria">', forma)
+        self.assertIn('<select id="industria" name="industria" data-desplegable>', forma)
         for nombre in descubrir.nombres_de_industrias():
             self.assertIn(f'<option value="{nombre}">', forma)
 
@@ -528,3 +528,45 @@ class TestFormularioDefinitivo(CasoWeb):
         bloque = forma.split('id="bloque-acepto"', 1)[1].split("</div>", 1)[0]
         self.assertIn('name="acepto"', bloque)
         self.assertNotIn("<p", bloque)
+
+
+class TestDetallesDelFormulario(CasoWeb):
+    def html_del_formulario(self) -> str:
+        h = self.cliente_web.get("/aplicar").get_data(as_text=True)
+        return h.split("<form", 1)[1].split("</form>", 1)[0]
+
+    def test_los_obligatorios_llevan_asterisco_y_no_hay_frase_que_lo_explique(self):
+        forma = self.html_del_formulario()
+        primero = forma.split('data-paso="1"', 1)[1].split('data-paso="2"', 1)[0]
+        self.assertEqual(primero.count('<span class="obligatorio" aria-hidden="true">*</span>'), 2)
+        self.assertNotIn("Lo único obligatorio", forma)
+        self.assertNotIn("Opcional", primero)
+
+    def test_el_paso_de_competencia_dice_que_es_opcional(self):
+        forma = self.html_del_formulario()
+        segundo = forma.split('data-paso="2"', 1)[1].split('data-paso="3"', 1)[0]
+        self.assertIn('<span class="opcional">Opcional</span>', segundo)
+        self.assertIn("Competencia<span class=\"opc\"> · opcional</span>", forma)
+
+    def test_las_listas_abren_hacia_abajo(self):
+        # El selector nativo abre hacia arriba cuando le falta lugar; con
+        # mouse se reemplaza por una lista propia que siempre baja.
+        forma = self.html_del_formulario()
+        for campo in ("industria", "origen"):
+            self.assertRegex(forma, rf'<select id="{campo}" name="{campo}" data-desplegable>')
+        h = self.cliente_web.get("/aplicar").get_data(as_text=True)
+        self.assertIn("matchMedia('(pointer: fine)')", h)
+
+    def test_las_paginas_publicas_ya_no_usan_la_letra_monoespaciada(self):
+        r = self.alta()
+        for ruta in ("/", "/aplicar", "/terminos", r.headers["Location"]):
+            with self.subTest(ruta=ruta):
+                h = self.cliente_web.get(ruta).get_data(as_text=True)
+                self.assertNotIn("IBM+Plex+Mono", h)
+                self.assertNotIn("var(--mono)", h)
+
+    def test_el_logo_del_checkout_vuelve_al_inicio(self):
+        # En el checkout y en gracias el logo era una imagen suelta.
+        r = self.alta()
+        h = self.cliente_web.get(r.headers["Location"]).get_data(as_text=True)
+        self.assertIn('<a href="/" aria-label="PulseRival, ir al inicio" class="logo-inicio">', h)

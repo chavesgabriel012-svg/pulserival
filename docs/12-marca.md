@@ -49,8 +49,11 @@ en degradado.
 | `LINEA_OSCURA` | `#3A3834` | divisores sobre fondo oscuro |
 | `TEXTO_OSCURO_2` | `#B5B0A6` | texto secundario sobre fondo oscuro |
 
-Las tipografías son Schibsted Grotesk (títulos), Source Serif 4 (cuerpo) e
-IBM Plex Mono (rótulos). En el correo no se cargan: ningún cliente de correo
+Las tipografías son Schibsted Grotesk (títulos y rótulos) y Source Serif 4
+(cuerpo). En las páginas públicas los rótulos ("EL PRIMER PASO", "SU EMPRESA")
+iban en IBM Plex Mono; desde octubre de 2026 usan Schibsted, para que la
+página tenga una sola voz. El panel de administración sigue usando IBM Plex
+Mono en sus etiquetas. En el correo no se cargan: ningún cliente de correo
 garantiza fuentes web, así que ahí se usan las pilas del sistema. Es a
 propósito y no hace falta arreglarlo.
 

@@ -9,7 +9,7 @@
 <link rel="icon" href="{{ marca_url }}/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
 <style>
   /* Mismos tokens de marca que las páginas públicas. */
   :root {
@@ -19,7 +19,6 @@
     --texto-osc-2:#B5B0A6; --radio:6px;
     --display:'Schibsted Grotesk',system-ui,-apple-system,sans-serif;
     --cuerpo:'Source Serif 4',Georgia,serif;
-    --mono:'IBM Plex Mono',ui-monospace,monospace;
   }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--papel); color:var(--tinta); line-height:1.55;
@@ -28,9 +27,11 @@
   a { color:var(--tinta); }
   header { background:var(--tinta); padding:20px 0; }
   header img { display:block; height:24px; width:auto; }
+  header .logo-inicio { display:inline-flex; align-items:center; min-height:44px; }
+  header .logo-inicio:hover { opacity:.75; }
   h1 { font-family:var(--display); font-size:30px; line-height:1.15; margin:0 0 16px;
        letter-spacing:-.02em; font-weight:700; }
-  h2 { font-family:var(--mono); font-size:12px; text-transform:uppercase;
+  h2 { font-family:var(--display); font-size:12px; text-transform:uppercase;
        letter-spacing:.1em; margin:36px 0 18px; color:var(--pulso-texto);
        font-weight:500; }
   /* Solo arriba y abajo: `padding:56px 0` le pisaba a `.env` el margen de
@@ -48,7 +49,7 @@
           border-radius:0 var(--radio) var(--radio) 0; margin:24px 0; }
   .aviso { border:1.5px solid var(--pulso); background:var(--blanco); padding:16px 18px;
            font-size:15px; margin:0 0 28px; border-radius:var(--radio); }
-  .aviso strong { font-family:var(--mono); text-transform:uppercase;
+  .aviso strong { font-family:var(--display); text-transform:uppercase;
                   letter-spacing:.1em; font-size:12px; color:var(--pulso-texto);
                   font-weight:500; }
   table { width:100%; border-collapse:collapse; font-size:16px; }
@@ -56,10 +57,10 @@
            vertical-align:top; }
   th { width:40%; color:var(--gris-texto); font-family:var(--display);
        font-weight:600; font-size:14px; }
-  .pill { font-family:var(--mono); font-size:12px; letter-spacing:.08em;
+  .pill { font-family:var(--display); font-size:12px; letter-spacing:.08em;
           color:var(--piedra); }
   footer { background:var(--tinta); color:var(--texto-osc-2); padding:26px 0;
-           font-family:var(--mono); font-size:12px; letter-spacing:.06em;
+           font-family:var(--display); font-size:12px; letter-spacing:.06em;
            margin-top:48px; }
   footer .pie-legal { display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:12px;
                       font-size:12.5px; }
@@ -80,7 +81,10 @@
 </head>
 <body>
 <header><div class="env">
-  <img src="{{ marca_url }}/logo-negativo.svg" alt="{{ marca }}">
+  {# El logo vuelve al inicio, igual que en las páginas públicas. #}
+  <a href="{{ inicio_url|default('/') }}" aria-label="{{ marca }}, ir al inicio" class="logo-inicio">
+    <img src="{{ marca_url }}/logo-negativo.svg" alt="{{ marca }}">
+  </a>
 </div></header>
 <div class="env cuerpo">{% block contenido %}{% endblock %}</div>
 <footer><div class="env">{{ marca }}{% if dominio %} &middot; {{ dominio }}{% endif %}

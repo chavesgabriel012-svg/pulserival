@@ -238,7 +238,6 @@ aplicar:
     Con el nombre de su empresa y un correo alcanza. Lo demás es opcional y
     mejora el reporte.
   empresa:
-    bajada: "Lo único obligatorio es el nombre y el correo."
     contexto_etiqueta: "Contexto de su negocio"
     contexto_ayuda: >-
       Qué le preocupa, si compite por precio o por servicio, cuántas sedes
@@ -261,6 +260,7 @@ aplicar:
       corto: "Empresa"
     - nombre: "Sus competidores"
       corto: "Competencia"
+      opcional: true
     - nombre: "Cómo nos conoció"
       corto: "Cómo nos conoció"
     - nombre: "Pago"
