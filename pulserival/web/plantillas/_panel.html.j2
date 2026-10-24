@@ -98,6 +98,16 @@
     text-transform:uppercase; letter-spacing:.1em; color:var(--piedra);
     margin:16px 0 6px; }
   .campos { display:grid; gap:0; }
+  label.casilla { display:flex; gap:9px; align-items:center; text-transform:none;
+                  letter-spacing:0; font-family:var(--cuerpo); font-size:14px;
+                  color:var(--tinta); margin:10px 0 12px; cursor:pointer; }
+  label.casilla input { width:18px; height:18px; accent-color:var(--pulso); margin:0; }
+  details.competidor { background:var(--blanco); border:1px solid var(--linea);
+                       border-radius:var(--radio); padding:0 16px 14px; margin:0 0 12px; }
+  details.competidor summary { border-bottom:0; text-transform:none; letter-spacing:0;
+                               font-family:var(--display); font-size:15px; color:var(--tinta); }
+  details.competidor .marca { margin-left:6px; }
+  .btn[disabled] { opacity:.45; cursor:not-allowed; }
   iframe { width:100%; height:760px; border:1px solid var(--linea); background:#fff; }
   .vacio { color:var(--piedra); font-size:16px; padding:28px 0; }
   .descargas { display:flex; align-items:center; gap:10px; flex-wrap:wrap;
@@ -172,6 +182,7 @@
     input[type=text], input[type=password], select { padding:14px 13px; }
   }
 </style>
+{% block cabeza %}{% endblock %}
 </head>
 <body>
 <header><div class="env">
@@ -180,6 +191,7 @@
   </a>
   <nav>
     <a class="nav-bandeja" href="{{ url_for('panel.bandeja') }}">Bandeja</a>
+    <a href="{{ url_for('panel.clientes') }}">Clientes</a>
     <a href="{{ url_for('panel.gasto') }}">Gasto</a>
     {% if csrf %}
     <form method="post" action="{{ url_for('panel.salir') }}" style="display:inline;">
@@ -190,5 +202,6 @@
   </nav>
 </div></header>
 <div class="env cuerpo">{% block contenido %}{% endblock %}</div>
+{% block guion %}{% endblock %}
 </body>
 </html>

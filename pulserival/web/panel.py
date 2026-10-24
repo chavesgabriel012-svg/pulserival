@@ -8,10 +8,11 @@ sigue yendo a `ediciones_registradas`, que es el activo que permite ajustar los
 prompts con evidencia. Revisar por el panel no pierde nada de lo que se gana
 revisando el .md.
 
-Lo que el panel NO hace, a propósito:
-  - no genera ni recolecta: eso gasta plata de scraper y de IA, y un botón que
-    gasta es un botón que se aprieta sin pensar. Lo dispara el cron.
-  - no administra clientes: sigue siendo `cli clientes`.
+Lo que gasta plata (buscar competidores, recolectar, rehacer un reporte) sí
+se puede disparar desde la página de cada cliente (panel_clientes.py), pero
+con una casilla de confirmación que dice cuánto cuesta: un botón que gasta
+es un botón que se aprieta sin pensar. Dar de alta, cobrar y dar de baja
+sigue siendo `cli clientes`.
 
 Sobre el acceso: el panel muestra datos de clientes y puede mandarles correos.
 Si no hay contraseña configurada **no se sirve**; no queda abierto. Un panel
@@ -161,10 +162,15 @@ def bandeja():
             filtro="r.estado IN ('borrador','revisado')"))
         historial = db.filas(con, _SQL_BANDEJA.format(
             filtro="r.estado IN ('enviado','descartado')") + " LIMIT 25")
+        # Los clientes con algo que resolver: sin competidores, con
+        # competidores elegidos por el sistema o que nunca trajeron anuncios.
+        from .panel_clientes import atencion
+
+        atender = atencion(con)
     finally:
         con.close()
     return render_template(
-        "panel_bandeja.html.j2", **_contexto(), csrf=_token_csrf(),
+        "panel_bandeja.html.j2", **_contexto(), csrf=_token_csrf(), atender=atender,
         pendientes=[_resumen(f) for f in pendientes],
         historial=[_resumen(f) for f in historial])
 
@@ -215,6 +221,12 @@ def ver(rid: int):
             abort(404)
         datos = db.leer_json(fila["datos_json"], {}) or {}
         dudosos = pipeline.sospechosas_para_cliente(con, int(fila["cid"]), fila["generado_en"])
+        # Lo que hay que resolver de sus competidores, para verlo antes de
+        # aprobar: si los eligió el sistema, o si alguno nunca trajo anuncios.
+        from .panel_clientes import atencion
+
+        problemas_cliente = next((c["problemas"] for c in atencion(con)
+                                  if c["id"] == int(fila["cid"])), [])
     finally:
         con.close()
 
@@ -234,6 +246,8 @@ def ver(rid: int):
                         or datos_mod.agrupar_por_competidor(datos.get("anuncios") or [])),
         conteo=datos.get("conteo") or {},
         dudosos=dudosos,
+        cid=int(fila["cid"]),
+        problemas_cliente=problemas_cliente,
         etiquetas=flujo.ETIQUETAS_VALIDAS,
         modelo=f"{fila['proveedor_ia'] or '?'}/{fila['modelo_ia'] or '?'}",
         puede_enviar=fila["estado"] == "revisado",
@@ -436,3 +450,8 @@ def _mensaje(titulo: str, mensaje: str, codigo: int = 200,
     html = render_template("panel_mensaje.html.j2", **_contexto(),
                            titulo_pagina=titulo, mensaje=mensaje, volver=volver)
     return (html, codigo) if codigo != 200 else html
+
+
+# Las páginas de clientes y competidores registran sus rutas en este mismo
+# blueprint. Van al final porque usan las utilidades de arriba.
+from . import panel_clientes  # noqa: E402,F401

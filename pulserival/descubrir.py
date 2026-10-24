@@ -23,7 +23,7 @@ import sqlite3
 import unicodedata
 from typing import Any
 
-from . import config, db, planes
+from . import altas, config, db, planes
 from .fuentes import FuenteError, obtener_fuente
 
 # Cuántos competidores se deducen. Los mismos que admite el plan de $25.
@@ -87,6 +87,13 @@ def deducir(con: sqlite3.Connection, cliente: Any, modo: str = "auto",
 
     fuente = obtener_fuente("meta", modo)
     generico = set().union(*(_palabras(t) for t in lista))
+    # Los que ya tiene, incluidos los que se quitaron: si alguien sacó a un
+    # competidor deducido, volver a buscar no tiene que traerlo de vuelta.
+    ya = db.filas(con, "SELECT nombre, clave, meta_pagina_id FROM competidores_seguidos "
+                       "WHERE cliente_id = ?", (cid,))
+    claves = {f["clave"] for f in ya if f["clave"]}
+    ya_nombres = {(f["nombre"] or "").strip().lower() for f in ya}
+    ya_ids = {str(f["meta_pagina_id"]) for f in ya if f["meta_pagina_id"]}
     conteo: dict[str, dict[str, Any]] = {}
     errores = []
     for termino in lista:
@@ -99,7 +106,10 @@ def deducir(con: sqlite3.Connection, cliente: Any, modo: str = "auto",
             nombre = (a.anunciante or "").strip()
             if not nombre or es_el_mismo(cliente["nombre_empresa"], nombre, generico):
                 continue
-            clave = str((a.metadata or {}).get("anunciante_id") or nombre.lower())
+            pagina = str((a.metadata or {}).get("anunciante_id") or "")
+            if nombre.lower() in ya_nombres or (pagina and pagina in ya_ids):
+                continue
+            clave = pagina or nombre.lower()
             fila = conteo.setdefault(clave, {"nombre": nombre, "id": (a.metadata or {})
                                              .get("anunciante_id"), "anuncios": 0,
                                              "termino": termino})
@@ -107,18 +117,21 @@ def deducir(con: sqlite3.Connection, cliente: Any, modo: str = "auto",
 
     elegidos = sorted(conteo.values(), key=lambda f: -f["anuncios"])[:maximo]
     agregados = []
+    hay_otros = bool(db.competidores_de(con, cid))
     for orden, e in enumerate(elegidos, start=1):
+        clave = altas.clave_desde(e["nombre"], claves)
+        claves.add(clave)
         db.insertar(con, "competidores_seguidos", {
             "cliente_id": cid,
             "nombre": e["nombre"],
-            "clave": re.sub(r"[^a-z0-9]+", "-", e["nombre"].lower()).strip("-")[:40] or None,
+            "clave": clave,
             # El id de página es lo más confiable para volver a pedir sus
             # anuncios; sin id, se lo busca por nombre.
             "meta_pagina_id": str(e["id"]) if e["id"] else None,
             "meta_consulta": None if e["id"] else e["nombre"],
             # En Google se lo busca por nombre de anunciante.
             "google_anunciante": e["nombre"],
-            "prioridad": 1 if orden == 1 else 2,
+            "prioridad": 1 if orden == 1 and not hay_otros else 2,
             "notas": NOTA.format(termino=e["termino"]),
         })
         agregados.append(e["nombre"])

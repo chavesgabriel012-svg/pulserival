@@ -16,9 +16,50 @@ funcionando; son dos puertas a lo mismo.
 
 ## Lo que el panel no hace, a propósito
 
-- **No genera ni recolecta.** Eso gasta plata de Apify y de IA, y un botón que
-  gasta es un botón que se aprieta sin pensar. Lo dispara el cron.
-- **No administra clientes.** Sigue siendo `cli clientes`.
+- **No da de alta, no cobra ni da de baja.** Eso sigue siendo `cli clientes`
+  y Paddle.
+- **No gasta sin que usted lo confirme.** Buscar competidores, recolectar y
+  rehacer un reporte se pueden disparar desde la página de cada cliente, pero
+  cada botón dice qué consume y pide marcar una casilla. Un botón que gasta
+  es un botón que se aprieta sin pensar.
+
+## Clientes y competidores
+
+El reporte sale aunque el cliente no indique competidores: el ciclo los
+deduce de su industria (ver `docs/08`, sección 5.6). Eso deja casos que
+tiene que resolver una persona, y la bandeja los avisa arriba de todo:
+
+- **Sin competidores:** la búsqueda no encontró a nadie (industria "Otra",
+  un nombre que no dice el rubro, Apify caído).
+- **Elegidos por el sistema:** competidores que dedujo la búsqueda y nadie
+  revisó. Se confirman guardándolos sin cambios.
+- **Sin anuncios:** un competidor del que, después de una corrida, no llegó
+  ningún anuncio. Puede que no paute, o que el nombre o la página estén mal.
+
+En **Clientes** (menú de arriba) aparecen primero los que tienen algo que
+resolver. La página de cada cliente permite:
+
+- **Agregar** un competidor con solo el nombre; la página de Facebook y el
+  sitio web son opcionales y afinan la búsqueda.
+- **Corregir** uno (nombre, Facebook, sitio, prioridad) o **quitarlo**. Quitar
+  lo desactiva sin borrar sus anuncios; si se vuelve a agregar con el mismo
+  nombre, recupera su historial.
+- **Corregir el correo, la industria y el contexto** del cliente.
+- **Buscar competidores por su industria** (Apify: hasta 40 anuncios por
+  término). No repite a los que ya tiene ni a los que se quitaron.
+- **Recolectar y generar el reporte** para ese cliente, sin esperar al ciclo
+  semanal (Apify e IA). Si no tiene competidores, primero los busca.
+- **Rehacer el reporte con lo que ya hay** (solo IA), después de corregir
+  competidores o contexto. Reemplaza el borrador: lo editado a mano en ese
+  reporte se pierde.
+
+Las tres últimas corren en segundo plano y la página se actualiza sola hasta
+que terminan. Una a la vez, y nunca junto con el ciclo programado: si hay
+otra corrida en curso, el botón espera. El aviso de cómo terminó vive en la
+memoria del servidor: un reinicio lo borra, pero no lo que la tarea ya guardó.
+
+La página del reporte también avisa si los competidores de ese cliente piden
+revisión, con un enlace a su ficha.
 
 ## Entrar
 
