@@ -24,12 +24,18 @@
   .grupo { background:var(--blanco); border:1px solid var(--linea);
            border-radius:var(--radio); padding:28px 28px 30px; }
   .grupo > .titulo {
-    font-family:var(--mono); font-size:12px; text-transform:uppercase;
-    letter-spacing:.1em; font-weight:500; color:var(--pulso-texto); margin:0 0 4px;
+    font-family:var(--display); font-size:13px; text-transform:uppercase;
+    letter-spacing:.08em; font-weight:600; color:var(--pulso-texto); margin:0 0 4px;
   }
+  /* Sin bajada debajo (el paso 1), el título necesita su propio aire. */
+  .grupo > .titulo:not(:has(+ .bajada)) { margin-bottom:20px; }
+  /* El paso entero es opcional: se dice con una etiqueta que se vea, no con
+     una palabra suelta en gris. */
   .grupo > .titulo .opcional {
-    font-family:var(--cuerpo); font-weight:400; letter-spacing:0;
-    text-transform:none; font-size:14px; color:var(--piedra); margin-left:10px;
+    display:inline-block; vertical-align:2px; margin-left:10px; padding:2px 9px;
+    border:1px solid var(--linea); border-radius:100px; background:var(--papel);
+    font-family:var(--display); font-weight:500; letter-spacing:0;
+    text-transform:none; font-size:12.5px; color:var(--gris-texto);
   }
   .grupo > .bajada { font-size:15.5px; color:var(--gris-texto); margin:0 0 22px;
                      line-height:1.5; }
@@ -52,10 +58,11 @@
     border:1px solid var(--linea); transition:color .25s var(--curva),
     border-color .25s var(--curva);
   }
+  .por-pasos .barra li .opc { font-weight:400; color:var(--piedra); margin-left:-5px; }
   .por-pasos .barra li .n {
     display:inline-flex; align-items:center; justify-content:center;
     width:22px; height:22px; border-radius:50%; background:var(--linea);
-    color:var(--gris-texto); font-family:var(--mono); font-size:12px;
+    color:var(--gris-texto); font-family:var(--display); font-size:12px;
     transition:background .25s var(--curva), color .25s var(--curva);
   }
   /* Los pasos por los que ya paso se pueden volver a tocar. Los de adelante
@@ -71,11 +78,46 @@
 
   .navegacion { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
 
-  .opcional-campo { font-family:var(--cuerpo); font-weight:400; font-size:14px;
-                    color:var(--piedra); margin-left:6px; }
+  /* Lo obligatorio se marca con un asterisco y nada más: con dos campos
+     obligatorios, una frase que lo explique es más ruido que ayuda. */
+  .obligatorio { color:var(--pulso); margin-left:3px; font-weight:600; }
   /* El ultimo paso de la barra es el checkout: se ve, pero no se toca
      desde aca. */
   .por-pasos .barra li.despues { cursor:default; opacity:.7; }
+
+  /* -- listas desplegables ------------------------------------- */
+  /* El selector nativo abre hacia arriba cuando le falta lugar abajo, y eso
+     no se puede cambiar. Con mouse se reemplaza por una lista propia que
+     siempre baja; en pantallas táctiles queda el selector del teléfono. El
+     <select> sigue en la página, escondido: es el que se envía. */
+  .desplegable { position:relative; }
+  .desplegable .nativo-oculto { position:absolute; inset:0; opacity:0; pointer-events:none; }
+  .desplegable-boton {
+    width:100%; text-align:left; padding:13px 42px 13px 14px; font-size:16px;
+    font-family:var(--cuerpo); color:var(--tinta); background:var(--blanco);
+    border:1px solid var(--linea); border-radius:var(--radio); cursor:pointer;
+    position:relative; line-height:1.4;
+    transition:border-color .2s var(--curva), box-shadow .2s var(--curva);
+  }
+  .desplegable-boton.vacio { color:var(--piedra); }
+  .desplegable-boton:after {
+    content:""; position:absolute; right:17px; top:50%; width:7px; height:7px;
+    border-right:1.5px solid var(--tinta); border-bottom:1.5px solid var(--tinta);
+    transform:translateY(-70%) rotate(45deg); transition:transform .2s var(--curva);
+  }
+  .desplegable-boton[aria-expanded="true"]:after { transform:translateY(-30%) rotate(-135deg); }
+  .desplegable-boton:focus, .desplegable-boton[aria-expanded="true"] {
+    outline:none; border-color:var(--pulso); box-shadow:0 0 0 3px rgba(221,65,21,.16);
+  }
+  .desplegable-lista {
+    position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:30;
+    max-height:300px; overflow-y:auto; margin:0; padding:6px 0; list-style:none;
+    background:var(--blanco); border:1px solid var(--linea); border-radius:var(--radio);
+    box-shadow:0 14px 34px rgba(20,19,18,.12);
+  }
+  .desplegable-lista li { padding:9px 14px; font-size:15.5px; cursor:pointer; }
+  .desplegable-lista li.activo { background:var(--papel); }
+  .desplegable-lista li[aria-selected="true"] { color:var(--pulso-texto); font-weight:600; }
 
   /* -- aceptacion de terminos ---------------------------------- */
   /* Solo la casilla, grande: es lo unico de este bloque que hay que tocar. */
@@ -181,13 +223,12 @@
          checkout, la pagina que sigue al enviar, y no se puede tocar. #}
       <ol class="barra" aria-hidden="true">
         {% for p in aplicar.pasos %}
-        <li data-ir="{{ loop.index }}"{% if loop.last and loop.length > 3 %} class="despues"{% endif %}><span class="n">{{ loop.index }}</span>{{ p.corto }}</li>
+        <li data-ir="{{ loop.index }}"{% if loop.last and loop.length > 3 %} class="despues"{% endif %}><span class="n">{{ loop.index }}</span>{{ p.corto }}{% if p.opcional %}<span class="opc"> · opcional</span>{% endif %}</li>
         {% endfor %}
       </ol>
 
       <div class="grupo paso sube" data-paso="1">
         <p class="titulo">{{ aplicar.pasos[0].nombre if aplicar.pasos else 'Su empresa' }}</p>
-        <p class="bajada">{{ aplicar.empresa.bajada if aplicar.empresa else '' }}</p>
         {# El plan va antes de los campos: un input oculto entre dos `.campo`
            corta el `.campo + .campo` y los deja pegados. #}
         {% if planes_checkout | length > 1 %}
@@ -204,25 +245,24 @@
         <input type="hidden" name="plan" value="{{ plan_form.clave }}">
         {% endif %}
         <div class="campo">
-          <label for="empresa">Nombre de la empresa</label>
+          <label for="empresa">Nombre de la empresa<span class="obligatorio" aria-hidden="true">*</span></label>
           <input id="empresa" name="empresa" required autocomplete="organization">
         </div>
         <div class="campo">
-          <label for="email">Correo donde quiere recibir los reportes</label>
+          <label for="email">Correo donde quiere recibir los reportes<span class="obligatorio" aria-hidden="true">*</span></label>
           <input id="email" name="email" type="email" required autocomplete="email">
         </div>
         <div class="campo">
-          <label for="industria">Industria <span class="opcional-campo">Opcional</span></label>
+          <label for="industria">Industria</label>
           {# Una lista y no texto libre: con la industria se buscan los
              competidores de quien no los indica (config/industrias.yaml). #}
-          <select id="industria" name="industria">
+          <select id="industria" name="industria" data-desplegable>
             <option value="">Elija una</option>
             {% for i in industrias %}<option value="{{ i }}">{{ i }}</option>{% endfor %}
           </select>
         </div>
         <div class="campo">
-          <label for="contexto">{{ aplicar.empresa.contexto_etiqueta if aplicar.empresa else 'Contexto de su negocio' }}
-            <span class="opcional-campo">Opcional</span></label>
+          <label for="contexto">{{ aplicar.empresa.contexto_etiqueta if aplicar.empresa else 'Contexto de su negocio' }}</label>
           {% if aplicar.empresa and aplicar.empresa.contexto_ayuda %}<p class="ayuda">{{ aplicar.empresa.contexto_ayuda }}</p>{% endif %}
           <textarea id="contexto" name="contexto"
                     placeholder="Ej: tenemos tres sucursales en el GAM, competimos por servicio más que por precio, y nos preocupa que la competencia esté empujando financiamiento a doce meses."></textarea>
@@ -257,7 +297,7 @@
         <p class="bajada">{{ aplicar.origen.ayuda }}</p>
         <div class="campo">
           <label for="origen">{{ aplicar.origen.etiqueta }}</label>
-          <select id="origen" name="origen">
+          <select id="origen" name="origen" data-desplegable>
             <option value=""></option>
             {% for o in aplicar.origen.opciones %}
             <option value="{{ o }}">{{ o }}</option>
@@ -529,6 +569,112 @@ document.addEventListener('change', function (e) {
   for (var k = 0; pedido && k < seleccion.options.length; k++) {
     if (seleccion.options[k].value === pedido) { seleccion.selectedIndex = k; break; }
   }
+})();
+</script>
+<script>
+// Las listas desplegables que siempre abren hacia abajo (ver el CSS). Solo
+// con mouse: en táctil el selector del teléfono es mejor que cualquier lista.
+(function () {
+  if (!window.matchMedia || !window.matchMedia('(pointer: fine)').matches) { return; }
+  document.querySelectorAll('select[data-desplegable]').forEach(function (sel) {
+    var caja = document.createElement('div');
+    caja.className = 'desplegable';
+    sel.parentNode.insertBefore(caja, sel);
+    caja.appendChild(sel);
+    sel.classList.add('nativo-oculto');
+    sel.tabIndex = -1;
+    sel.setAttribute('aria-hidden', 'true');
+
+    var boton = document.createElement('button');
+    boton.type = 'button';
+    boton.className = 'desplegable-boton';
+    boton.id = sel.id + '-boton';
+    boton.setAttribute('aria-haspopup', 'listbox');
+    boton.setAttribute('aria-expanded', 'false');
+    var etiqueta = document.querySelector('label[for="' + sel.id + '"]');
+    if (etiqueta) { etiqueta.htmlFor = boton.id; }
+    caja.appendChild(boton);
+
+    var lista = document.createElement('ul');
+    lista.className = 'desplegable-lista';
+    lista.id = sel.id + '-lista';
+    lista.setAttribute('role', 'listbox');
+    lista.hidden = true;
+    boton.setAttribute('aria-controls', lista.id);
+    var items = [].slice.call(sel.options).map(function (op, i) {
+      var li = document.createElement('li');
+      li.id = sel.id + '-op-' + i;
+      li.setAttribute('role', 'option');
+      li.textContent = op.text || ' ';
+      li.addEventListener('mousedown', function (e) { e.preventDefault(); elegir(i); });
+      li.addEventListener('mousemove', function () { resaltar(i); });
+      lista.appendChild(li);
+      return li;
+    });
+    caja.appendChild(lista);
+    var activo = sel.selectedIndex;
+
+    function pintar() {
+      var op = sel.options[sel.selectedIndex];
+      boton.textContent = op ? op.text : '';
+      boton.classList.toggle('vacio', !op || !op.value);
+      items.forEach(function (li, i) {
+        li.setAttribute('aria-selected', i === sel.selectedIndex ? 'true' : 'false');
+      });
+    }
+    function resaltar(i) {
+      activo = Math.max(0, Math.min(i, items.length - 1));
+      items.forEach(function (li, k) { li.classList.toggle('activo', k === activo); });
+      boton.setAttribute('aria-activedescendant', items[activo].id);
+      var li = items[activo];
+      if (li.offsetTop < lista.scrollTop) { lista.scrollTop = li.offsetTop; }
+      else if (li.offsetTop + li.offsetHeight > lista.scrollTop + lista.clientHeight) {
+        lista.scrollTop = li.offsetTop + li.offsetHeight - lista.clientHeight;
+      }
+    }
+    function abrir() {
+      lista.hidden = false;
+      boton.setAttribute('aria-expanded', 'true');
+      resaltar(sel.selectedIndex);
+      // Siempre abajo: si no entra en la pantalla, la página baja lo que falta.
+      var abajo = lista.getBoundingClientRect().bottom - window.innerHeight + 16;
+      if (abajo > 0) { window.scrollBy({ top: abajo, behavior: 'smooth' }); }
+    }
+    function cerrar() {
+      lista.hidden = true;
+      boton.setAttribute('aria-expanded', 'false');
+      boton.removeAttribute('aria-activedescendant');
+    }
+    function elegir(i) {
+      sel.selectedIndex = i;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      pintar();
+      cerrar();
+      boton.focus();
+    }
+
+    boton.addEventListener('click', function () { if (lista.hidden) { abrir(); } else { cerrar(); } });
+    boton.addEventListener('keydown', function (e) {
+      var abierta = !lista.hidden;
+      // Enter acá abre o elige; no tiene que llegar al formulario, que con
+      // Enter pasa al paso siguiente.
+      if (e.key === 'Enter') { e.stopPropagation(); }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!abierta) { abrir(); return; }
+        resaltar(activo + (e.key === 'ArrowDown' ? 1 : -1));
+      } else if ((e.key === 'Enter' || e.key === ' ') && abierta) {
+        e.preventDefault();
+        elegir(activo);
+      } else if (e.key === 'Escape' || e.key === 'Tab') {
+        cerrar();
+      }
+    });
+    document.addEventListener('mousedown', function (e) {
+      if (!caja.contains(e.target)) { cerrar(); }
+    });
+    pintar();
+  });
 })();
 </script>
 {% if not modo_servidor %}

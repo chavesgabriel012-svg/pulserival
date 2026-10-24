@@ -17,7 +17,7 @@
 <link rel="manifest" href="{{ marca_url }}/site.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
 {# La clase `js` se pone ANTES de que el navegador pinte nada. Sin esto, la
    animación de aparición tendría que esconder el contenido desde el CSS, y
    quien tenga JavaScript apagado se quedaría con una página en blanco. #}
@@ -44,7 +44,9 @@
 
     --display:'Schibsted Grotesk',system-ui,-apple-system,sans-serif;
     --cuerpo:'Source Serif 4',Georgia,serif;
-    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,monospace;
+    /* Los rótulos ("EL PRIMER PASO", "SU EMPRESA") usan la misma letra que
+       los titulares. Antes iban en IBM Plex Mono; se unificó a pedido de
+       marca para que la página tenga una sola voz. */
     --curva:cubic-bezier(.22,.7,.3,1);
   }
   * { box-sizing:border-box; }
@@ -58,7 +60,7 @@
   a { color:var(--tinta); }
   h1, h2, h3, .display { font-family:var(--display); font-weight:700;
                          letter-spacing:-.02em; line-height:1.1; }
-  .mono { font-family:var(--mono); font-size:12px; letter-spacing:.1em;
+  .mono { font-family:var(--display); font-size:12px; letter-spacing:.1em;
           text-transform:uppercase; }
 
   /* -- aparecer al bajar --------------------------------------- */
@@ -191,7 +193,7 @@
      #planes desde el menu deja el titulo de la seccion escondido detras. */
   section[id] { scroll-margin-top:84px; }
   .rotulo {
-    font-family:var(--mono); font-size:12px; text-transform:uppercase;
+    font-family:var(--display); font-size:12px; text-transform:uppercase;
     letter-spacing:.1em; color:var(--pulso-texto); margin:0 0 16px; font-weight:500;
   }
   h2 { font-size:36px; margin:0 0 18px; max-width:24ch; }
@@ -237,7 +239,7 @@
   @media (pointer: coarse) {
     footer .pie-legal a { min-height:44px; display:inline-flex; align-items:center; }
   }
-  footer .legal { font-family:var(--mono); font-size:12px; letter-spacing:.06em;
+  footer .legal { font-family:var(--display); font-size:12px; letter-spacing:.06em;
                   color:var(--piedra); margin-top:24px; text-transform:none; }
 
   @media (max-width:900px) { section { padding:62px 0; } h2 { font-size:29px; } }
@@ -247,7 +249,7 @@
   }
   /* Un dato legal que falta cargar en config/legal.yaml. Se ve a proposito:
      es mejor notarlo antes de publicar que despues. */
-  .pendiente { background:rgba(221,65,21,.12); color:var(--pulso-texto); font-family:var(--mono);
+  .pendiente { background:rgba(221,65,21,.12); color:var(--pulso-texto); font-family:var(--display);
                font-size:.82em; padding:1px 6px; border-radius:3px; }
   {% block estilos %}{% endblock %}
 </style>
