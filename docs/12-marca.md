@@ -52,8 +52,8 @@ en degradado.
 Las tipografías son Schibsted Grotesk (títulos y rótulos) y Source Serif 4
 (cuerpo). En las páginas públicas los rótulos ("EL PRIMER PASO", "SU EMPRESA")
 iban en IBM Plex Mono; desde octubre de 2026 usan Schibsted, para que la
-página tenga una sola voz. El panel de administración sigue usando IBM Plex
-Mono en sus etiquetas. En el correo no se cargan: ningún cliente de correo
+página tenga una sola voz. El panel de administración también. En el
+correo no se cargan: ningún cliente de correo
 garantiza fuentes web, así que ahí se usan las pilas del sistema. Es a
 propósito y no hace falta arreglarlo.
 
